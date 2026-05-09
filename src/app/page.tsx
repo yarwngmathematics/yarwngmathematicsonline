@@ -1,8 +1,3 @@
-# Yarwng Mathematics — Professional Website Upgrade
-
-Replace your current `src/app/page.tsx` code with the following upgraded version.
-
-```tsx
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 text-black">
