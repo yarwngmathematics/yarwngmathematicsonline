@@ -6,7 +6,7 @@ export default function Home() {
       <nav className="flex items-center justify-between px-10 py-6 backdrop-blur-md bg-white/70 sticky top-0 z-50 border-b">
 
         <h1 className="text-2xl font-bold text-blue-600">
-          Rakesh Maths
+          Yarwng Mathematics
         </h1>
 
         <div className="flex gap-8 text-lg">
@@ -214,7 +214,7 @@ export default function Home() {
 
           <div>
             <h2 className="text-3xl font-bold mb-2">
-              Rakesh Maths
+              yarwng mathematics
             </h2>
 
             <p className="text-gray-400">
