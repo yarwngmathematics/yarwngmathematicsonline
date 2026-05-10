@@ -1,3 +1,5 @@
+"use client";
+import { useState } from "react";
 export default function Home() {
   const scriptURL = "https://script.google.com/macros/s/AKfycbyXxSYFEtcKMLA3AU4h1pKJIgl76zA-L_Z8HoCEqyJubQKOT7TCEIfILryMaAR7Kf0e/exec"
   const handleSubmit = async (e: any) => {
