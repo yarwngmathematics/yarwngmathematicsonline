@@ -13,9 +13,13 @@ export default function Home() {
   };
 
   await fetch(scriptURL, {
-    method: "POST",
-    body: JSON.stringify(formData),
-  });
+  method: "POST",
+  mode: "no-cors",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(formData),
+});
 
   alert("Registration Successful!");
 };
