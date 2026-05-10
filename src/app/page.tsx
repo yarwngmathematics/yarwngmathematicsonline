@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 export default function Home() {
   const scriptURL = "https://script.google.com/macros/s/AKfycbx2dAeadFsu4yoiMk5zKpjcZtwkjy3eHvjZdEZ4KoWKdkHNTqE_sAmIrRUdDIXRQfBQ/exec"
   const handleSubmit = async (e: any) => {
@@ -13,13 +12,9 @@ export default function Home() {
   };
 
   await fetch(scriptURL, {
-  method: "POST",
-  mode: "no-cors",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(formData),
-});
+    method: "POST",
+    body: JSON.stringify(formData),
+  });
 
   alert("Registration Successful!");
 };
