@@ -5,7 +5,10 @@ import { useState } from "react";
 export default function Home() {
 
   const [showForm, setShowForm] = useState(false);
-
+const [name, setName] = useState("");
+const [whatsapp, setWhatsapp] = useState("");
+const [studentClass, setStudentClass] = useState("");
+const [mode, setMode] = useState("");
   const scriptURL =
     "https://script.google.com/macros/s/AKfycbx2dAeadFsu4yoiMk5zKpjcZtwkjy3eHvjZdEZ4KoWKdkHNTqE_sAmIrRUdDIXRQfBQ/exec";
 
@@ -13,11 +16,11 @@ export default function Home() {
     e.preventDefault();
 
     const formData = {
-      name: "Test Student",
-      whatsapp: "9366030347",
-      studentClass: "Class 10",
-      mode: "Online",
-    };
+  name,
+  whatsapp,
+  studentClass,
+  mode,
+};
 
     await fetch(scriptURL, {
       method: "POST",
@@ -111,28 +114,41 @@ export default function Home() {
             <form onSubmit={handleSubmit} className="space-y-4">
 
               <input
-                type="text"
-                placeholder="Student Name"
-                className="w-full border p-4 rounded-xl"
-              />
+  type="text"
+  placeholder="Student Name"
+  value={name}
+  onChange={(e) => setName(e.target.value)}
+  className="w-full border p-4 rounded-xl"
+/>
 
               <input
-                type="text"
-                placeholder="Whatsapp Number"
-                className="w-full border p-4 rounded-xl"
-              />
+  type="text"
+  placeholder="Whatsapp Number"
+  value={whatsapp}
+  onChange={(e) => setWhatsapp(e.target.value)}
+  className="w-full border p-4 rounded-xl"
+/>
 
-              <select className="w-full border p-4 rounded-xl">
-                <option>Class 10</option>
-                <option>Class 11</option>
-                <option>Class 12</option>
-              </select>
+              <select
+  value={studentClass}
+  onChange={(e) => setStudentClass(e.target.value)}
+  className="w-full border p-4 rounded-xl"
+>
+  <option value="">Select Class</option>
+  <option>Class 10</option>
+  <option>Class 11</option>
+  <option>Class 12</option>
+</select>
 
-              <select className="w-full border p-4 rounded-xl">
-                <option>Online</option>
-                <option>Offline</option>
-              </select>
-
+              <select
+  value={mode}
+  onChange={(e) => setMode(e.target.value)}
+  className="w-full border p-4 rounded-xl"
+>
+  <option value="">Select Mode</option>
+  <option>Online</option>
+  <option>Offline</option>
+</select>
               <button
                 type="submit"
                 className="w-full bg-blue-600 text-white py-4 rounded-xl text-xl font-bold hover:bg-blue-700"
