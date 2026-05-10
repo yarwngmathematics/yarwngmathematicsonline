@@ -1,34 +1,39 @@
 "use client";
-export default function Home() {
-  const scriptURL = "https://script.google.com/macros/s/AKfycbx2dAeadFsu4yoiMk5zKpjcZtwkjy3eHvjZdEZ4KoWKdkHNTqE_sAmIrRUdDIXRQfBQ/exec"
-  const handleSubmit = async (e: any) => {
-  e.preventDefault();
 
-  const formData = {
-    name: "Test Student",
-    whatsapp: "9366030347",
-    studentClass: "Class 10",
-    mode: "Online",
+import { useState } from "react";
+
+export default function Home() {
+
+  const [showForm, setShowForm] = useState(false);
+
+  const scriptURL =
+    "https://script.google.com/macros/s/AKfycbx2dAeadFsu4yoiMk5zKpjcZtwkjy3eHvjZdEZ4KoWKdkHNTqE_sAmIrRUdDIXRQfBQ/exec";
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+
+    const formData = {
+      name: "Test Student",
+      whatsapp: "9366030347",
+      studentClass: "Class 10",
+      mode: "Online",
+    };
+
+    await fetch(scriptURL, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify(formData),
+    });
+
+    alert("Registration Successful!");
+
+    setShowForm(false);
   };
 
-  await fetch(scriptURL, {
-    method: "POST",
-    body: JSON.stringify(formData),
-  });
-
-  alert("Registration Successful!");
-};
   return (
-    
     <main className="min-h-screen bg-gray-50 text-black">
 
       {/* Navbar */}
-      <button
-  onClick={handleSubmit}
-  className="bg-green-600 text-white px-6 py-3 rounded-lg"
->
-  Test Backend
-</button>
       <nav className="flex items-center justify-between px-8 py-6 bg-white shadow-sm border-b sticky top-0 z-50">
 
         {/* Left Side */}
@@ -76,51 +81,71 @@ export default function Home() {
           Class 10, Class 11 and Class 12.
         </p>
 
-        <button className="bg-blue-600 text-white px-10 py-5 rounded-2xl text-2xl font-semibold hover:bg-blue-700">
+        <button
+          onClick={() => setShowForm(true)}
+          className="bg-blue-600 text-white px-10 py-4 rounded-2xl text-2xl font-bold hover:bg-blue-700"
+        >
           Join Classes
         </button>
-<div className="max-w-xl mx-auto mt-16 bg-white p-8 rounded-3xl shadow-xl">
 
-  <h2 className="text-3xl font-bold text-center mb-6">
-    Student Registration
-  </h2>
-
-  <form onSubmit={handleSubmit} className="space-y-4">
-
-    <input
-      type="text"
-      placeholder="Student Name"
-      className="w-full border p-4 rounded-xl"
-    />
-
-    <input
-      type="text"
-      placeholder="Whatsapp Number"
-      className="w-full border p-4 rounded-xl"
-    />
-
-    <select className="w-full border p-4 rounded-xl">
-      <option>Class 10</option>
-      <option>Class 11</option>
-      <option>Class 12</option>
-    </select>
-
-    <select className="w-full border p-4 rounded-xl">
-      <option>Online</option>
-      <option>Offline</option>
-    </select>
-
-    <button
-      type="submit"
-      className="w-full bg-blue-600 text-white py-4 rounded-xl text-xl font-bold"
-    >
-      Submit Registration
-    </button>
-
-  </form>
-
-</div>
       </section>
+
+
+      {/* Popup Form */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+          <div className="bg-white p-8 rounded-3xl w-[90%] max-w-lg relative shadow-2xl">
+
+            <button
+              onClick={() => setShowForm(false)}
+              className="absolute top-4 right-4 text-2xl"
+            >
+              ×
+            </button>
+
+            <h2 className="text-3xl font-bold mb-6 text-center">
+              Join Yarwng Mathematics
+            </h2>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+
+              <input
+                type="text"
+                placeholder="Student Name"
+                className="w-full border p-4 rounded-xl"
+              />
+
+              <input
+                type="text"
+                placeholder="Whatsapp Number"
+                className="w-full border p-4 rounded-xl"
+              />
+
+              <select className="w-full border p-4 rounded-xl">
+                <option>Class 10</option>
+                <option>Class 11</option>
+                <option>Class 12</option>
+              </select>
+
+              <select className="w-full border p-4 rounded-xl">
+                <option>Online</option>
+                <option>Offline</option>
+              </select>
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-4 rounded-xl text-xl font-bold hover:bg-blue-700"
+              >
+                Submit Registration
+              </button>
+
+            </form>
+
+          </div>
+
+        </div>
+      )}
 
 
       {/* Online Session */}
@@ -167,7 +192,10 @@ export default function Home() {
               QR Scanner Here
             </div>
 
-            <button className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xl font-semibold hover:bg-blue-700">
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xl font-semibold hover:bg-blue-700"
+            >
               Join Classes
             </button>
 
@@ -221,7 +249,10 @@ export default function Home() {
               QR Scanner Here
             </div>
 
-            <button className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xl font-semibold hover:bg-blue-700">
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xl font-semibold hover:bg-blue-700"
+            >
               Join Classes
             </button>
 
@@ -289,5 +320,5 @@ export default function Home() {
       </footer>
 
     </main>
-  )
+  );
 }
