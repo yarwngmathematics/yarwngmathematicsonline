@@ -10,7 +10,7 @@ const [whatsapp, setWhatsapp] = useState("");
 const [studentClass, setStudentClass] = useState("");
 const [mode, setMode] = useState("");
   const scriptURL =
-    "https://script.google.com/macros/s/AKfycbyz2cuII76MVdRKOFo8UIcnKefLvFR3bg6RPVooE_-vYt06ukMymv5YOmIIVGpyGQfm/exec";
+    "https://script.google.com/macros/s/AKfycbwBZepl7eijkaiajLUwVlY_udCJhCcAJNUBBNfgz_IcSABbbLqdWOvtNlg1s8h4KFAOqA/exec";
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
