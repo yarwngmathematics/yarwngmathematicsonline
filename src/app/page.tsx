@@ -1,8 +1,33 @@
 export default function Home() {
+  const scriptURL = "https://script.google.com/macros/s/AKfycbyXxSYFEtcKMLA3AU4h1pKJIgl76zA-L_Z8HoCEqyJubQKOT7TCEIfILryMaAR7Kf0e/exec"
+  const handleSubmit = async (e: any) => {
+  e.preventDefault();
+
+  const formData = {
+    name: "Test Student",
+    whatsapp: "9366030347",
+    studentClass: "Class 10",
+    mode: "Online",
+  };
+
+  await fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify(formData),
+  });
+
+  alert("Registration Successful!");
+};
   return (
+    
     <main className="min-h-screen bg-gray-50 text-black">
 
       {/* Navbar */}
+      <button
+  onClick={handleSubmit}
+  className="bg-green-600 text-white px-6 py-3 rounded-lg"
+>
+  Test Backend
+</button>
       <nav className="flex items-center justify-between px-8 py-6 bg-white shadow-sm border-b sticky top-0 z-50">
 
         {/* Left Side */}
