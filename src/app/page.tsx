@@ -79,7 +79,47 @@ export default function Home() {
         <button className="bg-blue-600 text-white px-10 py-5 rounded-2xl text-2xl font-semibold hover:bg-blue-700">
           Join Classes
         </button>
+<div className="max-w-xl mx-auto mt-16 bg-white p-8 rounded-3xl shadow-xl">
 
+  <h2 className="text-3xl font-bold text-center mb-6">
+    Student Registration
+  </h2>
+
+  <form onSubmit={handleSubmit} className="space-y-4">
+
+    <input
+      type="text"
+      placeholder="Student Name"
+      className="w-full border p-4 rounded-xl"
+    />
+
+    <input
+      type="text"
+      placeholder="Whatsapp Number"
+      className="w-full border p-4 rounded-xl"
+    />
+
+    <select className="w-full border p-4 rounded-xl">
+      <option>Class 10</option>
+      <option>Class 11</option>
+      <option>Class 12</option>
+    </select>
+
+    <select className="w-full border p-4 rounded-xl">
+      <option>Online</option>
+      <option>Offline</option>
+    </select>
+
+    <button
+      type="submit"
+      className="w-full bg-blue-600 text-white py-4 rounded-xl text-xl font-bold"
+    >
+      Submit Registration
+    </button>
+
+  </form>
+
+</div>
       </section>
 
 
