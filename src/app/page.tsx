@@ -3,34 +3,36 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 text-black">
 
       {/* Navbar */}
-      <nav className="flex items-center justify-between px-8 py-6 bg-white border-b sticky top-0 z-50 shadow-sm">
+      <nav className="flex items-center justify-between px-8 py-6 bg-white shadow-sm border-b sticky top-0 z-50">
 
-        <div>
-          <h1 className="text-4xl font-bold text-blue-600">
-            Yarwng Mathematics
-          </h1>
+        {/* Left Side */}
+        <div className="flex items-center gap-4">
 
-          <p className="text-gray-600 text-sm mt-1">
-            By Rakesh Debbarma (M.Sc IIT Delhi)
-          </p>
+          {/* Circle Logo */}
+          <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold">
+            Y
+          </div>
+
+          {/* Text */}
+          <div>
+
+            <h1 className="text-3xl font-bold text-blue-600">
+              Yarwng Mathematics
+            </h1>
+
+            <p className="text-gray-600 text-sm">
+              Rakesh Debbarma (M.Sc IIT Delhi)
+            </p>
+
+          </div>
         </div>
 
-        <div className="flex gap-8 items-center text-lg font-medium">
-          <a href="#courses" className="hover:text-blue-600">
-            Courses
-          </a>
 
-          <a href="#login" className="hover:text-blue-600">
-            Login/Register
-          </a>
+        {/* Right Side */}
+        <button className="bg-blue-600 text-white px-6 py-3 rounded-xl text-lg font-semibold hover:bg-blue-700 transition">
+          Login/Register
+        </button>
 
-          <a
-            href="#join"
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700"
-          >
-            Join Classes
-          </a>
-        </div>
       </nav>
 
 
@@ -48,34 +50,31 @@ export default function Home() {
           Class 10, Class 11 and Class 12.
         </p>
 
-        <a
-          href="#join"
-          className="bg-blue-600 text-white px-10 py-5 rounded-2xl text-2xl font-semibold hover:bg-blue-700"
-        >
+        <button className="bg-blue-600 text-white px-10 py-5 rounded-2xl text-2xl font-semibold hover:bg-blue-700">
           Join Classes
-        </a>
+        </button>
+
       </section>
 
 
       {/* Online Session */}
-      <section
-        id="courses"
-        className="py-24 px-8"
-      >
+      <section className="py-24 px-8">
 
         <div className="max-w-7xl mx-auto bg-white rounded-3xl shadow-2xl p-10 grid md:grid-cols-2 gap-12">
 
           {/* Left */}
           <div>
+
             <h2 className="text-5xl font-bold mb-6 text-blue-600">
               Online Session
             </h2>
 
             <p className="text-xl text-gray-600 mb-10">
-              Live Online Mathematics Classes with Conceptual Learning.
+              Live Online Mathematics Coaching
             </p>
 
             <div className="space-y-6 text-2xl font-semibold">
+
               <div className="flex justify-between border-b pb-3">
                 <span>Class 10</span>
                 <span>₹700 / month</span>
@@ -90,6 +89,7 @@ export default function Home() {
                 <span>Class 12</span>
                 <span>₹1000 / month</span>
               </div>
+
             </div>
           </div>
 
@@ -101,21 +101,12 @@ export default function Home() {
               QR Scanner Here
             </div>
 
-            <a
-              href="https://forms.google.com"
-              target="_blank"
-              className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xl font-semibold mb-5 hover:bg-blue-700"
-            >
-              Registration Form
-            </a>
-
-            <a
-              href="#join"
-              className="border border-blue-600 text-blue-600 px-8 py-4 rounded-2xl text-xl font-semibold hover:bg-blue-100"
-            >
+            <button className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xl font-semibold hover:bg-blue-700">
               Join Classes
-            </a>
+            </button>
+
           </div>
+
         </div>
       </section>
 
@@ -127,6 +118,7 @@ export default function Home() {
 
           {/* Left */}
           <div>
+
             <h2 className="text-5xl font-bold mb-4 text-blue-600">
               Offline Coaching
             </h2>
@@ -136,6 +128,7 @@ export default function Home() {
             </p>
 
             <div className="space-y-6 text-2xl font-semibold">
+
               <div className="flex justify-between border-b pb-3">
                 <span>Class 10</span>
                 <span>₹700 / month</span>
@@ -150,6 +143,7 @@ export default function Home() {
                 <span>Class 12</span>
                 <span>₹1000 / month</span>
               </div>
+
             </div>
           </div>
 
@@ -161,174 +155,12 @@ export default function Home() {
               QR Scanner Here
             </div>
 
-            <a
-              href="https://forms.google.com"
-              target="_blank"
-              className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xl font-semibold mb-5 hover:bg-blue-700"
-            >
-              Registration Form
-            </a>
-
-            <a
-              href="#join"
-              className="border border-blue-600 text-blue-600 px-8 py-4 rounded-2xl text-xl font-semibold hover:bg-blue-100"
-            >
+            <button className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xl font-semibold hover:bg-blue-700">
               Join Classes
-            </a>
-          </div>
-        </div>
-      </section>
-
-
-      {/* Login/Register */}
-      <section
-        id="login"
-        className="py-24 px-8 bg-white"
-      >
-
-        <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-600 to-blue-800 p-12 rounded-3xl shadow-2xl text-white">
-
-          <h2 className="text-5xl font-bold text-center mb-12">
-            Login / Register
-          </h2>
-
-          <div className="grid gap-6">
-
-            <input
-              type="tel"
-              placeholder="Mobile Number"
-              className="p-5 rounded-xl text-black text-lg"
-            />
-
-            <button className="bg-white text-blue-700 py-4 rounded-xl text-xl font-bold hover:bg-gray-200">
-              Get OTP
             </button>
 
-            <input
-              type="text"
-              placeholder="First Name"
-              className="p-5 rounded-xl text-black text-lg"
-            />
-
-            <input
-              type="text"
-              placeholder="Surname"
-              className="p-5 rounded-xl text-black text-lg"
-            />
-
-            <textarea
-              placeholder="Address"
-              className="p-5 rounded-xl text-black text-lg"
-            />
-
-            <button className="bg-black text-white py-5 rounded-xl text-2xl font-bold hover:bg-gray-900">
-              Register Now
-            </button>
-          </div>
-        </div>
-      </section>
-
-
-      {/* Join Classes */}
-      <section
-        id="join"
-        className="py-24 px-8 bg-gray-100"
-      >
-
-        <div className="max-w-6xl mx-auto bg-white p-12 rounded-3xl shadow-2xl">
-
-          <h2 className="text-5xl font-bold text-center mb-14 text-blue-600">
-            Join Classes
-          </h2>
-
-
-          {/* Online/Offline */}
-          <div className="grid md:grid-cols-2 gap-10 mb-10">
-
-            <div>
-              <label className="text-xl font-semibold block mb-3">
-                Choose Mode
-              </label>
-
-              <select className="w-full p-5 rounded-xl border text-lg">
-                <option>Online</option>
-                <option>Offline</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xl font-semibold block mb-3">
-                Select Class
-              </label>
-
-              <select className="w-full p-5 rounded-xl border text-lg">
-                <option>Class 10</option>
-                <option>Class 11</option>
-                <option>Class 12</option>
-              </select>
-            </div>
           </div>
 
-
-          {/* Offline Slots */}
-          <div className="mb-10">
-            <h3 className="text-3xl font-bold mb-6">
-              Offline Time Slots
-            </h3>
-
-            <div className="grid md:grid-cols-2 gap-6">
-
-              <button className="border p-6 rounded-2xl hover:bg-blue-50 text-xl font-semibold">
-                Morning: 7 AM – 9 AM
-              </button>
-
-              <button className="border p-6 rounded-2xl hover:bg-blue-50 text-xl font-semibold">
-                Evening: 5 PM – 7 PM
-              </button>
-            </div>
-          </div>
-
-
-          {/* Online Slots */}
-          <div className="mb-10">
-            <h3 className="text-3xl font-bold mb-6">
-              Online Time Slots
-            </h3>
-
-            <div className="grid md:grid-cols-2 gap-6">
-
-              <button className="border p-6 rounded-2xl hover:bg-blue-50 text-xl font-semibold">
-                7:30 PM – 8:30 PM
-              </button>
-
-              <button className="border p-6 rounded-2xl hover:bg-blue-50 text-xl font-semibold">
-                9 PM – 11 PM
-              </button>
-            </div>
-          </div>
-
-
-          {/* Day Options */}
-          <div>
-            <h3 className="text-3xl font-bold mb-6">
-              Choose Days
-            </h3>
-
-            <div className="grid md:grid-cols-3 gap-6">
-
-              <button className="border p-6 rounded-2xl hover:bg-blue-50 text-lg font-semibold">
-                Monday & Wednesday
-              </button>
-
-              <button className="border p-6 rounded-2xl hover:bg-blue-50 text-lg font-semibold">
-                Tuesday & Friday
-              </button>
-
-              <button className="border p-6 rounded-2xl hover:bg-blue-50 text-lg font-semibold">
-                Thursday & Saturday
-              </button>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -345,7 +177,9 @@ export default function Home() {
           <div className="bg-gray-100 rounded-3xl p-10 text-gray-600 text-xl">
             Write about Yarwng Mathematics here later.
           </div>
+
         </div>
+
       </section>
 
 
@@ -361,7 +195,9 @@ export default function Home() {
           <div className="bg-white rounded-3xl p-10 text-gray-600 text-xl shadow-lg">
             Write what makes Yarwng Mathematics different later.
           </div>
+
         </div>
+
       </section>
 
 
@@ -384,10 +220,8 @@ export default function Home() {
           WhatsApp: +91 9366030347
         </p>
 
-        <p className="text-gray-400">
-          Email: yarwngmathematics@gmail.com
-        </p>
       </footer>
+
     </main>
   )
 }
