@@ -40,13 +40,13 @@ const [mode, setMode] = useState("");
       <nav className="flex flex-col md:flex-row items-center justify-between px-4 md:px-8 py-4 md:py-6 bg-white shadow-sm border-b sticky top-0 z-50 gap-4">
 
         {/* Left Side */}
-        <div className="flex items-center gap-3 md:gap-4">
+        <div className="flex items-center gap-5 md:gap-6">
 
           {/* Circle Logo */}
           <img
   src="/Logo.png"
   alt="Yarwng Mathematics Logo"
-  className="w-12 h-12 md:w-16 md:h-16 object-contain"
+  className="w-20 h-20 md:w-28 md:h-28 object-contain"
 />
 
           {/* Text */}
