@@ -43,14 +43,16 @@ const [mode, setMode] = useState("");
         <div className="flex items-center gap-4">
 
           {/* Circle Logo */}
-          <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold">
-            Y
-          </div>
+          <img
+  src="/Logo.png"
+  alt="Yarwng Mathematics Logo"
+  className="w-16 h-16 object-contain"
+/>
 
           {/* Text */}
           <div>
 
-            <h1 className="text-3xl font-bold text-blue-600">
+            <h1 className="text-xl md:text-3xl font-bold text-blue-600">
               Yarwng Mathematics
             </h1>
 
@@ -71,22 +73,22 @@ const [mode, setMode] = useState("");
 
 
       {/* Hero Section */}
-      <section className="py-28 px-8 text-center bg-gradient-to-b from-blue-50 to-white">
+      <section className="py-16 md:py-28 px-4 md:px-8 text-center bg-gradient-to-b from-blue-50 to-white">
 
-        <h1 className="text-6xl font-bold leading-tight mb-8">
+        <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-8">
           Learn Mathematics
           <br />
           With Conceptual Clarity
         </h1>
 
-        <p className="text-2xl text-gray-600 max-w-3xl mx-auto mb-10">
+        <p className="text-lg md:text-2xl text-gray-600 max-w-3xl mx-auto mb-10">
           Professional Mathematics Coaching for
           Class 10, Class 11 and Class 12.
         </p>
 
         <button
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-10 py-4 rounded-2xl text-2xl font-bold hover:bg-blue-700"
+          className="bg-blue-600 text-white px-6 md:px-10 py-3 md:py-4 rounded-2xl text-lg md:text-2xl font-bold hover:bg-blue-700"
         >
           Join Classes
         </button>
@@ -98,7 +100,7 @@ const [mode, setMode] = useState("");
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 
-          <div className="bg-white p-8 rounded-3xl w-[90%] max-w-lg relative shadow-2xl">
+          <div className="bg-white p-8 rounded-3xl w-[95%] md:w-[90%] max-w-lg relative shadow-2xl">
 
             <button
               onClick={() => setShowForm(false)}
@@ -172,7 +174,7 @@ const [mode, setMode] = useState("");
           {/* Left */}
           <div>
 
-            <h2 className="text-5xl font-bold mb-6 text-blue-600">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6 text-blue-600">
               Online Session
             </h2>
 
@@ -204,7 +206,7 @@ const [mode, setMode] = useState("");
           {/* Right */}
           <div className="bg-blue-50 rounded-3xl p-10 flex flex-col items-center justify-center text-center">
 
-            <div className="w-52 h-52 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-8 text-gray-500">
+            <div className="w-40 h-40 md:w-52 md:h-52 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-8 text-gray-500">
               QR Scanner Here
             </div>
 
@@ -261,7 +263,7 @@ const [mode, setMode] = useState("");
           {/* Right */}
           <div className="bg-blue-50 rounded-3xl p-10 flex flex-col items-center justify-center text-center">
 
-            <div className="w-52 h-52 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-8 text-gray-500">
+            <div className="w-40 h-40 md:w-52 md:h-52 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-8 text-gray-500">
               QR Scanner Here
             </div>
 
@@ -317,7 +319,7 @@ const [mode, setMode] = useState("");
       {/* Footer */}
       <footer className="bg-black text-white py-14 text-center">
 
-        <h3 className="text-4xl font-bold mb-4">
+        <h3 className="text-2xl md:text-4xl font-bold mb-4">
           Yarwng Mathematics
         </h3>
 
