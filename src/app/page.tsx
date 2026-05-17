@@ -37,16 +37,16 @@ const [mode, setMode] = useState("");
     <main className="min-h-screen bg-gray-50 text-black">
 
       {/* Navbar */}
-      <nav className="flex items-center justify-between px-8 py-6 bg-white shadow-sm border-b sticky top-0 z-50">
+      <nav className="flex flex-col md:flex-row items-center justify-between px-4 md:px-8 py-4 md:py-6 bg-white shadow-sm border-b sticky top-0 z-50 gap-4">
 
         {/* Left Side */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
 
           {/* Circle Logo */}
           <img
   src="/Logo.png"
   alt="Yarwng Mathematics Logo"
-  className="w-16 h-16 object-contain"
+  className="w-12 h-12 md:w-16 md:h-16 object-contain"
 />
 
           {/* Text */}
@@ -65,7 +65,7 @@ const [mode, setMode] = useState("");
 
 
         {/* Right Side */}
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-xl text-lg font-semibold hover:bg-blue-700 transition">
+        <button className="bg-blue-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl text-base md:text-lg font-semibold hover:bg-blue-700 transition whitespace-nowrap">
           Login/Register
         </button>
 
