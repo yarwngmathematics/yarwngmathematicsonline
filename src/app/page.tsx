@@ -40,28 +40,27 @@ const [mode, setMode] = useState("");
       <nav className="flex flex-col md:flex-row items-center justify-between px-4 md:px-8 py-4 md:py-6 bg-white shadow-sm border-b sticky top-0 z-50 gap-4">
 
         {/* Left Side */}
-<div className="flex items-center gap-4 md:gap-6">
+<div className="flex items-center gap-5 md:gap-6">
 
-  {/* Logo */}
+  {/* Circle Logo */}
   <img
     src="/Logo.png"
     alt="Yarwng Mathematics Logo"
-    className="w-24 h-24 md:w-32 md:h-32 object-contain"
+    className="w-20 h-20 md:w-28 md:h-28 object-contain"
   />
 
   {/* Text */}
   <div className="flex flex-col justify-center">
 
-    <h1 className="text-2xl md:text-5xl font-bold text-blue-600 leading-tight">
-      Yarwng Mathematics
-    </h1>
+  <h1 className="text-2xl md:text-5xl font-bold text-blue-600 leading-tight">
+    Yarwng Mathematics
+  </h1>
 
-    <p className="text-gray-600 text-sm md:text-2xl mt-1">
-      Rakesh Debbarma (M.Sc IIT Delhi)
-    </p>
+  <p className="text-gray-600 text-sm md:text-xl mt-1 text-center md:text-left">
+    Rakesh Debbarma (M.Sc IIT Delhi)
+  </p>
 
-  </div>
-
+</div>
 </div>
 
         {/* Right Side */}
