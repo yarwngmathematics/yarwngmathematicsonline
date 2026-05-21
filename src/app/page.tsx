@@ -56,7 +56,7 @@ export default function Home() {
         <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-3">📢 Enrollment Open</p>
         <h3 className="text-3xl md:text-4xl font-extrabold leading-tight mb-2">
           Online Classes Start<br />
-          <span className="text-yellow-300">3rd June 2025</span>
+          <span className="text-yellow-300">3rd June 2026</span>
         </h3>
         <p className="text-blue-100 text-base mt-2">Class 10 · 11 · 12 &nbsp;|&nbsp; Via Google Meet</p>
       </div>
@@ -83,7 +83,7 @@ export default function Home() {
         </span>
         <h3 className="text-3xl md:text-4xl font-extrabold text-white leading-tight mb-2">
           Online Classes<br />
-          <span className="text-yellow-300">Starting 3rd June 2025</span>
+          <span className="text-yellow-300">Starting 3rd June 2026</span>
         </h3>
         <p className="text-indigo-200 text-sm mt-2">Google Meet · Class 10 / 11 / 12</p>
       </div>
@@ -110,7 +110,7 @@ export default function Home() {
           <p className="text-xs font-bold uppercase tracking-widest text-blue-500 mb-2">📣 Announcement</p>
           <h3 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-2">
             Online Classes Start<br />
-            <span className="text-blue-700">3rd June 2025</span>
+            <span className="text-blue-700">3rd June 2026</span>
           </h3>
           <p className="text-gray-500 text-sm mt-1">Class 10, 11 & 12 · Google Meet · Live Sessions</p>
         </div>
@@ -459,7 +459,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>👨‍🏫 <strong className="text-gray-200">Rakesh Debbarma</strong></li>
                 <li>🎓 M.Sc Mathematics, IIT Delhi</li>
-                <li>📱 <a href="tel:+91XXXXXXXXXX" className="hover:text-white transition">+91 XXXXX XXXXX</a></li>
+                <li>📱 <a href="tel: 9366030347" className="hover:text-white transition">+91 XXXXX XXXXX</a></li>
                 <li>✉️ <a href="mailto:yarwngmaths@gmail.com" className="hover:text-white transition">yarwngmaths@gmail.com</a></li>
                 <li>📍 Khumulwng, Tripura</li>
               </ul>
