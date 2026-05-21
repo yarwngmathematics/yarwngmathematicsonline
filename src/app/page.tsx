@@ -459,8 +459,8 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>👨‍🏫 <strong className="text-gray-200">Rakesh Debbarma</strong></li>
                 <li>🎓 M.Sc Mathematics, IIT Delhi</li>
-                <li>📱 <a href="tel: 9366030347" className="hover:text-white transition">+91 XXXXX XXXXX</a></li>
-                <li>✉️ <a href="mailto:yarwngmaths@gmail.com" className="hover:text-white transition">yarwngmaths@gmail.com</a></li>
+                <li>📱 <a href="tel: 9366030347" className="hover:text-white transition"> 9366030347</a></li>
+                <li>✉️ <a href="mailto:yarwngmathematics@gmail.com" className="hover:text-white transition">yarwngmathematics@gmail.com</a></li>
                 <li>📍 Khumulwng, Tripura</li>
               </ul>
             </div>
