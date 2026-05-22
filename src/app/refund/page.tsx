@@ -1,4 +1,4 @@
-import PolicyLayout from "../components/PolicyLayout";
+import PolicyLayout from "../../components/PolicyLayout";
 
 export const metadata = {
   title: "Refund & Cancellation Policy | Yarwng Mathematics",
