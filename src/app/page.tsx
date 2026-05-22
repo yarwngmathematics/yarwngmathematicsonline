@@ -64,7 +64,7 @@ type Step = "form" | "payment" | "utr" | "done";
    Here we call your Next.js API route /api/phonepe/initiate which
    handles hashing securely and returns the redirect URL.
 ───────────────────────────────────────── */
-async function initPhonePePayment({
+/*async function initPhonePePayment({
   amount,
   name,
   phone,
@@ -99,7 +99,7 @@ async function initPhonePePayment({
     return null;
   }
 }
-
+*/
 export default function Home() {
   /* ── UI state ── */
   const [showModal, setShowModal]   = useState(false);
@@ -108,9 +108,9 @@ export default function Home() {
   const [adVariant, setAdVariant]   = useState(0);
   const [slotsOpen, setSlotsOpen]   = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [payLoading, setPayLoading] = useState(false);
+  /*const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError]     = useState("");
-
+*/
   /* ── Form state ── */
   const [name,         setName]         = useState("");
   const [whatsapp,     setWhatsapp]     = useState("");
@@ -123,7 +123,6 @@ export default function Home() {
 
   const submittedRef    = useRef(false);
   const utrSubmittedRef = useRef(false);
-
   /* ── Timers ── */
   useEffect(() => {
     const t = setInterval(() => setLiveDot(v => !v), 900);
@@ -140,7 +139,8 @@ export default function Home() {
     utrSubmittedRef.current = false;
     setStep("form");
     setName(""); setWhatsapp(""); setStudentClass(""); setMode(preMode ?? "");
-    setUtr(""); setUtrError(""); setPayError(""); setTxnId("");
+    setUtr(""); setUtrError(""); //setPayError(""); 
+    setTxnId("");
     setShowModal(true);
   };
   const closeModal = () => setShowModal(false);
@@ -161,9 +161,8 @@ export default function Home() {
     setSubmitting(false);
     setStep("payment");
   };
-
   /* ── PhonePe pay ── */
-  const handlePhonePePay = async () => {
+  /*const handlePhonePePay = async () => {
     if (!pay) return;
     setPayLoading(true);
     setPayError("");
@@ -183,7 +182,7 @@ export default function Home() {
       setPayError("Could not connect to PhonePe. Please try UPI or bank transfer below.");
     }
   };
-
+*/
   /* ── UTR submit (fallback for UPI / bank transfer) ── */
   const handleUtrSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,7 +203,6 @@ export default function Home() {
     } catch (_) {}
     setStep("done");
   };
-
   /* ── Payment info for selected class ── */
   const pay = studentClass ? PAYMENT.classes[studentClass] : null;
   const discount = pay ? Math.round(((pay.original - pay.offer) / pay.original) * 100) : 0;
@@ -756,6 +754,7 @@ export default function Home() {
                   </div>
 
                   {/* ── PRIMARY: PhonePe Button ── */}
+                  {/**
                   <div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Recommended · Secure Payment</p>
                     <button
@@ -790,7 +789,7 @@ export default function Home() {
                       Supports UPI, Cards, Net Banking, Wallets · 100% Secure
                     </p>
                   </div>
-
+                  */}
                   {/* ── Divider ── */}
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-gray-200" />
