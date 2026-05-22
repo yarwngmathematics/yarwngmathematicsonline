@@ -33,7 +33,7 @@ const SLOTS: Record<string, { days: string; time: string }> = {
 /* ─────────────────────────────────────────
    STEP TYPES
 ───────────────────────────────────────── */
-type Step = "form" | "payment" | "done";
+type Step = "form" | "payment" | "utr" | "done";
 
 export default function Home() {
   /* ── UI state ── */
@@ -50,6 +50,8 @@ export default function Home() {
   const [studentClass, setStudentClass] = useState("");
   const [mode,         setMode]         = useState("");
   const [submitting,   setSubmitting]   = useState(false);
+  const [utr,          setUtr]          = useState("");
+  const [utrError,     setUtrError]     = useState("");
 
   /* ── Prevent double submit ── */
   const submittedRef = useRef(false);
@@ -67,8 +69,9 @@ export default function Home() {
   /* ── Reset modal ── */
   const openModal = (preMode?: string) => {
     submittedRef.current = false;
+    utrSubmittedRef.current = false;
     setStep("form");
-    setName(""); setWhatsapp(""); setStudentClass(""); setMode(preMode ?? "");
+    setName(""); setWhatsapp(""); setStudentClass(""); setMode(preMode ?? ""); setUtr(""); setUtrError("");
     setShowModal(true);
   };
   const closeModal = () => setShowModal(false);
@@ -88,6 +91,30 @@ export default function Home() {
     } catch (_) { /* no-cors always "fails" */ }
     setSubmitting(false);
     setStep("payment");
+  };
+
+  /* ── UTR submit — validates format then submits to sheet and opens WhatsApp ── */
+  const utrSubmittedRef = useRef(false);
+  const handleUtrSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleaned = utr.trim().toUpperCase();
+    // UTR is 12 alphanumeric chars (UPI) or 16-22 digits (IMPS/NEFT)
+    if (!/^[A-Z0-9]{10,22}$/.test(cleaned)) {
+      setUtrError("Please enter a valid Transaction / UTR ID (10–22 characters).");
+      return;
+    }
+    if (utrSubmittedRef.current) return;
+    utrSubmittedRef.current = true;
+    setUtrError("");
+    // Save UTR to Google Sheet
+    try {
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({ name, whatsapp, studentClass, mode, utr: cleaned, status: "paid" }),
+      });
+    } catch (_) {}
+    setStep("done");
   };
 
   /* ── Payment info for selected class ── */
@@ -604,14 +631,25 @@ export default function Home() {
             {/* Header */}
             <div className="bg-blue-700 px-8 py-6 text-white">
               <button onClick={closeModal} className="absolute top-4 right-4 text-white/70 hover:text-white text-2xl font-bold">×</button>
+              {/* Step indicator */}
+              <div className="flex items-center gap-2 mb-4">
+                {["form","payment","utr","done"].map((s, i) => (
+                  <div key={s} className="flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition ${step === s ? "bg-yellow-400 text-blue-900" : ["form","payment","utr","done"].indexOf(step) > i ? "bg-white/30 text-white" : "bg-white/10 text-white/40"}`}>
+                      {["form","payment","utr","done"].indexOf(step) > i ? "✓" : i + 1}
+                    </div>
+                    {i < 3 && <div className={`h-px w-6 ${["form","payment","utr","done"].indexOf(step) > i ? "bg-white/40" : "bg-white/15"}`} />}
+                  </div>
+                ))}
+              </div>
               <div className="text-3xl mb-1">
-                {step === "form" ? "📝" : step === "payment" ? "💳" : "✅"}
+                {step === "form" ? "📝" : step === "payment" ? "💳" : step === "utr" ? "🔐" : "✅"}
               </div>
               <h2 className="text-xl font-black">
-                {step === "form" ? "Join Yarwng Mathematics" : step === "payment" ? "Complete Your Payment" : "Registration Complete!"}
+                {step === "form" ? "Join Yarwng Mathematics" : step === "payment" ? "Complete Your Payment" : step === "utr" ? "Confirm Your Payment" : "Registration Complete!"}
               </h2>
               <p className="text-blue-200 text-sm mt-0.5">
-                {step === "form" ? "Fill your details to register" : step === "payment" ? `${studentClass} · ₹${pay?.offer}/month` : "Welcome to Yarwng Mathematics"}
+                {step === "form" ? "Fill your details to register" : step === "payment" ? `${studentClass} · ₹${pay?.offer}/month` : step === "utr" ? "Enter your transaction ID to verify" : "Welcome to Yarwng Mathematics"}
               </p>
             </div>
 
@@ -685,16 +723,82 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-center">
-                    <p className="text-yellow-800 text-xs font-semibold">📌 Complete your payment above, then tap the button below to join your WhatsApp group.</p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3">
+                    <p className="text-yellow-800 text-xs font-semibold mb-1">📌 How to pay:</p>
+                    <ol className="text-yellow-700 text-xs space-y-1 list-decimal list-inside">
+                      <li>Tap any UPI app above or transfer to the bank account</li>
+                      <li>Complete the payment of <strong>₹{pay.offer}</strong></li>
+                      <li>Note the <strong>Transaction / UTR ID</strong> from your payment app</li>
+                      <li>Tap the button below and enter that ID</li>
+                    </ol>
                   </div>
 
                   <button
-                    onClick={() => setStep("done")}
-                    className="block w-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white text-center py-4 rounded-xl text-base font-black shadow-lg transition"
+                    onClick={() => setStep("utr")}
+                    className="block w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-center py-4 rounded-xl text-base font-black shadow-lg transition"
                   >
-                    💬 I've Paid — Join {studentClass} WhatsApp Group →
+                    ✅ I've Paid — Enter Transaction ID →
                   </button>
+                </div>
+              )}
+
+              {/* ── STEP 3: UTR VERIFICATION ── */}
+              {step === "utr" && pay && (
+                <div className="space-y-5">
+                  {/* What is UTR box */}
+                  <div className="bg-blue-50 border border-blue-100 rounded-2xl px-5 py-4">
+                    <p className="text-blue-800 font-bold text-sm mb-2">🔍 Where to find your Transaction ID?</p>
+                    <ul className="text-blue-700 text-xs space-y-1">
+                      <li>📱 <strong>Google Pay / PhonePe</strong> → Transaction History → tap the payment → copy UPI Ref No.</li>
+                      <li>🏦 <strong>Net Banking / IMPS</strong> → Transaction History → copy UTR Number</li>
+                      <li>✉️ <strong>SMS / Email</strong> → Check confirmation message for Ref/UTR ID</li>
+                    </ul>
+                  </div>
+
+                  <form onSubmit={handleUtrSubmit} className="space-y-4">
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">
+                        Transaction / UTR ID
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 426112345678 or T2506221234"
+                        value={utr}
+                        onChange={e => { setUtr(e.target.value); setUtrError(""); }}
+                        required
+                        maxLength={25}
+                        className={`w-full border p-3.5 rounded-xl text-gray-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase ${utrError ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+                      />
+                      {utrError && (
+                        <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">⚠️ {utrError}</p>
+                      )}
+                      <p className="text-gray-400 text-xs mt-1.5">10–22 characters · letters and numbers only</p>
+                    </div>
+
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Amount paid</span>
+                      <span className="font-black text-blue-700">₹{pay.offer}</span>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Class</span>
+                      <span className="font-bold text-gray-800">{studentClass}</span>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl text-base font-black shadow-lg transition"
+                    >
+                      💬 Verify & Join WhatsApp Group →
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStep("payment")}
+                      className="w-full text-gray-400 hover:text-gray-600 text-sm py-1 transition"
+                    >
+                      ← Back to payment
+                    </button>
+                  </form>
                 </div>
               )}
 
