@@ -144,9 +144,9 @@ export default function Home() {
     <div key="v1" className="w-full rounded-2xl overflow-hidden flex flex-col md:flex-row min-h-[200px] shadow-lg"
          style={{ background: "linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 60%,#2563eb 100%)" }}>
       <div className="flex flex-col justify-center px-8 py-10 flex-1">
-        <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-3">📢 Enrollment Open</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-3">📢 Enrollment Phiyokjak</p>
         <h3 className="text-3xl md:text-4xl font-extrabold text-white leading-tight mb-2">
-          Online Classes Start<br /><span className="text-yellow-300">3rd June 2026</span>
+          Online Classes Chengjakkha<br /><span className="text-yellow-300">3rd June 2026</span>
         </h3>
         <p className="text-blue-200 text-sm mt-2">Class 10 · 11 · 12 &nbsp;|&nbsp; Via Google Meet</p>
 
@@ -193,7 +193,7 @@ export default function Home() {
       <div className="w-3 bg-blue-600 shrink-0" />
       <div className="flex-1 flex flex-col md:flex-row items-center justify-between px-8 py-10 gap-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-blue-500 mb-2">📣 Announcement</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-500 mb-2">📣 Sakhwlaimung</p>
           <h3 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-2">
             Online Classes Start<br /><span className="text-blue-700">3rd June 2026</span>
           </h3>
@@ -356,7 +356,7 @@ export default function Home() {
               {/* Shimmer pill badge */}
               <div className="fade-up-1 inline-flex items-center gap-2 shimmer-pill border border-white/20 rounded-full px-4 py-2 mb-6">
                 <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
-                <span className="text-yellow-300 text-xs font-bold uppercase tracking-widest">IIT Delhi · Tripura</span>
+                <span className="text-yellow-300 text-xs font-bold uppercase tracking-widest">Mathematics · English Medium</span>
               </div>
 
               {/* Headline */}
@@ -387,7 +387,7 @@ export default function Home() {
               <div className="fade-up-4 flex flex-wrap gap-4 justify-center md:justify-start mb-10">
                 <button onClick={() => openModal()}
                   className="enroll-btn bg-yellow-400 hover:bg-yellow-300 text-blue-950 px-8 py-4 rounded-2xl font-black text-lg transition">
-                  Enroll Now →
+                  Enroll Khwlaidi →
                 </button>
                 <button onClick={() => { document.getElementById("online-session")?.scrollIntoView({behavior:"smooth"}); }}
                   className="glass-card text-white px-8 py-4 rounded-2xl font-semibold text-base hover:bg-white/10 transition">
@@ -399,7 +399,7 @@ export default function Home() {
               <div className="fade-up-5 flex gap-3 justify-center md:justify-start flex-wrap">
                 {[
                   { num:"3",    label:"Classes"         },
-                  { num:"IIT",  label:"Delhi Faculty"   },
+                  { num:"IIT",  label:"Delhi Alumni"   },
                   { num:"2hrs", label:"Per Session"     },
                   { num:"∞",    label:"Doubt Support"   },
                 ].map(s => (
