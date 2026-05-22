@@ -6,11 +6,11 @@ import { useState, useEffect, useRef } from "react";
    PAYMENT CONFIG — edit these freely
 ───────────────────────────────────────── */
 const PAYMENT = {
-  upi: "rakeshdebbarmaofficial@okaxis",          // your UPI ID
+  upi: "rakeshdebbarmaofficial@okaxis",
   bankName: "SBI",
   accountName: "Rakesh Debbarma",
-  accountNo: "43120222789",      // fill your account number
-  ifsc: "SBIN0064072",            // fill IFSC
+  accountNo: "43120222789",
+  ifsc: "SBIN0064072",
   classes: {
     "Class 10": { original: 700, offer: 600, whatsapp: "https://chat.whatsapp.com/DDdQ4xpOj3SA5RiVlPZ7Ar?s=cl&p=a&mlu=1" },
     "Class 11": { original: 900, offer: 800, whatsapp: "https://chat.whatsapp.com/E9FN3Nh6dLx3dKa7VGENkI?s=cl&p=a&mlu=1" },
@@ -93,6 +93,21 @@ export default function Home() {
   /* ── Payment info for selected class ── */
   const pay = studentClass ? PAYMENT.classes[studentClass] : null;
   const discount = pay ? Math.round(((pay.original - pay.offer) / pay.original) * 100) : 0;
+
+  /* ── Auto-open WhatsApp when step becomes "done" ── */
+  const [countdown, setCountdown] = useState(3);
+  useEffect(() => {
+    if (step !== "done" || !pay?.whatsapp) return;
+    setCountdown(3);
+    window.open(pay.whatsapp, "_blank", "noopener,noreferrer");
+    let c = 3;
+    const t = setInterval(() => {
+      c -= 1;
+      setCountdown(c);
+      if (c <= 0) clearInterval(t);
+    }, 1000);
+    return () => clearInterval(t);
+  }, [step]);
 
   /* ═══════════════════════════════════════
      AD VARIANTS
@@ -670,25 +685,52 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <p className="text-xs text-gray-400 text-center">After payment, click below to join your class WhatsApp group</p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-center">
+                    <p className="text-yellow-800 text-xs font-semibold">📌 Complete your payment above, then tap the button below to join your WhatsApp group.</p>
+                  </div>
 
-                  <a href={pay.whatsapp} target="_blank" rel="noreferrer"
-                    className="block w-full bg-green-500 hover:bg-green-600 text-white text-center py-4 rounded-xl text-base font-black shadow transition"
+                  <button
                     onClick={() => setStep("done")}
+                    className="block w-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white text-center py-4 rounded-xl text-base font-black shadow-lg transition"
                   >
-                    💬 Join {studentClass} WhatsApp Group →
-                  </a>
+                    💬 I've Paid — Join {studentClass} WhatsApp Group →
+                  </button>
                 </div>
               )}
 
               {/* ── STEP 3: DONE ── */}
-              {step === "done" && (
+              {step === "done" && pay && (
                 <div className="text-center py-4 space-y-4">
                   <div className="text-6xl">🎉</div>
                   <h3 className="text-xl font-black text-gray-900">Welcome, {name}!</h3>
-                  <p className="text-gray-500 text-sm">You're now part of Yarwng Mathematics. Check your WhatsApp group for class details.</p>
-                  <button onClick={closeModal} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold transition">
-                    Done
+                  <p className="text-gray-500 text-sm">You're now part of Yarwng Mathematics!</p>
+
+                  {/* Auto-redirect notice */}
+                  <div className="bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
+                    <p className="text-green-700 font-bold text-sm mb-1">
+                      ✅ Opening {studentClass} WhatsApp Group automatically…
+                    </p>
+                    {countdown > 0 ? (
+                      <p className="text-green-600 text-xs">Redirecting in <strong>{countdown}s</strong></p>
+                    ) : (
+                      <p className="text-green-600 text-xs">WhatsApp should be open now!</p>
+                    )}
+                  </div>
+
+                  {/* Fallback button — always visible */}
+                  <a
+                    href={pay.whatsapp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-black text-base shadow-lg transition"
+                  >
+                    💬 Open {studentClass} WhatsApp Group
+                  </a>
+
+                  <p className="text-xs text-gray-400">If WhatsApp didn't open, tap the button above.</p>
+
+                  <button onClick={closeModal} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm transition">
+                    Close
                   </button>
                 </div>
               )}
