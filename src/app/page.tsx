@@ -161,9 +161,35 @@ export default function Home() {
   };
 
   /* ─────────────────────────────────────────
+     Poll backend to verify payment status.
+     Tries every 2.5s for up to ~90s.
+     Returns orderId if PAID, throws otherwise.
+  ───────────────────────────────────────── */
+  const verifyPayment = async (orderId: string): Promise<string> => {
+    const MAX_ATTEMPTS = 36; // 36 × 2.5s = 90s max
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      await new Promise((r) => setTimeout(r, 2500));
+      try {
+        const res = await fetch(`/api/cashfree/verify-order?orderId=${orderId}`);
+        if (!res.ok) continue; // transient error — keep polling
+        const { status } = await res.json();
+        if (status === "PAID") return orderId;
+        if (status === "EXPIRED" || status === "CANCELLED")
+          throw new Error("Payment was cancelled or expired. Please try again.");
+        // ACTIVE / PENDING → keep polling
+      } catch (err) {
+        if (err instanceof Error && (err.message.includes("cancelled") || err.message.includes("expired")))
+          throw err;
+        // network hiccup — keep polling
+      }
+    }
+    throw new Error("Payment verification timed out. If money was deducted, contact us on WhatsApp.");
+  };
+
+  /* ─────────────────────────────────────────
      STEP 2 — Pay via Cashfree.
-     Sheet is written ONLY after payment succeeds.
-     Uses retry logic for weak networks.
+     Verifies with backend BEFORE showing WhatsApp.
+     Sheet is written ONLY after payment confirmed.
   ───────────────────────────────────────── */
   const handleCashfreePay = async () => {
     if (!pay) return;
@@ -195,26 +221,34 @@ export default function Home() {
         redirectTarget: "_modal",
       });
 
+      // result.error means user explicitly closed/failed inside modal
       if (result?.error) {
         throw new Error(result.error.message || "Payment failed. Please try again.");
       }
 
-      /* 3. Payment confirmed — NOW write to Google Sheet (once, with retries) */
+      /* 3. Modal closed — NOW verify with backend before doing anything.
+            This is the key fix: GPay/UPI close the modal before bank confirms,
+            so we poll until we get a definitive PAID status. */
+      setPayError(""); // clear any old error
+      // Show a verifying message via payLoading (button stays disabled)
+      const confirmedOrderId = await verifyPayment(orderId);
+
+      /* 4. Payment confirmed — write to Google Sheet (once, with retries) */
       if (!sheetSubmittedRef.current) {
         sheetSubmittedRef.current = true;
-        // Fire-and-forget with built-in retries; don't await so UI isn't blocked
         submitToSheet({
           name,
           whatsapp,
           studentClass,
           mode,
-          utr: orderId,
+          utr: confirmedOrderId,
           status: "paid_cashfree",
           paidAmount: String(pay.offer),
           timestamp: new Date().toISOString(),
         });
       }
 
+      /* 5. Only NOW move to done — WhatsApp group shows here */
       setStep("done");
     } catch (err: unknown) {
       setPayError(
@@ -966,12 +1000,18 @@ export default function Home() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
-                        Connecting to Cashfree…
+                        Verifying payment… please wait
                       </>
                     ) : (
                       <>💳 Pay ₹{pay.offer} Securely</>
                     )}
                   </button>
+
+                  {payLoading && (
+                    <p className="text-xs text-center text-blue-600 font-medium animate-pulse">
+                      ⏳ Confirming your payment with bank… do not close this window.
+                    </p>
+                  )}
 
                   {payError && (
                     <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm text-center">
