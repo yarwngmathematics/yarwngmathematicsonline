@@ -6,22 +6,6 @@ import { useState, useEffect, useRef } from "react";
    PAYMENT CONFIG
 ───────────────────────────────────────── */
 const PAYMENT = {
-  upi: "rakeshdebbarmaofficial@okaxis",
-  bankName: "SBI",
-  accountName: "Rakesh Debbarma",
-  accountNo: "43120222789",
-  ifsc: "SBIN0064072",
-  // ── PhonePe merchant credentials ──────────────────────────────────────────
-  // Replace these with your actual PhonePe Business / Payment Gateway values.
-  // Sign up at https://business.phonepe.com → Dashboard → API & Keys
-  phonepe: {
-    merchantId: "YOUR_MERCHANT_ID",       // e.g. "YARWNGONLINE"
-    saltKey: "YOUR_SALT_KEY",             // from PhonePe dashboard
-    saltIndex: "1",                       // usually "1"
-    // For production use "https://api.phonepe.com/apis/hermes"
-    // For UAT/testing use "https://api-preprod.phonepe.com/apis/pg-sandbox"
-    apiEndpoint: "https://api.phonepe.com/apis/hermes",
-  },
   classes: {
     "Class 10": { original: 700, offer: 600, whatsapp: "https://chat.whatsapp.com/DDdQ4xpOj3SA5RiVlPZ7Ar?s=cl&p=a&mlu=1" },
     "Class 11": { original: 900, offer: 800, whatsapp: "https://chat.whatsapp.com/E9FN3Nh6dLx3dKa7VGENkI?s=cl&p=a&mlu=1" },
@@ -30,7 +14,7 @@ const PAYMENT = {
 };
 
 /* ─────────────────────────────────────────
-   POLICY URLS  (update domain if needed)
+   POLICY URLS
 ───────────────────────────────────────── */
 const DOMAIN = "https://yarwngmathematicsonline.vercel.app";
 const POLICY = {
@@ -55,51 +39,30 @@ const SLOTS: Record<string, { days: string; time: string }> = {
 /* ─────────────────────────────────────────
    STEP TYPES
 ───────────────────────────────────────── */
-type Step = "form" | "payment" | "utr" | "done";
+type Step = "form" | "payment" | "done";
 
 /* ─────────────────────────────────────────
-   PHONEPE HELPER
-   Initiates a PhonePe Standard Checkout payment.
-   NOTE: The SHA256 hashing MUST be done server-side in production.
-   Here we call your Next.js API route /api/phonepe/initiate which
-   handles hashing securely and returns the redirect URL.
+   LOAD CASHFREE SDK VIA SCRIPT TAG
 ───────────────────────────────────────── */
-/*async function initPhonePePayment({
-  amount,
-  name,
-  phone,
-  studentClass,
-  merchantTransactionId,
-}: {
-  amount: number;
-  name: string;
-  phone: string;
-  studentClass: string;
-  merchantTransactionId: string;
-}): Promise<string | null> {
-  try {
-    const res = await fetch("/api/phonepe/initiate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount,           // in ₹ — API route converts to paise
-        name,
-        phone,
-        studentClass,
-        merchantTransactionId,
-        redirectUrl: `${DOMAIN}/payment-success?txn=${merchantTransactionId}`,
-        callbackUrl: `${DOMAIN}/api/phonepe/callback`,
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    // PhonePe returns: { success: true, data: { instrumentResponse: { redirectInfo: { url } } } }
-    return data?.data?.instrumentResponse?.redirectInfo?.url ?? null;
-  } catch {
-    return null;
-  }
+function loadCashfreeSDK(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") return reject(new Error("No window"));
+    if ((window as any).Cashfree) return resolve();
+    const existing = document.getElementById("cashfree-sdk-script");
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("SDK load failed")));
+      return;
+    }
+    const script = document.createElement("script");
+    script.id  = "cashfree-sdk-script";
+    script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
+    script.onload  = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Cashfree SDK"));
+    document.body.appendChild(script);
+  });
 }
-*/
+
 export default function Home() {
   /* ── UI state ── */
   const [showModal, setShowModal]   = useState(false);
@@ -108,21 +71,18 @@ export default function Home() {
   const [adVariant, setAdVariant]   = useState(0);
   const [slotsOpen, setSlotsOpen]   = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  /*const [payLoading, setPayLoading] = useState(false);
+  const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError]     = useState("");
-*/
+
   /* ── Form state ── */
   const [name,         setName]         = useState("");
   const [whatsapp,     setWhatsapp]     = useState("");
   const [studentClass, setStudentClass] = useState("");
   const [mode,         setMode]         = useState("");
   const [submitting,   setSubmitting]   = useState(false);
-  const [utr,          setUtr]          = useState("");
-  const [utrError,     setUtrError]     = useState("");
-  const [txnId,        setTxnId]        = useState("");
 
-  const submittedRef    = useRef(false);
-  const utrSubmittedRef = useRef(false);
+  const submittedRef = useRef(false);
+
   /* ── Timers ── */
   useEffect(() => {
     const t = setInterval(() => setLiveDot(v => !v), 900);
@@ -136,11 +96,9 @@ export default function Home() {
   /* ── Reset modal ── */
   const openModal = (preMode?: string) => {
     submittedRef.current = false;
-    utrSubmittedRef.current = false;
     setStep("form");
     setName(""); setWhatsapp(""); setStudentClass(""); setMode(preMode ?? "");
-    setUtr(""); setUtrError(""); //setPayError(""); 
-    setTxnId("");
+    setPayError("");
     setShowModal(true);
   };
   const closeModal = () => setShowModal(false);
@@ -161,48 +119,62 @@ export default function Home() {
     setSubmitting(false);
     setStep("payment");
   };
-  /* ── PhonePe pay ── */
-  /*const handlePhonePePay = async () => {
+
+  /* ── Cashfree pay ── */
+  const handleCashfreePay = async () => {
     if (!pay) return;
     setPayLoading(true);
     setPayError("");
-    const merchantTxnId = `YM_${Date.now()}_${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
-    setTxnId(merchantTxnId);
-    const redirectUrl = await initPhonePePayment({
-      amount: pay.offer,
-      name,
-      phone: whatsapp,
-      studentClass,
-      merchantTransactionId: merchantTxnId,
-    });
-    setPayLoading(false);
-    if (redirectUrl) {
-      window.location.href = redirectUrl;
-    } else {
-      setPayError("Could not connect to PhonePe. Please try UPI or bank transfer below.");
-    }
-  };
-*/
-  /* ── UTR submit (fallback for UPI / bank transfer) ── */
-  const handleUtrSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleaned = utr.trim().toUpperCase();
-    if (!/^[A-Z0-9]{10,22}$/.test(cleaned)) {
-      setUtrError("Please enter a valid Transaction / UTR ID (10–22 characters).");
-      return;
-    }
-    if (utrSubmittedRef.current) return;
-    utrSubmittedRef.current = true;
-    setUtrError("");
     try {
-      await fetch(SCRIPT_URL, {
+      const res = await fetch("/api/cashfree/create-order", {
         method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({ name, whatsapp, studentClass, mode, utr: cleaned, status: "paid" }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: pay.offer,
+          name,
+          phone: whatsapp,
+          studentClass,
+        }),
       });
-    } catch (_) {}
-    setStep("done");
+      if (!res.ok) throw new Error("Could not create payment order. Please try again.");
+      const { paymentSessionId, orderId } = await res.json();
+      if (!paymentSessionId) throw new Error("Invalid order response. Please try again.");
+
+      await loadCashfreeSDK();
+      const cashfree = (window as any).Cashfree({ mode: "production" });
+
+      const result = await cashfree.checkout({
+        paymentSessionId,
+        redirectTarget: "_modal",
+      });
+
+      if (result?.error) {
+        throw new Error(result.error.message || "Payment failed. Please try again.");
+      }
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          body: JSON.stringify({
+            name, whatsapp, studentClass, mode,
+            utr: orderId,
+            status: "paid_cashfree",
+          }),
+        });
+      } catch (_) {}
+
+      setStep("done");
+    } catch (err: unknown) {
+      setPayError(
+        err instanceof Error
+          ? err.message
+          : "Payment failed. Please try again."
+      );
+    }
+    setPayLoading(false);
   };
+
   /* ── Payment info for selected class ── */
   const pay = studentClass ? PAYMENT.classes[studentClass] : null;
   const discount = pay ? Math.round(((pay.original - pay.offer) / pay.original) * 100) : 0;
@@ -374,16 +346,13 @@ export default function Home() {
           min-width: 100px;
         }
 
-        /* PhonePe button */
-        @keyframes ppPulse {
-          0%,100% { box-shadow: 0 0 0 0 rgba(84,39,143,0.4); }
-          50%      { box-shadow: 0 0 0 10px rgba(84,39,143,0); }
+        @keyframes cfPulse {
+          0%,100% { box-shadow: 0 0 0 0 rgba(29,78,216,0.45); }
+          50%      { box-shadow: 0 0 0 12px rgba(29,78,216,0); }
         }
-        .phonepe-btn {
-          background: linear-gradient(135deg, #5f259f 0%, #7c3aed 100%);
-          animation: ppPulse 2.5s ease infinite;
-        }
-        .phonepe-btn:hover { background: linear-gradient(135deg, #4a1a7d 0%, #6d28d9 100%); }
+        .cf-pay-btn { animation: cfPulse 2.5s ease infinite; }
+        .cf-pay-btn:hover { filter: brightness(1.1); }
+        .cf-pay-btn:disabled { animation: none; opacity: 0.6; cursor: not-allowed; }
       `}</style>
 
       {/* ══════════════════ NAVBAR ══════════════════ */}
@@ -680,245 +649,203 @@ export default function Home() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4"
           onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
           <div className="bg-white rounded-3xl w-full max-w-md relative shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+
             {/* Header */}
             <div className="bg-blue-700 px-8 py-6 text-white sticky top-0 z-10">
               <button onClick={closeModal} className="absolute top-4 right-4 text-white/70 hover:text-white text-2xl font-bold">×</button>
+
+              {/* Step indicators */}
               <div className="flex items-center gap-2 mb-4">
-                {["form","payment","utr","done"].map((s, i) => (
+                {(["form","payment","done"] as Step[]).map((s, i) => (
                   <div key={s} className="flex items-center gap-2">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition ${step === s ? "bg-yellow-400 text-blue-900" : ["form","payment","utr","done"].indexOf(step) > i ? "bg-white/30 text-white" : "bg-white/10 text-white/40"}`}>
-                      {["form","payment","utr","done"].indexOf(step) > i ? "✓" : i + 1}
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition ${
+                      step === s
+                        ? "bg-yellow-400 text-blue-900"
+                        : (["form","payment","done"] as Step[]).indexOf(step) > i
+                          ? "bg-white/30 text-white"
+                          : "bg-white/10 text-white/40"
+                    }`}>
+                      {(["form","payment","done"] as Step[]).indexOf(step) > i ? "✓" : i + 1}
                     </div>
-                    {i < 3 && <div className={`h-px w-6 ${["form","payment","utr","done"].indexOf(step) > i ? "bg-white/40" : "bg-white/15"}`} />}
+                    {i < 2 && (
+                      <div className={`h-px w-6 ${(["form","payment","done"] as Step[]).indexOf(step) > i ? "bg-white/40" : "bg-white/15"}`} />
+                    )}
                   </div>
                 ))}
               </div>
+
               <div className="text-3xl mb-1">
-                {step === "form" ? "📝" : step === "payment" ? "💳" : step === "utr" ? "🔐" : "✅"}
+                {step === "form" ? "📝" : step === "payment" ? "💳" : "✅"}
               </div>
               <h2 className="text-xl font-black">
-                {step === "form" ? "Join Yarwng Mathematics" : step === "payment" ? "Complete Your Payment" : step === "utr" ? "Confirm Your Payment" : "Registration Complete!"}
+                {step === "form" ? "Join Yarwng Mathematics" : step === "payment" ? "Complete Your Payment" : "Registration Complete!"}
               </h2>
               <p className="text-blue-200 text-sm mt-0.5">
-                {step === "form" ? "Fill your details to register" : step === "payment" ? `${studentClass} · ₹${pay?.offer}/month` : step === "utr" ? "Enter your transaction ID to verify" : "Welcome to Yarwng Mathematics"}
+                {step === "form"
+                  ? "Fill your details to register"
+                  : step === "payment"
+                  ? `${studentClass} · ₹${pay?.offer}/month`
+                  : "Welcome to Yarwng Mathematics"}
               </p>
             </div>
 
             <div className="p-8">
+
               {/* ── STEP 1: FORM ── */}
               {step === "form" && (
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <input type="text" placeholder="Student Name" value={name} onChange={e => setName(e.target.value)} required
-                    className="w-full border border-gray-200 p-3.5 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input type="text" placeholder="WhatsApp Number" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} required
-                    className="w-full border border-gray-200 p-3.5 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <select value={studentClass} onChange={e => setStudentClass(e.target.value)} required
-                    className="w-full border border-gray-200 p-3.5 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <input
+                    type="text"
+                    placeholder="Student Name"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    required
+                    className="w-full border border-gray-200 p-3.5 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="WhatsApp Number"
+                    value={whatsapp}
+                    onChange={e => setWhatsapp(e.target.value)}
+                    required
+                    className="w-full border border-gray-200 p-3.5 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <select
+                    value={studentClass}
+                    onChange={e => setStudentClass(e.target.value)}
+                    required
+                    className="w-full border border-gray-200 p-3.5 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option value="">Select Class</option>
-                    <option>Class 10</option><option>Class 11</option><option>Class 12</option>
+                    <option>Class 10</option>
+                    <option>Class 11</option>
+                    <option>Class 12</option>
                   </select>
-                  <select value={mode} onChange={e => setMode(e.target.value)} required
-                    className="w-full border border-gray-200 p-3.5 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    value={mode}
+                    onChange={e => setMode(e.target.value)}
+                    required
+                    className="w-full border border-gray-200 p-3.5 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option value="">Select Mode</option>
-                    <option>Online</option><option>Offline</option>
+                    <option>Online</option>
+                    <option>Offline</option>
                   </select>
 
-                  {/* Policy consent */}
                   <p className="text-xs text-gray-400 text-center leading-relaxed">
                     By registering you agree to our{" "}
-                    <a href={POLICY.terms} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Terms &amp; Conditions</a>,{" "}
-                    <a href={POLICY.privacy} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Privacy Policy</a>,{" "}
-                    <a href={POLICY.refund} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Refund Policy</a> and{" "}
+                    <a href={POLICY.terms}    target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Terms &amp; Conditions</a>,{" "}
+                    <a href={POLICY.privacy}  target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Privacy Policy</a>,{" "}
+                    <a href={POLICY.refund}   target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Refund Policy</a> and{" "}
                     <a href={POLICY.shipping} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Shipping Policy</a>.
                   </p>
 
-                  <button type="submit" disabled={submitting}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white py-4 rounded-xl text-lg font-bold transition">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white py-4 rounded-xl text-lg font-bold transition"
+                  >
                     {submitting ? "Submitting…" : "Next: Pay & Join →"}
                   </button>
                 </form>
               )}
 
-              {/* ── STEP 2: PAYMENT ── */}
+              {/* ── STEP 2: PAYMENT — Cashfree only ── */}
               {step === "payment" && pay && (
-                <div className="space-y-5">
+                <div className="space-y-6">
+
                   {/* Fee summary */}
                   <div className="bg-blue-50 border border-blue-100 rounded-2xl px-5 py-4 flex items-center justify-between">
                     <div>
                       <p className="text-xs text-blue-500 font-semibold uppercase tracking-wide mb-0.5">{studentClass} · {mode}</p>
-                      <p className="text-2xl font-black text-blue-700">₹{pay.offer}<span className="text-sm font-normal text-gray-400 ml-1">/month</span></p>
+                      <p className="text-2xl font-black text-blue-700">
+                        ₹{pay.offer}
+                        <span className="text-sm font-normal text-gray-400 ml-1">/month</span>
+                      </p>
                     </div>
                     <div className="bg-green-100 text-green-700 text-xs font-black px-3 py-1.5 rounded-xl text-center">
-                      {discount}% OFF<br /><span className="line-through text-gray-400">₹{pay.original}</span>
+                      {discount}% OFF<br />
+                      <span className="line-through text-gray-400">₹{pay.original}</span>
                     </div>
                   </div>
 
-                  {/* ── PRIMARY: PhonePe Button ── */}
-                  {/**
-                  <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Recommended · Secure Payment</p>
-                    <button
-                      onClick={handlePhonePePay}
-                      disabled={payLoading}
-                      className="phonepe-btn w-full text-white py-4 rounded-2xl font-black text-lg shadow-lg transition flex items-center justify-center gap-3 disabled:opacity-60"
-                    >
-                      {payLoading ? (
-                        <>
-                          <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                          </svg>
-                          Connecting to PhonePe…
-                        </>
-                      ) : (
-                        <>
-                          <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-                            <rect width="32" height="32" rx="8" fill="white" fillOpacity="0.15"/>
-                            <text x="5" y="23" fontSize="18" fontWeight="900" fill="white">₱</text>
-                          </svg>
-                          Pay ₹{pay.offer} with PhonePe
-                        </>
-                      )}
-                    </button>
-                    {payError && (
-                      <div className="mt-2 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-red-600 text-xs">
-                        ⚠️ {payError}
-                      </div>
+                  {/* Cashfree Button */}
+                  <button
+                    onClick={handleCashfreePay}
+                    disabled={payLoading}
+                    className="cf-pay-btn w-full text-white py-5 rounded-2xl font-black text-xl shadow-lg transition flex items-center justify-center gap-3"
+                    style={{ background: "linear-gradient(135deg,#1a56db 0%,#1e40af 100%)" }}
+                  >
+                    {payLoading ? (
+                      <>
+                        <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                        Connecting to Cashfree…
+                      </>
+                    ) : (
+                      <>💳 Pay ₹{pay.offer} Securely</>
                     )}
-                    <p className="text-center text-xs text-gray-400 mt-2">
-                      Supports UPI, Cards, Net Banking, Wallets · 100% Secure
-                    </p>
-                  </div>
-                  */}
-                  {/* ── Divider ── */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-gray-200" />
-                    <span className="text-xs text-gray-400 font-semibold uppercase tracking-widest">or pay manually</span>
-                    <div className="flex-1 h-px bg-gray-200" />
-                  </div>
-
-                  {/* ── FALLBACK: Direct UPI apps ── */}
-                  <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Direct UPI Transfer</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { name:"Google Pay",  color:"#34A853", icon:"G" },
-                        { name:"PhonePe App", color:"#5f259f", icon:"₱" },
-                        { name:"Paytm",       color:"#00b9f1", icon:"P" },
-                        { name:"Any UPI App", color:"#1d4ed8", icon:"⊕" },
-                      ].map(app => (
-                        <a key={app.name}
-                          href={`upi://pay?pa=${PAYMENT.upi}&pn=${encodeURIComponent(PAYMENT.accountName)}&am=${pay.offer}&cu=INR`}
-                          className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 hover:bg-gray-50 transition font-semibold text-sm text-gray-700"
-                        >
-                          <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-xs shrink-0"
-                            style={{ background: app.color }}>{app.icon}</span>
-                          {app.name}
-                        </a>
-                      ))}
-                    </div>
-                    <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-center">
-                      <p className="text-xs text-gray-500 font-medium">UPI ID: <span className="font-mono font-bold text-gray-700 select-all">{PAYMENT.upi}</span></p>
-                    </div>
-                  </div>
-
-                  {/* ── Bank details ── */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Bank Transfer (NEFT / IMPS)</p>
-                    <div className="space-y-1 text-sm text-gray-600">
-                      <div className="flex justify-between"><span className="text-gray-400">Bank</span><span className="font-semibold">{PAYMENT.bankName}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-400">Name</span><span className="font-semibold">{PAYMENT.accountName}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-400">Account</span><span className="font-mono font-semibold">{PAYMENT.accountNo}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-400">IFSC</span><span className="font-mono font-semibold">{PAYMENT.ifsc}</span></div>
-                    </div>
-                  </div>
-
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3">
-                    <p className="text-yellow-800 text-xs font-semibold mb-1">📌 After manual payment:</p>
-                    <ol className="text-yellow-700 text-xs space-y-1 list-decimal list-inside">
-                      <li>Complete payment of <strong>₹{pay.offer}</strong> via UPI or bank transfer</li>
-                      <li>Note the <strong>Transaction / UTR ID</strong> from your payment app</li>
-                      <li>Tap the button below and enter that ID</li>
-                    </ol>
-                  </div>
-
-                  <button onClick={() => setStep("utr")}
-                    className="block w-full bg-gray-700 hover:bg-gray-800 text-white text-center py-3.5 rounded-xl text-sm font-bold shadow transition">
-                    ✅ Paid manually? Enter Transaction ID →
                   </button>
-                </div>
-              )}
 
-              {/* ── STEP 3: UTR VERIFICATION ── */}
-              {step === "utr" && pay && (
-                <div className="space-y-5">
-                  <div className="bg-blue-50 border border-blue-100 rounded-2xl px-5 py-4">
-                    <p className="text-blue-800 font-bold text-sm mb-2">🔍 Where to find your Transaction ID?</p>
-                    <ul className="text-blue-700 text-xs space-y-1">
-                      <li>📱 <strong>Google Pay / PhonePe</strong> → Transaction History → tap the payment → copy UPI Ref No.</li>
-                      <li>🏦 <strong>Net Banking / IMPS</strong> → Transaction History → copy UTR Number</li>
-                      <li>✉️ <strong>SMS / Email</strong> → Check confirmation message for Ref/UTR ID</li>
-                    </ul>
+                  {payError && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm text-center">
+                      ⚠️ {payError}
+                    </div>
+                  )}
+
+                  <div className="text-center space-y-2">
+                    <p className="text-xs text-gray-400">
+                      UPI · Cards · Net Banking · Wallets
+                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-xs text-gray-400">🔒 100% Secure via</span>
+                      <span className="text-xs font-bold text-blue-600">Cashfree Payments</span>
+                    </div>
                   </div>
-                  <form onSubmit={handleUtrSubmit} className="space-y-4">
-                    <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Transaction / UTR ID</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 426112345678 or T2506221234"
-                        value={utr}
-                        onChange={e => { setUtr(e.target.value); setUtrError(""); }}
-                        required
-                        maxLength={25}
-                        className={`w-full border p-3.5 rounded-xl text-gray-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase ${utrError ? "border-red-400 bg-red-50" : "border-gray-200"}`}
-                      />
-                      {utrError && <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">⚠️ {utrError}</p>}
-                      <p className="text-gray-400 text-xs mt-1.5">10–22 characters · letters and numbers only</p>
-                    </div>
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Amount paid</span>
-                      <span className="font-black text-blue-700">₹{pay.offer}</span>
-                    </div>
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Class</span>
-                      <span className="font-bold text-gray-800">{studentClass}</span>
-                    </div>
-                    <button type="submit"
-                      className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl text-base font-black shadow-lg transition">
-                      💬 Verify & Join WhatsApp Group →
-                    </button>
-                    <button type="button" onClick={() => setStep("payment")}
-                      className="w-full text-gray-400 hover:text-gray-600 text-sm py-1 transition">
-                      ← Back to payment
-                    </button>
-                  </form>
+
                 </div>
               )}
 
-              {/* ── STEP 4: DONE ── */}
+              {/* ── STEP 3: DONE ── */}
               {step === "done" && pay && (
                 <div className="text-center py-4 space-y-4">
                   <div className="text-6xl">🎉</div>
                   <h3 className="text-xl font-black text-gray-900">Welcome, {name}!</h3>
                   <p className="text-gray-500 text-sm">You're now part of Yarwng Mathematics!</p>
+
                   <div className="bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
-                    <p className="text-green-700 font-bold text-sm mb-1">✅ Opening {studentClass} WhatsApp Group automatically…</p>
+                    <p className="text-green-700 font-bold text-sm mb-1">
+                      ✅ Opening {studentClass} WhatsApp Group automatically…
+                    </p>
                     {countdown > 0 ? (
                       <p className="text-green-600 text-xs">Redirecting in <strong>{countdown}s</strong></p>
                     ) : (
                       <p className="text-green-600 text-xs">WhatsApp should be open now!</p>
                     )}
                   </div>
-                  <a href={pay.whatsapp} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-black text-base shadow-lg transition">
+
+                  <a
+                    href={pay.whatsapp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-black text-base shadow-lg transition"
+                  >
                     💬 Open {studentClass} WhatsApp Group
                   </a>
+
                   <p className="text-xs text-gray-400">If WhatsApp didn't open, tap the button above.</p>
-                  <button onClick={closeModal} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm transition">
+
+                  <button
+                    onClick={closeModal}
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm transition"
+                  >
                     Close
                   </button>
                 </div>
               )}
+
             </div>
           </div>
         </div>
@@ -932,16 +859,10 @@ export default function Home() {
               <h3 className="text-white font-bold text-xl mb-2">Yarwng Mathematics</h3>
               <p className="text-yellow-400 italic text-sm mb-3">"Amani Kok Kokborok bai Swrwngwi Mannai"</p>
               <p className="text-gray-400 text-sm leading-relaxed">Professional Mathematics Coaching for Classes 10, 11 &amp; 12. Conceptual clarity. Proven results.</p>
-
-              {/* Payment badges */}
               <div className="mt-4 flex flex-wrap gap-2">
-                <div className="flex items-center gap-1.5 bg-purple-900/50 border border-purple-700/50 rounded-lg px-3 py-1.5">
-                  <span className="text-purple-300 text-xs font-bold">PhonePe</span>
-                  <span className="text-purple-400 text-xs">Secured</span>
-                </div>
-                <div className="flex items-center gap-1.5 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5">
-                  <span className="text-green-400 text-xs font-bold">UPI</span>
-                  <span className="text-gray-400 text-xs">Accepted</span>
+                <div className="flex items-center gap-1.5 bg-blue-900/50 border border-blue-700/50 rounded-lg px-3 py-1.5">
+                  <span className="text-blue-300 text-xs font-bold">Cashfree</span>
+                  <span className="text-blue-400 text-xs">Secured</span>
                 </div>
                 <div className="flex items-center gap-1.5 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5">
                   <span className="text-blue-400 text-xs font-bold">🔒 SSL</span>
@@ -970,12 +891,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── Policy links row (edtech-style) ── */}
           <div className="border-t border-gray-700 pt-6 pb-2">
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4">
               {[
-                { label:"Terms & Conditions", href: POLICY.terms    },
-                { label:"Privacy Policy",     href: POLICY.privacy  },
+                { label:"Terms & Conditions",           href: POLICY.terms    },
+                { label:"Privacy Policy",               href: POLICY.privacy  },
                 { label:"Refund & Cancellation Policy", href: POLICY.refund   },
                 { label:"Shipping & Delivery Policy",   href: POLICY.shipping },
               ].map(link => (
