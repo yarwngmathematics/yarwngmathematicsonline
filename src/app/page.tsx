@@ -536,7 +536,7 @@ export default function Home() {
                 <div className="h-px w-8 bg-yellow-400/60" />
               </div>
               <p className="fade-up-3 text-blue-200 text-base md:text-lg max-w-lg mb-8 leading-relaxed mx-auto md:mx-0">
-                Expert coaching for <strong className="text-white">Class 10, 11 &amp; 12</strong> by an
+                Expert coaching for <strong className="text-white">Class 10, 11 &amp; 12</strong>  by an
                 IIT Delhi graduate — Online via Google Meet &amp; Offline at Khumulwng.
               </p>
               <div className="fade-up-4 flex flex-wrap gap-4 justify-center md:justify-start mb-10">
