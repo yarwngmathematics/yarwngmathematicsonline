@@ -75,13 +75,21 @@ const POLICY = {
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBZepl7eijkaiajLUwVlY_udCJhCcAJNUBBNfgz_IcSABbbLqdWOvtNlg1s8h4KFAOqA/exec";
 
+/* ─────────────────────────────────────────
+   VISITOR COUNTER CONFIG
+   Uses countapi.xyz — free, no signup needed.
+   First visit auto-creates the counter.
+───────────────────────────────────────── */
+const COUNTER_NAMESPACE = "yarwngmathematics";
+const COUNTER_KEY = "site-visitors-2026";
+
 const SLOTS = {
   "Class 10": { days: "Monday & Wednesday", time: "5:00 PM – 7:00 PM" },
   "Class 11": { days: "Tuesday & Friday", time: "5:00 PM – 7:00 PM" },
   "Class 12": { days: "Thursday & Saturday", time: "5:00 PM – 7:00 PM" },
 };
 
-async function submitToSheet(payload, maxAttempts = 4) {
+async function submitToSheet(payload: Record<string, string>, maxAttempts = 4) {
   const body = JSON.stringify(payload);
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -94,10 +102,10 @@ async function submitToSheet(payload, maxAttempts = 4) {
   }
 }
 
-function loadCashfreeSDK() {
+function loadCashfreeSDK(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (typeof window === "undefined") return reject(new Error("No window"));
-    if (window.Cashfree) return resolve();
+    if ((window as any).Cashfree) return resolve();
     const existing = document.getElementById("cashfree-sdk-script");
     if (existing) {
       existing.addEventListener("load", () => resolve());
@@ -133,22 +141,47 @@ export default function Home() {
   const [liveDot, setLiveDot] = useState(true);
   const [adVariant, setAdVariant] = useState(0);
   const [slotsOpen, setSlotsOpen] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState("");
+
+  /* ── Form state ── */
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [studentClass, setStudentClass] = useState("");
+  const [board, setBoard] = useState("");
+  const [medium, setMedium] = useState("English");
+  const [schoolName, setSchoolName] = useState("");
+  const [address, setAddress] = useState("");
   const [mode, setMode] = useState("");
+
   const [submitting, setSubmitting] = useState(false);
   const [countdown, setCountdown] = useState(3);
+
+  /* ── Visitor counter ── */
+  const [visitorCount, setVisitorCount] = useState<number | null>(null);
+
   const sheetSubmittedRef = useRef(false);
+
+  /* ── Visitor counter: hit on first load ── */
+  useEffect(() => {
+    fetch(`https://api.countapi.xyz/hit/${COUNTER_NAMESPACE}/${COUNTER_KEY}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && typeof data.value === "number") {
+          setVisitorCount(data.value);
+        }
+      })
+      .catch(() => {
+        // Silently fail — counter is non-critical
+      });
+  }, []);
 
   /* ── Scroll spy & nav shadow ── */
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
-      const sections = NAV_LINKS.map((l) => document.getElementById(l.id)).filter(Boolean);
+      const sections = NAV_LINKS.map((l) => document.getElementById(l.id)).filter(Boolean) as HTMLElement[];
       let current = "home";
       sections.forEach((sec) => {
         if (window.scrollY >= sec.offsetTop - 100) current = sec.id;
@@ -163,26 +196,35 @@ export default function Home() {
     const t = setInterval(() => setLiveDot((v) => !v), 900);
     return () => clearInterval(t);
   }, []);
+
   useEffect(() => {
     const t = setInterval(() => setAdVariant((v) => (v + 1) % 3), 5000);
     return () => clearInterval(t);
   }, []);
 
-  const scrollToSection = (id) => {
+  const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     setMobileMenuOpen(false);
   };
 
-  const openModal = (preMode) => {
+  const openModal = (preMode?: string) => {
     sheetSubmittedRef.current = false;
     setStep("form");
-    setName(""); setWhatsapp(""); setStudentClass(""); setMode(preMode ?? "");
+    setName("");
+    setWhatsapp("");
+    setStudentClass("");
+    setBoard("");
+    setMedium("English");
+    setSchoolName("");
+    setAddress("");
+    setMode(preMode ?? "");
     setPayError("");
     setShowModal(true);
   };
+
   const closeModal = () => setShowModal(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
@@ -190,7 +232,7 @@ export default function Home() {
     setStep("payment");
   };
 
-  const verifyPayment = async (orderId) => {
+  const verifyPayment = async (orderId: string): Promise<string> => {
     const MAX_ATTEMPTS = 36;
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       await new Promise((r) => setTimeout(r, 2500));
@@ -222,13 +264,26 @@ export default function Home() {
       const { paymentSessionId, orderId } = await res.json();
       if (!paymentSessionId) throw new Error("Invalid order response. Please try again.");
       await loadCashfreeSDK();
-      const cashfree = window.Cashfree({ mode: "production" });
+      const cashfree = (window as any).Cashfree({ mode: "production" });
       const result = await cashfree.checkout({ paymentSessionId, redirectTarget: "_modal" });
       if (result?.error) throw new Error(result.error.message || "Payment failed. Please try again.");
       const confirmedOrderId = await verifyPayment(orderId);
       if (!sheetSubmittedRef.current) {
         sheetSubmittedRef.current = true;
-        submitToSheet({ name, whatsapp, studentClass, mode, utr: confirmedOrderId, status: "paid_cashfree", paidAmount: String(pay.offer), timestamp: new Date().toISOString() });
+        submitToSheet({
+          name,
+          whatsapp,
+          studentClass,
+          board,
+          medium,
+          schoolName,
+          address,
+          mode,
+          utr: confirmedOrderId,
+          status: "paid_cashfree",
+          paidAmount: String(pay.offer),
+          timestamp: new Date().toISOString(),
+        });
       }
       setStep("done");
     } catch (err) {
@@ -237,7 +292,7 @@ export default function Home() {
     setPayLoading(false);
   };
 
-  const pay = studentClass ? PAYMENT.classes[studentClass] : null;
+  const pay = studentClass ? PAYMENT.classes[studentClass as keyof typeof PAYMENT.classes] : null;
   const discount = pay ? Math.round(((pay.original - pay.offer) / pay.original) * 100) : 0;
 
   useEffect(() => {
@@ -245,7 +300,11 @@ export default function Home() {
     setCountdown(3);
     window.open(pay.whatsapp, "_blank", "noopener,noreferrer");
     let c = 3;
-    const t = setInterval(() => { c -= 1; setCountdown(c); if (c <= 0) clearInterval(t); }, 1000);
+    const t = setInterval(() => {
+      c -= 1;
+      setCountdown(c);
+      if (c <= 0) clearInterval(t);
+    }, 1000);
     return () => clearInterval(t);
   }, [step]);
 
@@ -312,7 +371,9 @@ export default function Home() {
           --gray-200: #e5e7eb;
           --gray-400: #9ca3af;
           --gray-500: #6b7280;
+          --gray-600: #4b5563;
           --gray-700: #374151;
+          --gray-800: #1f2937;
           --gray-900: #111827;
           --green: #16a34a;
           --green-light: #dcfce7;
@@ -365,6 +426,15 @@ export default function Home() {
           content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
           width: 4px; height: 4px; border-radius: 50%; background: var(--gold);
         }
+        .ym-nav-visitor {
+          display: flex; align-items: center; gap: 6px;
+          background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 100px; padding: 5px 12px;
+        }
+        .ym-nav-visitor-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
+        .ym-nav-visitor-text { color: rgba(255,255,255,0.6); font-size: 12px; white-space: nowrap; }
+        .ym-nav-visitor-count { color: #fff; font-weight: 700; font-size: 12px; }
+        @keyframes visitorPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
         .ym-nav-cta {
           background: var(--gold); color: #1a0a00;
           padding: 9px 20px; border-radius: 10px;
@@ -398,7 +468,18 @@ export default function Home() {
         }
         .ym-mobile-link:hover, .ym-mobile-link.active { background: rgba(59,130,246,0.15); color: #fff; }
         .ym-mobile-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0; }
+        .ym-mobile-visitor {
+          display: flex; align-items: center; gap: 8px;
+          background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 12px; padding: 12px 16px; margin-top: 8px;
+        }
+        .ym-mobile-visitor-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
+        .ym-mobile-visitor-label { color: rgba(255,255,255,0.5); font-size: 13px; }
+        .ym-mobile-visitor-count { color: #fff; font-size: 18px; font-weight: 700; }
 
+        @media (max-width: 1100px) {
+          .ym-nav-visitor { display: none; }
+        }
         @media (max-width: 900px) {
           .ym-nav-links { display: none; }
           .ym-hamburger { display: flex; flex-direction: column; }
@@ -590,6 +671,16 @@ export default function Home() {
         .ym-about-card-sub { color: #3b82f6; font-size: 12px; margin-top: 4px; }
         @media (max-width: 800px) { .ym-about-grid { grid-template-columns: 1fr; gap: 40px; } }
 
+        /* ── VISITOR COUNTER SECTION ── */
+        .ym-visitor-section { background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 100%); padding: 48px 24px; }
+        .ym-visitor-inner { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 24px; }
+        .ym-visitor-label { color: rgba(255,255,255,0.5); font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+        .ym-visitor-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 32px 48px; display: flex; align-items: center; gap: 16px; }
+        .ym-visitor-card-dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
+        .ym-visitor-card-count { font-size: clamp(2.8rem, 6vw, 4rem); font-weight: 800; color: #fff; line-height: 1; font-family: 'Cormorant Garamond', serif; }
+        .ym-visitor-card-label { color: rgba(255,255,255,0.5); font-size: 14px; margin-top: 4px; }
+        .ym-visitor-sub { color: rgba(255,255,255,0.35); font-size: 12px; text-align: center; }
+
         /* ── CONTACT ── */
         .ym-contact-section { background: var(--navy); }
         .ym-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
@@ -620,6 +711,14 @@ export default function Home() {
         .ym-footer-h4 { color: rgba(255,255,255,0.8); font-weight: 600; font-size: 14px; margin-bottom: 14px; }
         .ym-footer-item { font-size: 13px; margin-bottom: 8px; line-height: 1.5; }
         .ym-footer-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin-bottom: 20px; }
+        .ym-footer-visitor-bar {
+          display: flex; align-items: center; justify-content: center; gap: 12px;
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 14px; padding: 14px 24px; margin-bottom: 28px;
+        }
+        .ym-footer-visitor-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
+        .ym-footer-visitor-count { color: #fff; font-weight: 700; font-size: 20px; }
+        .ym-footer-visitor-label { color: rgba(255,255,255,0.4); font-size: 13px; }
         .ym-footer-policy-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 20px; margin-bottom: 16px; }
         .ym-footer-policy-link { font-size: 12px; color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.2s; }
         .ym-footer-policy-link:hover { color: #93c5fd; }
@@ -628,7 +727,7 @@ export default function Home() {
 
         /* ── MODAL ── */
         .ym-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; backdrop-filter: blur(4px); }
-        .ym-modal { background: #fff; border-radius: 28px; width: 100%; max-width: 460px; box-shadow: 0 24px 80px rgba(0,0,0,0.3); overflow: hidden; max-height: 90vh; overflow-y: auto; position: relative; }
+        .ym-modal { background: #fff; border-radius: 28px; width: 100%; max-width: 480px; box-shadow: 0 24px 80px rgba(0,0,0,0.3); overflow: hidden; max-height: 92vh; overflow-y: auto; position: relative; }
         .ym-modal-head { background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%); padding: 28px 32px 24px; color: #fff; position: sticky; top: 0; z-index: 10; }
         .ym-modal-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.15); border: none; color: #fff; width: 32px; height: 32px; border-radius: 8px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .ym-modal-close:hover { background: rgba(255,255,255,0.25); }
@@ -645,10 +744,13 @@ export default function Home() {
         .ym-modal-sub { color: rgba(255,255,255,0.65); font-size: 14px; margin-top: 4px; }
         .ym-modal-body { padding: 28px 32px 32px; }
         .ym-form-info { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 16px; display: flex; gap: 8px; font-size: 13px; color: #1e40af; margin-bottom: 20px; }
+        .ym-form-label { font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: block; }
+        .ym-form-group { display: flex; flex-direction: column; }
         .ym-input { width: 100%; border: 1.5px solid var(--gray-200); padding: 13px 16px; border-radius: 12px; font-size: 15px; font-family: 'Outfit', sans-serif; color: var(--gray-900); outline: none; transition: border-color 0.2s; background: #fff; }
         .ym-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
         .ym-input::placeholder { color: var(--gray-400); }
         .ym-form-stack { display: flex; flex-direction: column; gap: 14px; }
+        .ym-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .ym-policy-text { font-size: 12px; color: var(--gray-400); text-align: center; line-height: 1.6; }
         .ym-policy-text a { color: #3b82f6; text-decoration: none; }
         .ym-submit-btn { width: 100%; background: #2563eb; color: #fff; padding: 15px; border-radius: 13px; font-size: 17px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
@@ -681,6 +783,9 @@ export default function Home() {
         .ym-done-close-btn:hover { background: var(--gray-200); }
         .ym-spin { animation: spin 0.8s linear infinite; }
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+        /* ── MEDIUM BADGE ── */
+        .ym-medium-badge { display: inline-flex; align-items: center; gap: 6px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 6px 12px; font-size: 13px; color: #1e40af; font-weight: 600; }
       `}</style>
 
       {/* ══════════════════ NAVBAR ══════════════════ */}
@@ -709,6 +814,15 @@ export default function Home() {
               </button>
             ))}
           </div>
+
+          {/* Visitor counter pill in nav (desktop only) */}
+          {visitorCount !== null && (
+            <div className="ym-nav-visitor" title="Total site visitors">
+              <span className="ym-nav-visitor-dot" />
+              <span className="ym-nav-visitor-count">{visitorCount.toLocaleString("en-IN")}</span>
+              <span className="ym-nav-visitor-text">visitors</span>
+            </div>
+          )}
 
           {/* Right side CTA */}
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -740,6 +854,16 @@ export default function Home() {
         <button onClick={() => { openModal(); setMobileMenuOpen(false); }} className="ym-nav-enroll" style={{ borderRadius: "12px" }}>
           Enroll Now →
         </button>
+        {/* Visitor counter in mobile menu */}
+        {visitorCount !== null && (
+          <div className="ym-mobile-visitor">
+            <span className="ym-mobile-visitor-dot" />
+            <div>
+              <div className="ym-mobile-visitor-count">{visitorCount.toLocaleString("en-IN")}</div>
+              <div className="ym-mobile-visitor-label">total visitors to this site</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ══════════════════ HERO ══════════════════ */}
@@ -859,10 +983,10 @@ export default function Home() {
                 {idx === 1 && <div className="ym-class-badge">Most Popular</div>}
                 <div className="ym-class-icon">{cls === "Class 10" ? "📘" : cls === "Class 11" ? "📙" : "📗"}</div>
                 <h3 className="ym-class-name">{cls}</h3>
-                <p className="ym-class-days">{SLOTS[cls].days}</p>
-                <p className="ym-class-time">{SLOTS[cls].time}</p>
+                <p className="ym-class-days">{SLOTS[cls as keyof typeof SLOTS].days}</p>
+                <p className="ym-class-time">{SLOTS[cls as keyof typeof SLOTS].time}</p>
                 <div className="ym-class-price-row">
-                  <span className="ym-class-price">₹{PAYMENT.classes[cls].offer === 1 ? PAYMENT.classes[cls].original : PAYMENT.classes[cls].offer}</span>
+                  <span className="ym-class-price">₹{PAYMENT.classes[cls as keyof typeof PAYMENT.classes].offer === 1 ? PAYMENT.classes[cls as keyof typeof PAYMENT.classes].original : PAYMENT.classes[cls as keyof typeof PAYMENT.classes].offer}</span>
                   <span className="ym-class-price-unit">/month</span>
                 </div>
                 <button onClick={() => openModal()} className="ym-class-btn ym-class-btn-primary">Join {cls}</button>
@@ -887,9 +1011,9 @@ export default function Home() {
                     {selectedSlot === cls && (
                       <div className="ym-slot-detail">
                         {[
-                          { icon: "📆", label: SLOTS[cls].days, sub: "Every week" },
-                          { icon: "🕐", label: SLOTS[cls].time, sub: "Evening · 2 hours" },
-                          { icon: "💰", label: `₹${PAYMENT.classes[cls].offer === 1 ? PAYMENT.classes[cls].original : PAYMENT.classes[cls].offer}/month`, sub: `Regular: ₹${PAYMENT.classes[cls].original}` },
+                          { icon: "📆", label: SLOTS[cls as keyof typeof SLOTS].days, sub: "Every week" },
+                          { icon: "🕐", label: SLOTS[cls as keyof typeof SLOTS].time, sub: "Evening · 2 hours" },
+                          { icon: "💰", label: `₹${PAYMENT.classes[cls as keyof typeof PAYMENT.classes].offer === 1 ? PAYMENT.classes[cls as keyof typeof PAYMENT.classes].original : PAYMENT.classes[cls as keyof typeof PAYMENT.classes].offer}/month`, sub: `Regular: ₹${PAYMENT.classes[cls as keyof typeof PAYMENT.classes].original}` },
                         ].map((r) => (
                           <div key={r.label} className="ym-slot-row">
                             <span className="ym-slot-row-icon">{r.icon}</span>
@@ -994,6 +1118,23 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ══════════════════ VISITOR COUNTER SECTION ══════════════════ */}
+      {visitorCount !== null && (
+        <section className="ym-visitor-section" aria-label="Visitor counter">
+          <div className="ym-visitor-inner">
+            <p className="ym-visitor-label">🌐 Live Site Statistics</p>
+            <div className="ym-visitor-card">
+              <span className="ym-visitor-card-dot" />
+              <div>
+                <div className="ym-visitor-card-count">{visitorCount.toLocaleString("en-IN")}</div>
+                <div className="ym-visitor-card-label">total visitors</div>
+              </div>
+            </div>
+            <p className="ym-visitor-sub">Counter updates with every new visit · Powered by countapi.xyz</p>
+          </div>
+        </section>
+      )}
+
       {/* ══════════════════ CONTACT ══════════════════ */}
       <section id="contact" className="ym-section ym-contact-section">
         <div className="ym-section-inner">
@@ -1066,6 +1207,16 @@ export default function Home() {
               <p className="ym-footer-item" style={{ color: "#fb923c", marginTop: "12px" }}>🏫 Offline: Khumulwng (Launching Soon)</p>
             </div>
           </div>
+
+          {/* ── Visitor counter bar in footer ── */}
+          {visitorCount !== null && (
+            <div className="ym-footer-visitor-bar">
+              <span className="ym-footer-visitor-dot" />
+              <span className="ym-footer-visitor-count">{visitorCount.toLocaleString("en-IN")}</span>
+              <span className="ym-footer-visitor-label">people have visited this site</span>
+            </div>
+          )}
+
           <hr className="ym-footer-divider" />
           <div className="ym-footer-policy-links">
             {[
@@ -1124,19 +1275,129 @@ export default function Home() {
                     <span>Your details will be saved after successful payment.</span>
                   </div>
                   <div className="ym-form-stack">
-                    <input type="text" placeholder="Student Name" value={name} onChange={(e) => setName(e.target.value)} required className="ym-input" />
-                    <input type="text" placeholder="WhatsApp Number" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} required className="ym-input" />
-                    <select value={studentClass} onChange={(e) => setStudentClass(e.target.value)} required className="ym-input">
-                      <option value="">Select Class</option>
-                      <option>Class 10</option>
-                      <option>Class 11</option>
-                      <option>Class 12</option>
-                    </select>
-                    <select value={mode} onChange={(e) => setMode(e.target.value)} required className="ym-input">
-                      <option value="">Select Mode</option>
-                      <option>Online</option>
-                      <option>Offline</option>
-                    </select>
+
+                    {/* Student Name */}
+                    <div className="ym-form-group">
+                      <label className="ym-form-label">Student Name *</label>
+                      <input
+                        type="text"
+                        placeholder="Full name of the student"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        className="ym-input"
+                      />
+                    </div>
+
+                    {/* WhatsApp */}
+                    <div className="ym-form-group">
+                      <label className="ym-form-label">WhatsApp Number *</label>
+                      <input
+                        type="tel"
+                        placeholder="10-digit WhatsApp number"
+                        value={whatsapp}
+                        onChange={(e) => setWhatsapp(e.target.value)}
+                        required
+                        className="ym-input"
+                      />
+                    </div>
+
+                    {/* Class & Board on same row */}
+                    <div className="ym-form-row">
+                      <div className="ym-form-group">
+                        <label className="ym-form-label">Class *</label>
+                        <select
+                          value={studentClass}
+                          onChange={(e) => setStudentClass(e.target.value)}
+                          required
+                          className="ym-input"
+                        >
+                          <option value="">Select Class</option>
+                          <option>Class 10</option>
+                          <option>Class 11</option>
+                          <option>Class 12</option>
+                        </select>
+                      </div>
+                      <div className="ym-form-group">
+                        <label className="ym-form-label">Board *</label>
+                        <select
+                          value={board}
+                          onChange={(e) => setBoard(e.target.value)}
+                          required
+                          className="ym-input"
+                        >
+                          <option value="">Select Board</option>
+                          <option value="CBSE">CBSE</option>
+                          <option value="TBSE">TBSE</option>
+                          <option value="ICSE">ICSE</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Medium & Mode on same row */}
+                    <div className="ym-form-row">
+                      <div className="ym-form-group">
+                        <label className="ym-form-label">Medium *</label>
+                        <select
+                          value={medium}
+                          onChange={(e) => setMedium(e.target.value)}
+                          required
+                          className="ym-input"
+                        >
+                          <option value="English">English</option>
+                          <option value="Bengali">Bengali</option>
+                          <option value="Kokborok">Kokborok</option>
+                        </select>
+                      </div>
+                      <div className="ym-form-group">
+                        <label className="ym-form-label">Mode *</label>
+                        <select
+                          value={mode}
+                          onChange={(e) => setMode(e.target.value)}
+                          required
+                          className="ym-input"
+                        >
+                          <option value="">Select Mode</option>
+                          <option value="Online">Online</option>
+                          <option value="Offline">Offline</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* School Name */}
+                    <div className="ym-form-group">
+                      <label className="ym-form-label">School Name *</label>
+                      <input
+                        type="text"
+                        placeholder="Name of the school"
+                        value={schoolName}
+                        onChange={(e) => setSchoolName(e.target.value)}
+                        required
+                        className="ym-input"
+                      />
+                    </div>
+
+                    {/* Address */}
+                    <div className="ym-form-group">
+                      <label className="ym-form-label">Address *</label>
+                      <input
+                        type="text"
+                        placeholder="Village / Town / Area"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        required
+                        className="ym-input"
+                      />
+                    </div>
+
+                    {/* Medium note */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "10px", padding: "10px 14px" }}>
+                      <span style={{ fontSize: "16px" }}>📢</span>
+                      <span style={{ fontSize: "13px", color: "#15803d", fontWeight: 500 }}>
+                        Classes are taught in <strong>English Medium</strong>. Select your school medium above for our records.
+                      </span>
+                    </div>
+
                     <p className="ym-policy-text">
                       By registering you agree to our{" "}
                       <a href={POLICY.terms} target="_blank" rel="noopener noreferrer">Terms & Conditions</a>,{" "}
@@ -1156,7 +1417,7 @@ export default function Home() {
                 <div>
                   <div className="ym-pay-summary">
                     <div>
-                      <p className="ym-pay-class">{studentClass} · {mode}</p>
+                      <p className="ym-pay-class">{studentClass} · {board} · {mode}</p>
                       <p>
                         <span className="ym-pay-amount">₹{pay.offer}</span>
                         <span className="ym-pay-unit"> /month</span>
@@ -1167,6 +1428,14 @@ export default function Home() {
                       {discount}% OFF<br />
                       <span style={{ textDecoration: "line-through", color: "#9ca3af", fontSize: "12px" }}>₹{pay.original}</span>
                     </div>
+                  </div>
+                  {/* Student summary */}
+                  <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: "12px", padding: "12px 16px", marginBottom: "20px", fontSize: "13px", color: "#374151", lineHeight: 1.8 }}>
+                    <p><strong>Name:</strong> {name}</p>
+                    <p><strong>WhatsApp:</strong> {whatsapp}</p>
+                    <p><strong>School:</strong> {schoolName}</p>
+                    <p><strong>Board:</strong> {board} &nbsp;·&nbsp; <strong>Medium:</strong> {medium}</p>
+                    <p><strong>Address:</strong> {address}</p>
                   </div>
                   <button onClick={handleCashfreePay} disabled={payLoading} className="ym-pay-btn">
                     {payLoading ? (
