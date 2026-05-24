@@ -17,14 +17,27 @@ export const metadata: Metadata = {
   description:
     "Online & offline mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma (M.Sc, IIT Delhi). Live Google Meet sessions. Enroll now from ₹600/month.",
   keywords: [
-    "mathematics coaching Tripura",
-    "math tuition Class 10 11 12",
-    "online math class Kokborok",
+    // ── Brand & person (these get you found by name searches)
     "Yarwng Mathematics",
+    "Rakesh Debbarma",
     "Rakesh Debbarma IIT Delhi",
-    "Khumulwng tuition",
+    "Rakesh Debbarma mathematics",
+    // ── Location-based
+    "mathematics coaching Tripura",
+    "math tuition Khumulwng",
+    "online math class Kokborok",
+    "math teacher Tripura",
+    // ── Class-based
+    "math tuition Class 10 11 12",
+    "Class 10 mathematics coaching",
+    "Class 11 mathematics coaching",
+    "Class 12 mathematics coaching",
+    // ── General
+    "IIT Delhi math tutor",
+    "online mathematics coaching India",
   ],
   authors: [{ name: "Rakesh Debbarma" }],
+  creator: "Rakesh Debbarma",
   robots: "index, follow",
   metadataBase: new URL("https://yarwngmathematicsonline.vercel.app"),
   alternates: {
@@ -68,6 +81,61 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "EducationalOrganization",
+              "name": "Yarwng Mathematics",
+              "url": "https://yarwngmathematicsonline.vercel.app",
+              "logo": "https://yarwngmathematicsonline.vercel.app/Logo.png",
+              "description": "Mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
+              "founder": {
+                "@type": "Person",
+                "name": "Rakesh Debbarma",
+                "alumniOf": {
+                  "@type": "EducationalOrganization",
+                  "name": "IIT Delhi"
+                },
+                "hasCredential": {
+                  "@type": "EducationalOccupationalCredential",
+                  "credentialCategory": "M.Sc Mathematics"
+                }
+              },
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Khumulwng",
+                "addressRegion": "Tripura",
+                "addressCountry": "IN"
+              },
+              "telephone": "+919366030347",
+              "email": "yarwngmathematics@gmail.com",
+              "offers": [
+                {
+                  "@type": "Offer",
+                  "name": "Class 10 Mathematics",
+                  "price": "600",
+                  "priceCurrency": "INR"
+                },
+                {
+                  "@type": "Offer",
+                  "name": "Class 11 Mathematics",
+                  "price": "800",
+                  "priceCurrency": "INR"
+                },
+                {
+                  "@type": "Offer",
+                  "name": "Class 12 Mathematics",
+                  "price": "900",
+                  "priceCurrency": "INR"
+                }
+              ]
+            }),
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
