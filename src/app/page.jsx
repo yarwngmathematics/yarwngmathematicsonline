@@ -1,0 +1,1214 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+
+/* ─── SEO HELMET INJECT (Next.js Head alternative as inline script) ─── */
+/* Place this in your _document.tsx / layout.tsx <Head>:
+
+<title>Yarwng Mathematics – Expert Math Coaching by IIT Delhi | Class 10, 11, 12</title>
+<meta name="description" content="Online & offline mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma (M.Sc, IIT Delhi). Live Google Meet sessions. Enroll now from ₹600/month." />
+<meta name="keywords" content="mathematics coaching Tripura, math tuition Class 10 11 12, online math class Kokborok, Yarwng Mathematics, Rakesh Debbarma IIT Delhi, Khumulwng tuition" />
+<meta name="author" content="Rakesh Debbarma" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://yarwngmathematicsonline.vercel.app/" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://yarwngmathematicsonline.vercel.app/" />
+<meta property="og:title" content="Yarwng Mathematics – IIT Delhi Math Coaching | Class 10, 11, 12" />
+<meta property="og:description" content="Expert mathematics coaching by an IIT Delhi M.Sc graduate. Online via Google Meet. Classes 10–12. Starting 3rd June 2026." />
+<meta property="og:image" content="https://yarwngmathematicsonline.vercel.app/og-image.jpg" />
+<meta property="og:locale" content="en_IN" />
+<meta property="og:site_name" content="Yarwng Mathematics" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Yarwng Mathematics – IIT Delhi Math Coaching" />
+<meta name="twitter:description" content="Live online math classes for Class 10–12 by Rakesh Debbarma, IIT Delhi." />
+<meta name="twitter:image" content="https://yarwngmathematicsonline.vercel.app/og-image.jpg" />
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">{JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  "name": "Yarwng Mathematics",
+  "url": "https://yarwngmathematicsonline.vercel.app",
+  "logo": "https://yarwngmathematicsonline.vercel.app/Logo.png",
+  "description": "Expert mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
+  "address": { "@type": "PostalAddress", "addressLocality": "Khumulwng", "addressRegion": "Tripura", "addressCountry": "IN" },
+  "telephone": "+919366030347",
+  "email": "yarwngmathematics@gmail.com",
+  "founder": {
+    "@type": "Person",
+    "name": "Rakesh Debbarma",
+    "alumniOf": { "@type": "EducationalOrganization", "name": "IIT Delhi" },
+    "hasCredential": { "@type": "EducationalOccupationalCredential", "credentialCategory": "M.Sc Mathematics" }
+  },
+  "offers": [
+    { "@type": "Offer", "name": "Class 10 Mathematics", "price": "600", "priceCurrency": "INR", "availability": "https://schema.org/InStock" },
+    { "@type": "Offer", "name": "Class 11 Mathematics", "price": "800", "priceCurrency": "INR", "availability": "https://schema.org/InStock" },
+    { "@type": "Offer", "name": "Class 12 Mathematics", "price": "900", "priceCurrency": "INR", "availability": "https://schema.org/InStock" }
+  ]
+})}</script>
+*/
+
+/* ─────────────────────────────────────────
+   PAYMENT CONFIG
+───────────────────────────────────────── */
+const TEST_MODE = true;
+
+const PAYMENT = {
+  classes: {
+    "Class 10": { original: 700, offer: TEST_MODE ? 1 : 600, whatsapp: "https://chat.whatsapp.com/DDdQ4xpOj3SA5RiVlPZ7Ar?s=cl&p=a&mlu=1" },
+    "Class 11": { original: 900, offer: TEST_MODE ? 1 : 800, whatsapp: "https://chat.whatsapp.com/E9FN3Nh6dLx3dKa7VGENkI?s=cl&p=a&mlu=1" },
+    "Class 12": { original: 1000, offer: TEST_MODE ? 1 : 900, whatsapp: "https://chat.whatsapp.com/HUe0D5AybDc7aBivxsp426?s=cl&p=a&mlu=1" },
+  },
+};
+
+const DOMAIN = "https://yarwngmathematicsonline.vercel.app";
+const POLICY = {
+  terms: `${DOMAIN}/terms`,
+  privacy: `${DOMAIN}/privacy`,
+  refund: `${DOMAIN}/refund`,
+  shipping: `${DOMAIN}/shipping`,
+};
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBZepl7eijkaiajLUwVlY_udCJhCcAJNUBBNfgz_IcSABbbLqdWOvtNlg1s8h4KFAOqA/exec";
+
+const SLOTS = {
+  "Class 10": { days: "Monday & Wednesday", time: "5:00 PM – 7:00 PM" },
+  "Class 11": { days: "Tuesday & Friday", time: "5:00 PM – 7:00 PM" },
+  "Class 12": { days: "Thursday & Saturday", time: "5:00 PM – 7:00 PM" },
+};
+
+async function submitToSheet(payload, maxAttempts = 4) {
+  const body = JSON.stringify(payload);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", keepalive: true, body });
+      return;
+    } catch {
+      if (attempt === maxAttempts) return;
+      await new Promise((res) => setTimeout(res, 1000 * Math.pow(2, attempt - 1)));
+    }
+  }
+}
+
+function loadCashfreeSDK() {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") return reject(new Error("No window"));
+    if (window.Cashfree) return resolve();
+    const existing = document.getElementById("cashfree-sdk-script");
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("SDK load failed")));
+      return;
+    }
+    const script = document.createElement("script");
+    script.id = "cashfree-sdk-script";
+    script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Cashfree SDK"));
+    document.body.appendChild(script);
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   NAV LINKS CONFIG
+═══════════════════════════════════════════════════ */
+const NAV_LINKS = [
+  { label: "Home", href: "#home", id: "home" },
+  { label: "About", href: "#about", id: "about" },
+  { label: "Classes", href: "#classes", id: "classes" },
+  { label: "Why Us", href: "#why-us", id: "why-us" },
+  { label: "Contact", href: "#contact", id: "contact" },
+];
+
+export default function Home() {
+  const [showModal, setShowModal] = useState(false);
+  const [step, setStep] = useState("form");
+  const [activeSection, setActiveSection] = useState("home");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [liveDot, setLiveDot] = useState(true);
+  const [adVariant, setAdVariant] = useState(0);
+  const [slotsOpen, setSlotsOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [payLoading, setPayLoading] = useState(false);
+  const [payError, setPayError] = useState("");
+  const [name, setName] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [studentClass, setStudentClass] = useState("");
+  const [mode, setMode] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+  const sheetSubmittedRef = useRef(false);
+
+  /* ── Scroll spy & nav shadow ── */
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+      const sections = NAV_LINKS.map((l) => document.getElementById(l.id)).filter(Boolean);
+      let current = "home";
+      sections.forEach((sec) => {
+        if (window.scrollY >= sec.offsetTop - 100) current = sec.id;
+      });
+      setActiveSection(current);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setLiveDot((v) => !v), 900);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    const t = setInterval(() => setAdVariant((v) => (v + 1) % 3), 5000);
+    return () => clearInterval(t);
+  }, []);
+
+  const scrollToSection = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    setMobileMenuOpen(false);
+  };
+
+  const openModal = (preMode) => {
+    sheetSubmittedRef.current = false;
+    setStep("form");
+    setName(""); setWhatsapp(""); setStudentClass(""); setMode(preMode ?? "");
+    setPayError("");
+    setShowModal(true);
+  };
+  const closeModal = () => setShowModal(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitting(false);
+    setStep("payment");
+  };
+
+  const verifyPayment = async (orderId) => {
+    const MAX_ATTEMPTS = 36;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      await new Promise((r) => setTimeout(r, 2500));
+      try {
+        const res = await fetch(`/api/cashfree/verify-order?orderId=${orderId}`);
+        if (!res.ok) continue;
+        const { status } = await res.json();
+        if (status === "PAID") return orderId;
+        if (status === "EXPIRED" || status === "CANCELLED")
+          throw new Error("Payment was cancelled or expired. Please try again.");
+      } catch (err) {
+        if (err instanceof Error && (err.message.includes("cancelled") || err.message.includes("expired"))) throw err;
+      }
+    }
+    throw new Error("Payment verification timed out. If money was deducted, contact us on WhatsApp.");
+  };
+
+  const handleCashfreePay = async () => {
+    if (!pay) return;
+    setPayLoading(true);
+    setPayError("");
+    try {
+      const res = await fetch("/api/cashfree/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: pay.offer, name, phone: whatsapp, studentClass }),
+      });
+      if (!res.ok) throw new Error("Could not create payment order. Please try again.");
+      const { paymentSessionId, orderId } = await res.json();
+      if (!paymentSessionId) throw new Error("Invalid order response. Please try again.");
+      await loadCashfreeSDK();
+      const cashfree = window.Cashfree({ mode: "production" });
+      const result = await cashfree.checkout({ paymentSessionId, redirectTarget: "_modal" });
+      if (result?.error) throw new Error(result.error.message || "Payment failed. Please try again.");
+      const confirmedOrderId = await verifyPayment(orderId);
+      if (!sheetSubmittedRef.current) {
+        sheetSubmittedRef.current = true;
+        submitToSheet({ name, whatsapp, studentClass, mode, utr: confirmedOrderId, status: "paid_cashfree", paidAmount: String(pay.offer), timestamp: new Date().toISOString() });
+      }
+      setStep("done");
+    } catch (err) {
+      setPayError(err instanceof Error ? err.message : "Payment failed. Please try again.");
+    }
+    setPayLoading(false);
+  };
+
+  const pay = studentClass ? PAYMENT.classes[studentClass] : null;
+  const discount = pay ? Math.round(((pay.original - pay.offer) / pay.original) * 100) : 0;
+
+  useEffect(() => {
+    if (step !== "done" || !pay?.whatsapp) return;
+    setCountdown(3);
+    window.open(pay.whatsapp, "_blank", "noopener,noreferrer");
+    let c = 3;
+    const t = setInterval(() => { c -= 1; setCountdown(c); if (c <= 0) clearInterval(t); }, 1000);
+    return () => clearInterval(t);
+  }, [step]);
+
+  /* ─── AD VARIANTS ─── */
+  const adVariants = [
+    <div key="v1" className="ym-ad-card ym-ad-dark">
+      <div className="ym-ad-content">
+        <p className="ym-ad-eyebrow">📢 Enrollment Open Now</p>
+        <h3 className="ym-ad-headline">Online Classes Starting<br /><span className="ym-ad-accent">3rd June 2026</span></h3>
+        <p className="ym-ad-sub">Class 10 · 11 · 12 &nbsp;|&nbsp; Via Google Meet</p>
+      </div>
+      <div className="ym-ad-cta">
+        <div className="ym-ad-badge"><p className="ym-ad-badge-label">Limited Seats</p><p className="ym-ad-badge-val">🔥 Enroll Fast</p></div>
+        <button onClick={() => openModal()} className="ym-btn-yellow">Register Now →</button>
+      </div>
+    </div>,
+    <div key="v2" className="ym-ad-card ym-ad-indigo">
+      <div className="ym-ad-content">
+        <span className="ym-ad-pill">🚀 Accepting Registrations</span>
+        <h3 className="ym-ad-headline" style={{ marginTop: "12px" }}>Mathematics Coaching<br /><span className="ym-ad-accent">Start 3rd June 2026</span></h3>
+        <p className="ym-ad-sub">Google Meet · Class 10 / 11 / 12</p>
+      </div>
+      <div className="ym-ad-cta">
+        <p className="ym-ad-urgency">⚡ Don't miss out — seats limited!</p>
+        <button onClick={() => openModal()} className="ym-btn-yellow">Register Now →</button>
+      </div>
+    </div>,
+    <div key="v3" className="ym-ad-card ym-ad-white">
+      <div className="ym-ad-stripe" />
+      <div className="ym-ad-content" style={{ flex: 1 }}>
+        <p className="ym-ad-eyebrow" style={{ color: "#2563eb" }}>📣 Announcement</p>
+        <h3 className="ym-ad-headline" style={{ color: "#111827" }}>Online Classes Start<br /><span style={{ color: "#1d4ed8" }}>3rd June 2026</span></h3>
+        <p className="ym-ad-sub" style={{ color: "#6b7280" }}>Class 10, 11 & 12 · Google Meet · Live</p>
+      </div>
+      <div className="ym-ad-cta">
+        <div className="ym-ad-white-badge"><p>Limited Seats 🔥</p></div>
+        <button onClick={() => openModal()} className="ym-btn-blue-solid">Register Now →</button>
+      </div>
+    </div>,
+  ];
+
+  /* ═══════════════════════════════════════════════════
+     RENDER
+  ═══════════════════════════════════════════════════ */
+  return (
+    <main id="home" className="ym-page">
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+          --navy: #060f2e;
+          --navy-mid: #0d1b4b;
+          --blue-bright: #1d4ed8;
+          --blue-light: #3b82f6;
+          --gold: #f59e0b;
+          --gold-light: #fcd34d;
+          --gold-pale: #fef3c7;
+          --white: #ffffff;
+          --gray-50: #f9fafb;
+          --gray-100: #f3f4f6;
+          --gray-200: #e5e7eb;
+          --gray-400: #9ca3af;
+          --gray-500: #6b7280;
+          --gray-700: #374151;
+          --gray-900: #111827;
+          --green: #16a34a;
+          --green-light: #dcfce7;
+          --red: #dc2626;
+          --red-light: #fee2e2;
+          --radius-sm: 8px;
+          --radius-md: 12px;
+          --radius-lg: 20px;
+          --radius-xl: 28px;
+          --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+          --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+          --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
+        }
+
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Outfit', sans-serif; color: var(--gray-900); background: #fff; }
+        .ym-page { font-family: 'Outfit', sans-serif; }
+        .ym-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+
+        /* ── NAVBAR ── */
+        .ym-nav {
+          position: sticky; top: 0; z-index: 100;
+          background: rgba(6,15,46,0.97);
+          backdrop-filter: blur(20px);
+          border-bottom: 1px solid rgba(255,255,255,0.07);
+          transition: box-shadow 0.3s;
+        }
+        .ym-nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+        .ym-nav-inner {
+          max-width: 1200px; margin: 0 auto;
+          padding: 0 24px;
+          height: 68px;
+          display: flex; align-items: center; justify-content: space-between; gap: 24px;
+        }
+        .ym-nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .ym-nav-logo { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); }
+        .ym-nav-name { font-weight: 700; font-size: 17px; color: #fff; line-height: 1.2; }
+        .ym-nav-sub { font-size: 11px; color: #93c5fd; font-weight: 400; }
+        .ym-nav-links { display: flex; align-items: center; gap: 4px; }
+        .ym-nav-link {
+          padding: 7px 14px; border-radius: 8px;
+          font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7);
+          cursor: pointer; transition: all 0.2s; background: transparent; border: none;
+          text-decoration: none;
+        }
+        .ym-nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .ym-nav-link.active { color: #fff; background: rgba(59,130,246,0.2); }
+        .ym-nav-link.active-dot { position: relative; }
+        .ym-nav-link.active-dot::after {
+          content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+          width: 4px; height: 4px; border-radius: 50%; background: var(--gold);
+        }
+        .ym-nav-cta {
+          background: var(--gold); color: #1a0a00;
+          padding: 9px 20px; border-radius: 10px;
+          font-weight: 700; font-size: 13px;
+          text-decoration: none; transition: all 0.2s;
+          white-space: nowrap; border: none; cursor: pointer;
+        }
+        .ym-nav-cta:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,0.35); }
+        .ym-nav-enroll {
+          background: linear-gradient(135deg, #1d4ed8, #1e40af);
+          color: #fff; padding: 9px 20px; border-radius: 10px;
+          font-weight: 700; font-size: 13px;
+          border: none; cursor: pointer; transition: all 0.2s;
+          white-space: nowrap;
+        }
+        .ym-nav-enroll:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(29,78,216,0.35); }
+        .ym-hamburger { display: none; background: transparent; border: none; cursor: pointer; padding: 6px; }
+        .ym-hamburger span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; transition: all 0.3s; }
+        .ym-hamburger span + span { margin-top: 5px; }
+        .ym-mobile-menu {
+          display: none; position: fixed; top: 68px; left: 0; right: 0; bottom: 0;
+          background: rgba(6,15,46,0.98); backdrop-filter: blur(20px);
+          z-index: 99; flex-direction: column; padding: 24px;
+          gap: 8px; overflow-y: auto;
+        }
+        .ym-mobile-menu.open { display: flex; }
+        .ym-mobile-link {
+          padding: 14px 18px; border-radius: 12px;
+          font-size: 16px; font-weight: 500; color: rgba(255,255,255,0.8);
+          cursor: pointer; background: transparent; border: none; text-align: left; transition: all 0.2s;
+        }
+        .ym-mobile-link:hover, .ym-mobile-link.active { background: rgba(59,130,246,0.15); color: #fff; }
+        .ym-mobile-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0; }
+
+        @media (max-width: 900px) {
+          .ym-nav-links { display: none; }
+          .ym-hamburger { display: flex; flex-direction: column; }
+          .ym-nav-cta { display: none; }
+        }
+        @media (max-width: 600px) {
+          .ym-nav-enroll { font-size: 12px; padding: 8px 14px; }
+        }
+
+        /* ── HERO ── */
+        @keyframes heroShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        @keyframes floatUp {
+          0%,100%{transform:translateY(0) rotate(0deg); opacity:0.07}
+          50%{transform:translateY(-30px) rotate(8deg); opacity:0.13}
+        }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes glowPulse { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.45)} 50%{box-shadow:0 0 0 16px rgba(245,158,11,0)} }
+        @keyframes cfPulse { 0%,100%{box-shadow:0 0 0 0 rgba(29,78,216,0.45)} 50%{box-shadow:0 0 0 14px rgba(29,78,216,0)} }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+        .hero-section {
+          background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 40%, #0f2d6b 65%, #0d1b4b 85%, #060f2e 100%);
+          background-size: 300% 300%;
+          animation: heroShift 14s ease infinite;
+          clip-path: polygon(0 0, 100% 0, 100% 93%, 0 100%);
+          position: relative; overflow: hidden;
+          padding: 96px 24px 140px;
+        }
+        .math-sym { position: absolute; color: #fff; font-weight: 900; pointer-events: none; animation: floatUp ease-in-out infinite; font-family: 'Cormorant Garamond', serif; }
+        .hero-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 64px; }
+        .hero-left { flex: 1; }
+        .hero-right { width: 320px; flex-shrink: 0; }
+        .hero-badge {
+          display: inline-flex; align-items: center; gap: 8px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 75%);
+          background-size: 200% auto; animation: shimmer 3s linear infinite;
+          border: 1px solid rgba(255,255,255,0.18); border-radius: 100px;
+          padding: 8px 18px; margin-bottom: 24px;
+        }
+        .hero-badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+        .hero-badge-text { color: #fcd34d; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+        .hero-h1 { font-size: clamp(2.6rem, 5.5vw, 4rem); font-weight: 800; color: #fff; line-height: 1.07; margin-bottom: 20px; }
+        .hero-h1-accent { color: var(--gold); text-shadow: 0 0 48px rgba(245,158,11,0.35); }
+        .hero-tagline-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .hero-tagline-line { height: 1px; width: 32px; background: rgba(245,158,11,0.5); }
+        .hero-tagline { color: rgba(253,211,77,0.85); font-style: italic; font-size: 14px; font-weight: 400; }
+        .hero-desc { color: #bfdbfe; font-size: 17px; line-height: 1.75; max-width: 500px; margin-bottom: 36px; }
+        .hero-btns { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 44px; }
+        .ym-btn-gold { background: var(--gold); color: #1a0a00; padding: 16px 32px; border-radius: 14px; font-weight: 800; font-size: 17px; border: none; cursor: pointer; transition: all 0.2s; animation: glowPulse 2.4s ease infinite; }
+        .ym-btn-gold:hover { background: var(--gold-light); transform: translateY(-2px); }
+        .ym-btn-ghost { background: rgba(255,255,255,0.07); color: #fff; padding: 16px 32px; border-radius: 14px; font-weight: 600; font-size: 16px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s; backdrop-filter: blur(8px); }
+        .ym-btn-ghost:hover { background: rgba(255,255,255,0.13); }
+        .hero-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+        .hero-stat { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.11); border-radius: 14px; padding: 14px 20px; text-align: center; flex: 1; min-width: 90px; }
+        .hero-stat-num { font-family: 'Cormorant Garamond', serif; color: var(--gold-light); font-weight: 700; font-size: 22px; line-height: 1; margin-bottom: 4px; }
+        .hero-stat-label { color: #93c5fd; font-size: 11px; font-weight: 500; }
+        .hero-card { background: rgba(255,255,255,0.07); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.13); border-radius: 24px; padding: 28px; position: relative; overflow: hidden; }
+        .hero-card-glow { position: absolute; top: -40px; right: -40px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(245,158,11,0.2) 0%, transparent 70%); pointer-events: none; }
+        .hero-card-avatar { width: 60px; height: 60px; border-radius: 14px; background: var(--gold); color: #1a0a00; font-size: 20px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .hero-card-name { color: #fff; font-weight: 700; font-size: 17px; }
+        .hero-card-degree { color: #bfdbfe; font-size: 12px; margin-top: 2px; }
+        .hero-card-iit { color: var(--gold); font-size: 12px; font-weight: 600; }
+        .hero-card-row { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px 14px; }
+        .hero-card-row-label { color: #fff; font-size: 12px; font-weight: 600; line-height: 1; }
+        .hero-card-row-val { color: #93c5fd; font-size: 11px; margin-top: 2px; }
+        .hero-card-btn { width: 100%; background: var(--gold); color: #1a0a00; font-weight: 800; padding: 13px; border-radius: 12px; border: none; cursor: pointer; font-size: 14px; transition: all 0.2s; margin-top: 20px; }
+        .hero-card-btn:hover { background: var(--gold-light); }
+
+        .fade-up-1 { animation: fadeUp 0.7s ease both; animation-delay: 0.1s; }
+        .fade-up-2 { animation: fadeUp 0.7s ease both; animation-delay: 0.25s; }
+        .fade-up-3 { animation: fadeUp 0.7s ease both; animation-delay: 0.4s; }
+        .fade-up-4 { animation: fadeUp 0.7s ease both; animation-delay: 0.55s; }
+        .fade-up-5 { animation: fadeUp 0.7s ease both; animation-delay: 0.7s; }
+
+        @media (max-width: 900px) {
+          .hero-section { padding: 72px 20px 110px; clip-path: polygon(0 0, 100% 0, 100% 96%, 0 100%); }
+          .hero-inner { flex-direction: column; gap: 40px; }
+          .hero-right { width: 100%; }
+          .hero-h1 { font-size: clamp(2.2rem, 7vw, 3rem); }
+        }
+
+        /* ── SECTION COMMON ── */
+        .ym-section { padding: 88px 24px; }
+        .ym-section-inner { max-width: 1200px; margin: 0 auto; }
+        .ym-section-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+        .ym-section-tag.green { background: #dcfce7; color: #15803d; }
+        .ym-section-tag.blue { background: #dbeafe; color: #1d4ed8; }
+        .ym-section-tag.orange { background: #ffedd5; color: #c2410c; }
+        .ym-section-tag.gold { background: #fef3c7; color: #92400e; }
+        .ym-section-h2 { font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 800; color: var(--gray-900); margin-bottom: 12px; }
+        .ym-section-line { width: 56px; height: 4px; border-radius: 2px; margin: 0 auto 16px; }
+        .ym-section-desc { color: var(--gray-500); font-size: 16px; max-width: 520px; margin: 0 auto; line-height: 1.7; }
+        .ym-section-head { text-align: center; margin-bottom: 56px; }
+
+        /* ── AD BANNER ── */
+        .ym-ad-section { background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); padding: 32px 24px; position: relative; }
+        .ym-live-pill { position: absolute; top: 12px; left: 20px; display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #fecaca; border-radius: 100px; padding: 5px 12px; box-shadow: var(--shadow-sm); z-index: 10; }
+        .ym-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; transition: opacity 0.4s; }
+        .ym-live-text { font-size: 11px; font-weight: 700; color: #dc2626; text-transform: uppercase; letter-spacing: 0.06em; }
+        .ym-ad-inner { max-width: 1200px; margin: 0 auto; padding-top: 28px; }
+        .ym-ad-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+        .ym-ad-dot { width: 9px; height: 9px; border-radius: 50%; border: none; cursor: pointer; transition: all 0.2s; }
+        .ym-ad-card { width: 100%; border-radius: 20px; overflow: hidden; display: flex; flex-direction: row; min-height: 190px; animation: fadeIn 0.4s ease; }
+        .ym-ad-dark { background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%); box-shadow: var(--shadow-md); }
+        .ym-ad-indigo { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #3730a3 100%); box-shadow: var(--shadow-md); }
+        .ym-ad-white { background: #fff; border: 1px solid var(--gray-200); box-shadow: var(--shadow-md); display: flex; flex-direction: row; }
+        .ym-ad-stripe { width: 6px; background: #2563eb; flex-shrink: 0; }
+        .ym-ad-content { flex: 1; padding: 32px 36px; display: flex; flex-direction: column; justify-content: center; }
+        .ym-ad-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #bfdbfe; margin-bottom: 10px; }
+        .ym-ad-headline { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 800; color: #fff; line-height: 1.15; }
+        .ym-ad-accent { color: var(--gold-light); }
+        .ym-ad-sub { color: #bfdbfe; font-size: 14px; margin-top: 8px; }
+        .ym-ad-pill { display: inline-block; background: rgba(99,102,241,0.35); color: #c7d2fe; font-size: 12px; font-weight: 600; padding: 5px 14px; border-radius: 100px; }
+        .ym-ad-urgency { color: #fcd34d; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+        .ym-ad-cta { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 32px; background: rgba(255,255,255,0.08); flex-shrink: 0; min-width: 200px; }
+        .ym-ad-badge { border: 2px solid #fcd34d; border-radius: 14px; padding: 12px 20px; text-align: center; }
+        .ym-ad-badge-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fcd34d; margin-bottom: 4px; }
+        .ym-ad-badge-val { font-size: 18px; font-weight: 800; color: #fff; }
+        .ym-ad-white-badge { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 10px 18px; color: #1d4ed8; font-size: 13px; font-weight: 700; text-align: center; }
+        .ym-btn-yellow { background: var(--gold); color: #1a0a00; padding: 12px 28px; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .ym-btn-yellow:hover { background: var(--gold-light); }
+        .ym-btn-blue-solid { background: #2563eb; color: #fff; padding: 12px 28px; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .ym-btn-blue-solid:hover { background: #1d4ed8; }
+        @media (max-width: 700px) {
+          .ym-ad-card { flex-direction: column; }
+          .ym-ad-cta { padding: 20px; min-width: unset; background: rgba(255,255,255,0.05); }
+          .ym-ad-stripe { width: 100%; height: 5px; }
+        }
+
+        /* ── CLASSES SECTION ── */
+        .ym-classes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 44px; }
+        .ym-class-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 20px; padding: 28px 24px; text-align: center; transition: all 0.25s; box-shadow: var(--shadow-sm); }
+        .ym-class-card:hover { border-color: #93c5fd; box-shadow: var(--shadow-md); transform: translateY(-4px); }
+        .ym-class-card.featured { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.12), var(--shadow-md); }
+        .ym-class-icon { font-size: 40px; margin-bottom: 14px; }
+        .ym-class-name { font-size: 22px; font-weight: 800; color: var(--gray-900); margin-bottom: 4px; }
+        .ym-class-days { color: var(--gray-500); font-size: 14px; margin-bottom: 2px; }
+        .ym-class-time { color: var(--gray-400); font-size: 13px; margin-bottom: 20px; }
+        .ym-class-price-row { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .ym-class-price { font-size: 28px; font-weight: 800; color: #2563eb; }
+        .ym-class-price-unit { font-size: 14px; color: var(--gray-400); }
+        .ym-class-original { font-size: 13px; color: var(--gray-400); text-decoration: line-through; }
+        .ym-class-btn { width: 100%; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; }
+        .ym-class-btn-primary { background: #2563eb; color: #fff; }
+        .ym-class-btn-primary:hover { background: #1d4ed8; }
+        .ym-class-badge { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 100px; margin-bottom: 12px; }
+        @media (max-width: 800px) { .ym-classes-grid { grid-template-columns: 1fr; } }
+        @media (min-width: 600px) and (max-width: 800px) { .ym-classes-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        /* ── SLOT ACCORDION ── */
+        .ym-slots-wrap { max-width: 680px; margin: 0 auto; }
+        .ym-slots-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; background: #2563eb; color: #fff; padding: 16px 24px; border-radius: 16px; font-weight: 700; font-size: 16px; border: none; cursor: pointer; transition: background 0.2s; margin-bottom: 12px; }
+        .ym-slots-toggle:hover { background: #1d4ed8; }
+        .ym-slots-body { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+        .ym-slot-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-radius: 12px; border: 1px solid var(--gray-200); background: #fff; font-weight: 600; font-size: 15px; color: var(--gray-800); cursor: pointer; transition: all 0.2s; }
+        .ym-slot-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .ym-slot-btn:hover:not(.active) { border-color: #93c5fd; }
+        .ym-slot-detail { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px 20px; margin-top: 6px; display: flex; flex-direction: column; gap: 12px; }
+        .ym-slot-row { display: flex; align-items: flex-start; gap: 12px; }
+        .ym-slot-row-icon { font-size: 20px; }
+        .ym-slot-row-label { font-weight: 600; color: #1e40af; font-size: 14px; }
+        .ym-slot-row-sub { color: #3b82f6; font-size: 12px; margin-top: 2px; }
+
+        /* ── OFFLINE SECTION ── */
+        .ym-offline-section { background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%); border-top: 1px solid #fed7aa; border-bottom: 1px solid #fed7aa; }
+        .ym-offline-card { background: #fff; border: 1.5px solid #fed7aa; border-radius: 28px; padding: 56px 48px; text-align: center; box-shadow: var(--shadow-sm); max-width: 640px; margin: 0 auto; }
+        .ym-offline-loc { display: inline-flex; align-items: center; gap: 6px; color: #c2410c; font-weight: 700; font-size: 17px; margin-bottom: 12px; }
+        .ym-btn-orange { background: #ea580c; color: #fff; padding: 14px 32px; border-radius: 14px; font-weight: 700; font-size: 16px; border: none; cursor: pointer; transition: all 0.2s; }
+        .ym-btn-orange:hover { background: #c2410c; }
+
+        /* ── WHY US ── */
+        .ym-why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .ym-why-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 20px; padding: 28px; transition: all 0.25s; box-shadow: var(--shadow-sm); }
+        .ym-why-card:hover { border-color: #93c5fd; box-shadow: var(--shadow-md); transform: translateY(-4px); }
+        .ym-why-icon { font-size: 36px; margin-bottom: 14px; }
+        .ym-why-title { font-size: 17px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; }
+        .ym-why-desc { color: var(--gray-500); font-size: 14px; line-height: 1.65; }
+        @media (max-width: 800px) { .ym-why-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 540px) { .ym-why-grid { grid-template-columns: 1fr; } }
+
+        /* ── ABOUT ── */
+        .ym-about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+        .ym-about-text p { color: var(--gray-600); font-size: 17px; line-height: 1.8; margin-bottom: 20px; }
+        .ym-about-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .ym-about-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 16px; padding: 20px; text-align: center; }
+        .ym-about-card-icon { font-size: 28px; margin-bottom: 8px; }
+        .ym-about-card-label { font-weight: 700; color: #1e3a8a; font-size: 14px; }
+        .ym-about-card-sub { color: #3b82f6; font-size: 12px; margin-top: 4px; }
+        @media (max-width: 800px) { .ym-about-grid { grid-template-columns: 1fr; gap: 40px; } }
+
+        /* ── CONTACT ── */
+        .ym-contact-section { background: var(--navy); }
+        .ym-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
+        .ym-contact-info h3 { color: #fff; font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+        .ym-contact-tagline { color: #fcd34d; font-style: italic; font-size: 15px; margin-bottom: 32px; }
+        .ym-contact-row { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+        .ym-contact-icon { width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .ym-contact-val { color: #fff; font-size: 15px; font-weight: 500; }
+        .ym-contact-val a { color: #93c5fd; text-decoration: none; }
+        .ym-contact-val a:hover { color: #fff; }
+        .ym-contact-sub { color: rgba(255,255,255,0.45); font-size: 12px; }
+        .ym-contact-cta { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 24px; padding: 36px; display: flex; flex-direction: column; gap: 16px; }
+        .ym-contact-cta-title { color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .ym-contact-cta-sub { color: rgba(255,255,255,0.55); font-size: 14px; margin-bottom: 8px; }
+        .ym-contact-enroll-btn { width: 100%; background: var(--gold); color: #1a0a00; padding: 16px; border-radius: 14px; font-weight: 800; font-size: 16px; border: none; cursor: pointer; transition: all 0.2s; }
+        .ym-contact-enroll-btn:hover { background: var(--gold-light); }
+        @media (max-width: 800px) { .ym-contact-grid { grid-template-columns: 1fr; gap: 36px; } }
+
+        /* ── FOOTER ── */
+        .ym-footer { background: #030a1f; color: rgba(255,255,255,0.55); padding: 48px 24px 24px; }
+        .ym-footer-inner { max-width: 1200px; margin: 0 auto; }
+        .ym-footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+        .ym-footer-brand-name { color: #fff; font-weight: 700; font-size: 20px; margin-bottom: 6px; }
+        .ym-footer-brand-tagline { color: #fcd34d; font-style: italic; font-size: 13px; margin-bottom: 12px; }
+        .ym-footer-brand-desc { font-size: 13px; line-height: 1.7; }
+        .ym-footer-badges { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+        .ym-footer-badge { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 12px; font-size: 12px; }
+        .ym-footer-h4 { color: rgba(255,255,255,0.8); font-weight: 600; font-size: 14px; margin-bottom: 14px; }
+        .ym-footer-item { font-size: 13px; margin-bottom: 8px; line-height: 1.5; }
+        .ym-footer-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin-bottom: 20px; }
+        .ym-footer-policy-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 20px; margin-bottom: 16px; }
+        .ym-footer-policy-link { font-size: 12px; color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.2s; }
+        .ym-footer-policy-link:hover { color: #93c5fd; }
+        .ym-footer-copy { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; text-align: center; }
+        @media (max-width: 800px) { .ym-footer-grid { grid-template-columns: 1fr; gap: 32px; } }
+
+        /* ── MODAL ── */
+        .ym-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; backdrop-filter: blur(4px); }
+        .ym-modal { background: #fff; border-radius: 28px; width: 100%; max-width: 460px; box-shadow: 0 24px 80px rgba(0,0,0,0.3); overflow: hidden; max-height: 90vh; overflow-y: auto; position: relative; }
+        .ym-modal-head { background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%); padding: 28px 32px 24px; color: #fff; position: sticky; top: 0; z-index: 10; }
+        .ym-modal-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.15); border: none; color: #fff; width: 32px; height: 32px; border-radius: 8px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .ym-modal-close:hover { background: rgba(255,255,255,0.25); }
+        .ym-modal-steps { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+        .ym-modal-step { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: all 0.3s; }
+        .ym-modal-step.current { background: var(--gold); color: #1a0a00; }
+        .ym-modal-step.done { background: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
+        .ym-modal-step.future { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
+        .ym-modal-step-line { flex: 1; height: 2px; border-radius: 1px; max-width: 40px; }
+        .ym-modal-step-line.done { background: rgba(255,255,255,0.3); }
+        .ym-modal-step-line.future { background: rgba(255,255,255,0.12); }
+        .ym-modal-emoji { font-size: 32px; margin-bottom: 8px; }
+        .ym-modal-title { font-size: 22px; font-weight: 800; }
+        .ym-modal-sub { color: rgba(255,255,255,0.65); font-size: 14px; margin-top: 4px; }
+        .ym-modal-body { padding: 28px 32px 32px; }
+        .ym-form-info { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 16px; display: flex; gap: 8px; font-size: 13px; color: #1e40af; margin-bottom: 20px; }
+        .ym-input { width: 100%; border: 1.5px solid var(--gray-200); padding: 13px 16px; border-radius: 12px; font-size: 15px; font-family: 'Outfit', sans-serif; color: var(--gray-900); outline: none; transition: border-color 0.2s; background: #fff; }
+        .ym-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .ym-input::placeholder { color: var(--gray-400); }
+        .ym-form-stack { display: flex; flex-direction: column; gap: 14px; }
+        .ym-policy-text { font-size: 12px; color: var(--gray-400); text-align: center; line-height: 1.6; }
+        .ym-policy-text a { color: #3b82f6; text-decoration: none; }
+        .ym-submit-btn { width: 100%; background: #2563eb; color: #fff; padding: 15px; border-radius: 13px; font-size: 17px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
+        .ym-submit-btn:hover { background: #1d4ed8; }
+        .ym-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .ym-pay-summary { background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 16px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .ym-pay-class { font-size: 12px; color: #3b82f6; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+        .ym-pay-amount { font-size: 28px; font-weight: 800; color: #1d4ed8; }
+        .ym-pay-unit { font-size: 13px; color: var(--gray-400); }
+        .ym-pay-discount { background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 12px; text-align: center; }
+        .ym-pay-btn { width: 100%; background: linear-gradient(135deg, #1a56db 0%, #1e40af 100%); color: #fff; padding: 18px; border-radius: 16px; font-size: 20px; font-weight: 800; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.2s; animation: cfPulse 2.5s ease infinite; }
+        .ym-pay-btn:hover:not(:disabled) { filter: brightness(1.1); }
+        .ym-pay-btn:disabled { animation: none; opacity: 0.6; cursor: not-allowed; }
+        .ym-pay-verify-msg { font-size: 13px; text-align: center; color: #2563eb; font-weight: 500; margin-top: 8px; }
+        .ym-pay-err { background: #fee2e2; border: 1px solid #fecaca; border-radius: 12px; padding: 13px 16px; color: #dc2626; font-size: 14px; text-align: center; margin-top: 12px; }
+        .ym-pay-secure { text-align: center; margin-top: 16px; display: flex; flex-direction: column; gap: 4px; }
+        .ym-pay-methods { font-size: 12px; color: var(--gray-400); }
+        .ym-pay-cf { font-size: 12px; color: var(--gray-400); }
+        .ym-pay-cf strong { color: #2563eb; }
+        .ym-done-wrap { text-align: center; padding: 16px 0; }
+        .ym-done-confetti { font-size: 56px; margin-bottom: 16px; }
+        .ym-done-name { font-size: 22px; font-weight: 800; color: var(--gray-900); margin-bottom: 6px; }
+        .ym-done-sub { color: var(--gray-500); font-size: 15px; margin-bottom: 24px; }
+        .ym-done-wa-box { background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 16px; padding: 18px; margin-bottom: 20px; }
+        .ym-done-wa-title { color: #15803d; font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+        .ym-done-wa-sub { color: #16a34a; font-size: 13px; }
+        .ym-done-wa-btn { width: 100%; background: #16a34a; color: #fff; padding: 15px; border-radius: 13px; font-size: 16px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; transition: background 0.2s; }
+        .ym-done-wa-btn:hover { background: #15803d; }
+        .ym-done-close-btn { width: 100%; background: var(--gray-100); color: var(--gray-700); padding: 13px; border-radius: 13px; font-size: 15px; font-weight: 600; border: none; cursor: pointer; transition: background 0.2s; }
+        .ym-done-close-btn:hover { background: var(--gray-200); }
+        .ym-spin { animation: spin 0.8s linear infinite; }
+        @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+      `}</style>
+
+      {/* ══════════════════ NAVBAR ══════════════════ */}
+      <nav className={`ym-nav${scrolled ? " scrolled" : ""}`} role="navigation" aria-label="Main navigation">
+        <div className="ym-nav-inner">
+          {/* Brand */}
+          <a href="#home" className="ym-nav-brand" onClick={(e) => { e.preventDefault(); scrollToSection("home"); }}>
+            <img src="/Logo.png" alt="Yarwng Mathematics Logo" className="ym-nav-logo" />
+            <div>
+              <div className="ym-nav-name">Yarwng Mathematics</div>
+              <div className="ym-nav-sub">Rakesh Debbarma · M.Sc, IIT Delhi</div>
+            </div>
+          </a>
+
+          {/* Desktop Nav Links */}
+          <div className="ym-nav-links" role="menubar">
+            {NAV_LINKS.map((l) => (
+              <button
+                key={l.id}
+                role="menuitem"
+                onClick={() => scrollToSection(l.id)}
+                className={`ym-nav-link${activeSection === l.id ? " active active-dot" : ""}`}
+                aria-current={activeSection === l.id ? "page" : undefined}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Right side CTA */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <a href="/login" className="ym-nav-cta">Login / Register</a>
+            <button onClick={() => openModal()} className="ym-nav-enroll">Enroll Now →</button>
+            {/* Hamburger */}
+            <button
+              className="ym-hamburger"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              <span style={{ transform: mobileMenuOpen ? "rotate(45deg) translate(5px,5px)" : "none" }} />
+              <span style={{ opacity: mobileMenuOpen ? 0 : 1 }} />
+              <span style={{ transform: mobileMenuOpen ? "rotate(-45deg) translate(5px,-5px)" : "none" }} />
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Menu */}
+      <div className={`ym-mobile-menu${mobileMenuOpen ? " open" : ""}`} role="dialog" aria-modal="true" aria-label="Mobile navigation">
+        {NAV_LINKS.map((l) => (
+          <button key={l.id} onClick={() => scrollToSection(l.id)} className={`ym-mobile-link${activeSection === l.id ? " active" : ""}`}>
+            {l.label}
+          </button>
+        ))}
+        <div className="ym-mobile-divider" />
+        <button onClick={() => { openModal(); setMobileMenuOpen(false); }} className="ym-nav-enroll" style={{ borderRadius: "12px" }}>
+          Enroll Now →
+        </button>
+      </div>
+
+      {/* ══════════════════ HERO ══════════════════ */}
+      <section className="hero-section" aria-label="Hero — Yarwng Mathematics">
+        {[
+          { sym: "∑", top: "8%", left: "4%", size: 52, dur: "7s", delay: "0s" },
+          { sym: "π", top: "15%", left: "88%", size: 44, dur: "9s", delay: "1.2s" },
+          { sym: "∫", top: "55%", left: "6%", size: 38, dur: "8s", delay: "2s" },
+          { sym: "√", top: "70%", left: "82%", size: 46, dur: "10s", delay: "0.5s" },
+          { sym: "∞", top: "30%", left: "92%", size: 32, dur: "6s", delay: "3s" },
+          { sym: "Δ", top: "80%", left: "15%", size: 28, dur: "11s", delay: "1.8s" },
+          { sym: "θ", top: "22%", left: "48%", size: 24, dur: "8s", delay: "4s" },
+          { sym: "≈", top: "60%", left: "55%", size: 22, dur: "7s", delay: "2.5s" },
+        ].map((s, i) => (
+          <span key={i} className="math-sym" aria-hidden="true" style={{ top: s.top, left: s.left, fontSize: s.size, animationDuration: s.dur, animationDelay: s.delay }}>{s.sym}</span>
+        ))}
+
+        <div className="hero-inner">
+          <div className="hero-left">
+            <div className="hero-badge fade-up-1">
+              <span className="hero-badge-dot" />
+              <span className="hero-badge-text">Mathematics · English Medium</span>
+            </div>
+            <h1 className="hero-h1 fade-up-2">
+              Master Mathematics<br />
+              <span className="hero-h1-accent">With Confidence</span>
+            </h1>
+            <div className="hero-tagline-row fade-up-3">
+              <div className="hero-tagline-line" />
+              <p className="hero-tagline">"Amani Kok Kokborok bai Swrwngwi Mannai"</p>
+              <div className="hero-tagline-line" />
+            </div>
+            <p className="hero-desc fade-up-3">
+              Expert coaching for <strong style={{ color: "#fff" }}>Class 10, 11 & 12</strong> by an IIT Delhi graduate — Online via Google Meet & Offline at Khumulwng.
+            </p>
+            <div className="hero-btns fade-up-4">
+              <button onClick={() => openModal()} className="ym-btn-gold">Enroll Khwlaidi →</button>
+              <button onClick={() => scrollToSection("classes")} className="ym-btn-ghost">View Schedule</button>
+            </div>
+            <div className="hero-stats fade-up-5">
+              {[
+                { num: "3", label: "Classes" },
+                { num: "IIT", label: "Delhi Alumni" },
+                { num: "2hrs", label: "Per Session" },
+                { num: "∞", label: "Doubt Support" },
+              ].map((s) => (
+                <div key={s.label} className="hero-stat">
+                  <p className="hero-stat-num">{s.num}</p>
+                  <p className="hero-stat-label">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="hero-right fade-up-2">
+            <div className="hero-card">
+              <div className="hero-card-glow" />
+              <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px", position: "relative" }}>
+                <div className="hero-card-avatar">RD</div>
+                <div>
+                  <p className="hero-card-name">Rakesh Debbarma</p>
+                  <p className="hero-card-degree">M.Sc Mathematics</p>
+                  <p className="hero-card-iit">IIT Delhi</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", position: "relative" }}>
+                {[
+                  { icon: "🟢", label: "Online", val: "Google Meet · Live" },
+                  { icon: "🏫", label: "Offline", val: "Khumulwng (Soon)" },
+                  { icon: "📅", label: "Schedule", val: "Structured weekly" },
+                  { icon: "💬", label: "Support", val: "WhatsApp batches" },
+                ].map((r) => (
+                  <div key={r.label} className="hero-card-row">
+                    <span style={{ fontSize: "16px" }}>{r.icon}</span>
+                    <div>
+                      <p className="hero-card-row-label">{r.label}</p>
+                      <p className="hero-card-row-val">{r.val}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => openModal()} className="hero-card-btn">🚀 Classes Start 3rd June 2026</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════ LIVE AD BANNER ══════════════════ */}
+      <div className="ym-ad-section">
+        <div className="ym-live-pill">
+          <span className="ym-live-dot" style={{ opacity: liveDot ? 1 : 0.15 }} />
+          <span className="ym-live-text">Live</span>
+        </div>
+        <div className="ym-ad-inner">
+          <div className="ym-ad-dots">
+            {[0, 1, 2].map((i) => (
+              <button key={i} onClick={() => setAdVariant(i)} className="ym-ad-dot" style={{ background: adVariant === i ? "#2563eb" : "#d1d5db" }} aria-label={`Ad variant ${i + 1}`} />
+            ))}
+          </div>
+          {adVariants[adVariant]}
+        </div>
+      </div>
+
+      {/* ══════════════════ CLASSES ══════════════════ */}
+      <section id="classes" className="ym-section" style={{ background: "#fff" }}>
+        <div className="ym-section-inner">
+          <div className="ym-section-head">
+            <div className="ym-section-tag green">🟢 Currently via Google Meet</div>
+            <h2 className="ym-section-h2">Online Classes</h2>
+            <div className="ym-section-line" style={{ background: "#22c55e" }} />
+            <p className="ym-section-desc">Live interactive sessions via Google Meet. Join from anywhere across India.</p>
+          </div>
+
+          <div className="ym-classes-grid">
+            {Object.entries(PAYMENT.classes).map(([cls], idx) => (
+              <div key={cls} className={`ym-class-card${idx === 1 ? " featured" : ""}`}>
+                {idx === 1 && <div className="ym-class-badge">Most Popular</div>}
+                <div className="ym-class-icon">{cls === "Class 10" ? "📘" : cls === "Class 11" ? "📙" : "📗"}</div>
+                <h3 className="ym-class-name">{cls}</h3>
+                <p className="ym-class-days">{SLOTS[cls].days}</p>
+                <p className="ym-class-time">{SLOTS[cls].time}</p>
+                <div className="ym-class-price-row">
+                  <span className="ym-class-price">₹{PAYMENT.classes[cls].offer === 1 ? PAYMENT.classes[cls].original : PAYMENT.classes[cls].offer}</span>
+                  <span className="ym-class-price-unit">/month</span>
+                </div>
+                <button onClick={() => openModal()} className="ym-class-btn ym-class-btn-primary">Join {cls}</button>
+              </div>
+            ))}
+          </div>
+
+          {/* Slot Accordion */}
+          <div className="ym-slots-wrap">
+            <button onClick={() => { setSlotsOpen(!slotsOpen); setSelectedSlot(null); }} className="ym-slots-toggle">
+              <span>📅 View Detailed Class Slots</span>
+              <span style={{ fontSize: "22px" }}>{slotsOpen ? "−" : "+"}</span>
+            </button>
+            {slotsOpen && (
+              <div className="ym-slots-body">
+                {["Class 10", "Class 11", "Class 12"].map((cls) => (
+                  <div key={cls}>
+                    <button onClick={() => setSelectedSlot(selectedSlot === cls ? null : cls)} className={`ym-slot-btn${selectedSlot === cls ? " active" : ""}`}>
+                      <span>{cls}</span>
+                      <span>{selectedSlot === cls ? "▲" : "▼"}</span>
+                    </button>
+                    {selectedSlot === cls && (
+                      <div className="ym-slot-detail">
+                        {[
+                          { icon: "📆", label: SLOTS[cls].days, sub: "Every week" },
+                          { icon: "🕐", label: SLOTS[cls].time, sub: "Evening · 2 hours" },
+                          { icon: "💰", label: `₹${PAYMENT.classes[cls].offer === 1 ? PAYMENT.classes[cls].original : PAYMENT.classes[cls].offer}/month`, sub: `Regular: ₹${PAYMENT.classes[cls].original}` },
+                        ].map((r) => (
+                          <div key={r.label} className="ym-slot-row">
+                            <span className="ym-slot-row-icon">{r.icon}</span>
+                            <div>
+                              <p className="ym-slot-row-label">{r.label}</p>
+                              <p className="ym-slot-row-sub">{r.sub}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════ OFFLINE ══════════════════ */}
+      <section className="ym-section ym-offline-section">
+        <div className="ym-section-inner">
+          <div className="ym-section-head">
+            <div className="ym-section-tag orange">🔔 Starting Soon</div>
+            <h2 className="ym-section-h2">Offline Session</h2>
+            <div className="ym-section-line" style={{ background: "#f97316" }} />
+          </div>
+          <div className="ym-offline-card">
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>🏫</div>
+            <h3 style={{ fontSize: "24px", fontWeight: 800, color: "#111827", marginBottom: "8px" }}>Physical Classroom</h3>
+            <div className="ym-offline-loc">📍 Khumulwng, Tripura</div>
+            <p style={{ color: "#6b7280", marginBottom: "24px", maxWidth: "420px", margin: "0 auto 24px", lineHeight: 1.7 }}>
+              Face-to-face classes in a structured environment. Personalised attention. Details will be announced soon.
+            </p>
+            <div style={{ display: "inline-block", background: "#ffedd5", color: "#c2410c", padding: "8px 20px", borderRadius: "12px", fontWeight: 700, fontSize: "14px", marginBottom: "24px" }}>
+              ⏳ Launching Soon — Limited Seats
+            </div>
+            <br />
+            <button onClick={() => openModal("Offline")} className="ym-btn-orange">Register Interest</button>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════ WHY US ══════════════════ */}
+      <section id="why-us" className="ym-section" style={{ background: "linear-gradient(180deg, #f9fafb 0%, #fff 100%)" }}>
+        <div className="ym-section-inner">
+          <div className="ym-section-head">
+            <div className="ym-section-tag gold">⭐ Our Edge</div>
+            <h2 className="ym-section-h2">What Makes Us Different</h2>
+            <div className="ym-section-line" style={{ background: "#f59e0b" }} />
+          </div>
+          <div className="ym-why-grid">
+            {[
+              { icon: "🧠", title: "Conceptual Depth", desc: "We don't just teach formulas — we build intuition and deep understanding that lasts beyond exams." },
+              { icon: "👨‍🏫", title: "IIT-Level Expertise", desc: "Faculty trained at one of India's premier institutes brings top-tier rigour to every class." },
+              { icon: "🗓️", title: "Structured Timetable", desc: "Fixed weekly slots per class ensure consistency, discipline, and steady progress." },
+              { icon: "💬", title: "WhatsApp Support", desc: "Doubt-clearing continues beyond class hours via dedicated WhatsApp groups for every batch." },
+              { icon: "🖥️", title: "Google Meet Sessions", desc: "High-quality online classes via Google Meet — join from anywhere with a good connection." },
+              { icon: "📝", title: "Regular Assessments", desc: "Frequent tests and detailed feedback help track progress and identify areas needing improvement." },
+            ].map((item) => (
+              <div key={item.title} className="ym-why-card">
+                <div className="ym-why-icon">{item.icon}</div>
+                <h3 className="ym-why-title">{item.title}</h3>
+                <p className="ym-why-desc">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════ ABOUT ══════════════════ */}
+      <section id="about" className="ym-section" style={{ background: "#fff" }}>
+        <div className="ym-section-inner">
+          <div className="ym-section-head">
+            <div className="ym-section-tag blue">🎓 Our Story</div>
+            <h2 className="ym-section-h2">Know About Yarwng Mathematics</h2>
+            <div className="ym-section-line" style={{ background: "#2563eb" }} />
+            <p className="ym-section-desc" style={{ fontStyle: "italic", color: "#2563eb" }}>"Amani Kok Kokborok bai Swrwngwi Mannai"</p>
+          </div>
+          <div className="ym-about-grid">
+            <div className="ym-about-text">
+              <p><strong style={{ color: "#1d4ed8" }}>Yarwng Mathematics</strong> was founded to make advanced mathematics accessible and enjoyable for every student in Tripura and beyond.</p>
+              <p>Led by <strong>Rakesh Debbarma</strong>, an M.Sc graduate from <strong>IIT Delhi</strong>, we bring world-class mathematical thinking to your doorstep.</p>
+              <p>Our approach combines rigorous conceptual teaching, regular problem-solving, and personalised attention so every student grows confidently.</p>
+              <button onClick={() => openModal()} className="ym-btn-gold" style={{ marginTop: "8px" }}>Start Learning Today →</button>
+            </div>
+            <div className="ym-about-cards">
+              {[
+                { icon: "🎓", label: "IIT Delhi Alumni", sub: "M.Sc Mathematics" },
+                { icon: "📚", label: "Classes 10–12", sub: "Full syllabus coverage" },
+                { icon: "🌐", label: "Online & Offline", sub: "Flexible modes" },
+                { icon: "📈", label: "Proven Results", sub: "High scoring students" },
+              ].map((card) => (
+                <div key={card.label} className="ym-about-card">
+                  <div className="ym-about-card-icon">{card.icon}</div>
+                  <p className="ym-about-card-label">{card.label}</p>
+                  <p className="ym-about-card-sub">{card.sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════ CONTACT ══════════════════ */}
+      <section id="contact" className="ym-section ym-contact-section">
+        <div className="ym-section-inner">
+          <div className="ym-section-head">
+            <div className="ym-section-tag" style={{ background: "rgba(255,255,255,0.1)", color: "#93c5fd" }}>📬 Get In Touch</div>
+            <h2 className="ym-section-h2" style={{ color: "#fff" }}>Contact Us</h2>
+            <div className="ym-section-line" style={{ background: "#f59e0b" }} />
+          </div>
+          <div className="ym-contact-grid">
+            <div className="ym-contact-info">
+              <h3>Yarwng Mathematics</h3>
+              <p className="ym-contact-tagline">"Amani Kok Kokborok bai Swrwngwi Mannai"</p>
+              {[
+                { icon: "👨‍🏫", label: "Instructor", val: "Rakesh Debbarma", sub: "M.Sc Mathematics, IIT Delhi" },
+                { icon: "📱", label: "Phone", val: <a href="tel:9366030347">9366030347</a>, sub: "WhatsApp available" },
+                { icon: "✉️", label: "Email", val: <a href="mailto:yarwngmathematics@gmail.com">yarwngmathematics@gmail.com</a>, sub: "" },
+                { icon: "📍", label: "Location", val: "Khumulwng, Tripura", sub: "Offline classes launching soon" },
+              ].map((r) => (
+                <div key={r.label} className="ym-contact-row">
+                  <div className="ym-contact-icon">{r.icon}</div>
+                  <div>
+                    <p className="ym-contact-val">{r.val}</p>
+                    {r.sub && <p className="ym-contact-sub">{r.sub}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="ym-contact-cta">
+              <div>
+                <p className="ym-contact-cta-title">Ready to Excel in Mathematics?</p>
+                <p className="ym-contact-cta-sub">Classes start 3rd June 2026. Limited seats per batch. Enroll now to secure your spot.</p>
+              </div>
+              <button onClick={() => openModal()} className="ym-contact-enroll-btn">🚀 Enroll Now →</button>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {["Class 10 · ₹600/mo", "Class 11 · ₹800/mo", "Class 12 · ₹900/mo"].map((t) => (
+                  <span key={t} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", padding: "6px 12px", fontSize: "12px", color: "rgba(255,255,255,0.65)" }}>{t}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════ FOOTER ══════════════════ */}
+      <footer className="ym-footer" role="contentinfo">
+        <div className="ym-footer-inner">
+          <div className="ym-footer-grid">
+            <div>
+              <p className="ym-footer-brand-name">Yarwng Mathematics</p>
+              <p className="ym-footer-brand-tagline">"Amani Kok Kokborok bai Swrwngwi Mannai"</p>
+              <p className="ym-footer-brand-desc">Professional Mathematics Coaching for Classes 10, 11 & 12. Conceptual clarity. Proven results. By Rakesh Debbarma, M.Sc IIT Delhi.</p>
+              <div className="ym-footer-badges">
+                <span className="ym-footer-badge"><span style={{ color: "#93c5fd", fontWeight: 700 }}>Cashfree</span><span>Secured</span></span>
+                <span className="ym-footer-badge"><span style={{ color: "#34d399" }}>🔒 SSL</span><span>Secure</span></span>
+              </div>
+            </div>
+            <div>
+              <p className="ym-footer-h4">Contact</p>
+              <p className="ym-footer-item">👨‍🏫 <strong style={{ color: "rgba(255,255,255,0.8)" }}>Rakesh Debbarma</strong></p>
+              <p className="ym-footer-item">🎓 M.Sc Mathematics, IIT Delhi</p>
+              <p className="ym-footer-item">📱 <a href="tel:9366030347" style={{ color: "#93c5fd", textDecoration: "none" }}>9366030347</a></p>
+              <p className="ym-footer-item">✉️ <a href="mailto:yarwngmathematics@gmail.com" style={{ color: "#93c5fd", textDecoration: "none" }}>yarwngmathematics@gmail.com</a></p>
+              <p className="ym-footer-item">📍 Khumulwng, Tripura</p>
+            </div>
+            <div>
+              <p className="ym-footer-h4">Classes Offered</p>
+              <p className="ym-footer-item">📘 Class 10 · Mon & Wed · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹600</span></p>
+              <p className="ym-footer-item">📙 Class 11 · Tue & Fri · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹800</span></p>
+              <p className="ym-footer-item">📗 Class 12 · Thu & Sat · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹900</span></p>
+              <p className="ym-footer-item" style={{ color: "#fb923c", marginTop: "12px" }}>🏫 Offline: Khumulwng (Launching Soon)</p>
+            </div>
+          </div>
+          <hr className="ym-footer-divider" />
+          <div className="ym-footer-policy-links">
+            {[
+              { label: "Terms & Conditions", href: POLICY.terms },
+              { label: "Privacy Policy", href: POLICY.privacy },
+              { label: "Refund & Cancellation Policy", href: POLICY.refund },
+              { label: "Shipping & Delivery Policy", href: POLICY.shipping },
+            ].map((l) => (
+              <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="ym-footer-policy-link">{l.label}</a>
+            ))}
+          </div>
+          <div className="ym-footer-copy">
+            <p>© {new Date().getFullYear()} Yarwng Mathematics. All rights reserved.</p>
+            <p>Managed by Rakesh Debbarma · M.Sc Mathematics, IIT Delhi</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* ══════════════════ MODAL ══════════════════ */}
+      {showModal && (
+        <div className="ym-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }} role="dialog" aria-modal="true" aria-label="Registration modal">
+          <div className="ym-modal">
+            {/* Header */}
+            <div className="ym-modal-head">
+              <button onClick={closeModal} className="ym-modal-close" aria-label="Close modal">×</button>
+              <div className="ym-modal-steps">
+                {(["form", "payment", "done"]).map((s, i) => {
+                  const stepIdx = ["form", "payment", "done"].indexOf(step);
+                  const isCurrentIdx = i === stepIdx;
+                  const isDone = i < stepIdx;
+                  return (
+                    <div key={s} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <div className={`ym-modal-step ${isCurrentIdx ? "current" : isDone ? "done" : "future"}`}>
+                        {isDone ? "✓" : i + 1}
+                      </div>
+                      {i < 2 && <div className={`ym-modal-step-line ${isDone ? "done" : "future"}`} />}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="ym-modal-emoji">{step === "form" ? "📝" : step === "payment" ? "💳" : "✅"}</div>
+              <div className="ym-modal-title">
+                {step === "form" ? "Join Yarwng Mathematics" : step === "payment" ? "Complete Payment" : "Registration Complete!"}
+              </div>
+              <div className="ym-modal-sub">
+                {step === "form" ? "Fill your details to proceed" : step === "payment" ? `${studentClass} · ₹${pay?.offer}/month` : "Welcome to Yarwng Mathematics"}
+              </div>
+            </div>
+
+            <div className="ym-modal-body">
+              {/* STEP 1: FORM */}
+              {step === "form" && (
+                <form onSubmit={handleSubmit}>
+                  <div className="ym-form-info">
+                    <span>ℹ️</span>
+                    <span>Your details will be saved after successful payment.</span>
+                  </div>
+                  <div className="ym-form-stack">
+                    <input type="text" placeholder="Student Name" value={name} onChange={(e) => setName(e.target.value)} required className="ym-input" />
+                    <input type="text" placeholder="WhatsApp Number" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} required className="ym-input" />
+                    <select value={studentClass} onChange={(e) => setStudentClass(e.target.value)} required className="ym-input">
+                      <option value="">Select Class</option>
+                      <option>Class 10</option>
+                      <option>Class 11</option>
+                      <option>Class 12</option>
+                    </select>
+                    <select value={mode} onChange={(e) => setMode(e.target.value)} required className="ym-input">
+                      <option value="">Select Mode</option>
+                      <option>Online</option>
+                      <option>Offline</option>
+                    </select>
+                    <p className="ym-policy-text">
+                      By registering you agree to our{" "}
+                      <a href={POLICY.terms} target="_blank" rel="noopener noreferrer">Terms & Conditions</a>,{" "}
+                      <a href={POLICY.privacy} target="_blank" rel="noopener noreferrer">Privacy Policy</a>,{" "}
+                      <a href={POLICY.refund} target="_blank" rel="noopener noreferrer">Refund Policy</a> and{" "}
+                      <a href={POLICY.shipping} target="_blank" rel="noopener noreferrer">Shipping Policy</a>.
+                    </p>
+                    <button type="submit" disabled={submitting} className="ym-submit-btn">
+                      {submitting ? "Please wait…" : "Next: Pay & Join →"}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* STEP 2: PAYMENT */}
+              {step === "payment" && pay && (
+                <div>
+                  <div className="ym-pay-summary">
+                    <div>
+                      <p className="ym-pay-class">{studentClass} · {mode}</p>
+                      <p>
+                        <span className="ym-pay-amount">₹{pay.offer}</span>
+                        <span className="ym-pay-unit"> /month</span>
+                      </p>
+                      {TEST_MODE && <p style={{ fontSize: "12px", color: "#ea580c", fontWeight: 700, marginTop: "4px" }}>⚠️ Test Mode — ₹1 charge</p>}
+                    </div>
+                    <div className="ym-pay-discount">
+                      {discount}% OFF<br />
+                      <span style={{ textDecoration: "line-through", color: "#9ca3af", fontSize: "12px" }}>₹{pay.original}</span>
+                    </div>
+                  </div>
+                  <button onClick={handleCashfreePay} disabled={payLoading} className="ym-pay-btn">
+                    {payLoading ? (
+                      <>
+                        <svg className="ym-spin" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
+                          <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" />
+                        </svg>
+                        Verifying payment…
+                      </>
+                    ) : <>💳 Pay ₹{pay.offer} Securely</>}
+                  </button>
+                  {payLoading && <p className="ym-pay-verify-msg">⏳ Confirming with bank — do not close this window.</p>}
+                  {payError && <div className="ym-pay-err">⚠️ {payError}</div>}
+                  <div className="ym-pay-secure">
+                    <p className="ym-pay-methods">UPI · Cards · Net Banking · Wallets</p>
+                    <p className="ym-pay-cf">🔒 100% Secure via <strong>Cashfree Payments</strong></p>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: DONE */}
+              {step === "done" && pay && (
+                <div className="ym-done-wrap">
+                  <div className="ym-done-confetti">🎉</div>
+                  <h3 className="ym-done-name">Welcome, {name}!</h3>
+                  <p className="ym-done-sub">You're now part of Yarwng Mathematics!</p>
+                  <div className="ym-done-wa-box">
+                    <p className="ym-done-wa-title">✅ Opening {studentClass} WhatsApp Group…</p>
+                    <p className="ym-done-wa-sub">{countdown > 0 ? `Redirecting in ${countdown}s` : "WhatsApp should be open now!"}</p>
+                  </div>
+                  <a href={pay.whatsapp} target="_blank" rel="noopener noreferrer" className="ym-done-wa-btn">
+                    💬 Open {studentClass} WhatsApp Group
+                  </a>
+                  <p style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "16px" }}>If WhatsApp didn't open, tap the button above.</p>
+                  <button onClick={closeModal} className="ym-done-close-btn">Close</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
