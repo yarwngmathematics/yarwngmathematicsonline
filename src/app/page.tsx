@@ -2,56 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 
-/* ─── SEO HELMET INJECT (Next.js Head alternative as inline script) ─── */
-/* Place this in your _document.tsx / layout.tsx <Head>:
-
-<title>Yarwng Mathematics – Expert Math Coaching by IIT Delhi | Class 10, 11, 12</title>
-<meta name="description" content="Online & offline mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma (M.Sc, IIT Delhi). Live Google Meet sessions. Enroll now from ₹600/month." />
-<meta name="keywords" content="mathematics coaching Tripura, math tuition Class 10 11 12, online math class Kokborok, Yarwng Mathematics, Rakesh Debbarma IIT Delhi, Khumulwng tuition" />
-<meta name="author" content="Rakesh Debbarma" />
-<meta name="robots" content="index, follow" />
-<link rel="canonical" href="https://yarwngmathematicsonline.vercel.app/" />
-
-<!-- Open Graph -->
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://yarwngmathematicsonline.vercel.app/" />
-<meta property="og:title" content="Yarwng Mathematics – IIT Delhi Math Coaching | Class 10, 11, 12" />
-<meta property="og:description" content="Expert mathematics coaching by an IIT Delhi M.Sc graduate. Online via Google Meet. Classes 10–12. Starting 3rd June 2026." />
-<meta property="og:image" content="https://yarwngmathematicsonline.vercel.app/og-image.jpg" />
-<meta property="og:locale" content="en_IN" />
-<meta property="og:site_name" content="Yarwng Mathematics" />
-
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Yarwng Mathematics – IIT Delhi Math Coaching" />
-<meta name="twitter:description" content="Live online math classes for Class 10–12 by Rakesh Debbarma, IIT Delhi." />
-<meta name="twitter:image" content="https://yarwngmathematicsonline.vercel.app/og-image.jpg" />
-
-<!-- JSON-LD Structured Data -->
-<script type="application/ld+json">{JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "EducationalOrganization",
-  "name": "Yarwng Mathematics",
-  "url": "https://yarwngmathematicsonline.vercel.app",
-  "logo": "https://yarwngmathematicsonline.vercel.app/Logo.png",
-  "description": "Expert mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
-  "address": { "@type": "PostalAddress", "addressLocality": "Khumulwng", "addressRegion": "Tripura", "addressCountry": "IN" },
-  "telephone": "+919366030347",
-  "email": "yarwngmathematics@gmail.com",
-  "founder": {
-    "@type": "Person",
-    "name": "Rakesh Debbarma",
-    "alumniOf": { "@type": "EducationalOrganization", "name": "IIT Delhi" },
-    "hasCredential": { "@type": "EducationalOccupationalCredential", "credentialCategory": "M.Sc Mathematics" }
-  },
-  "offers": [
-    { "@type": "Offer", "name": "Class 10 Mathematics", "price": "600", "priceCurrency": "INR", "availability": "https://schema.org/InStock" },
-    { "@type": "Offer", "name": "Class 11 Mathematics", "price": "800", "priceCurrency": "INR", "availability": "https://schema.org/InStock" },
-    { "@type": "Offer", "name": "Class 12 Mathematics", "price": "900", "priceCurrency": "INR", "availability": "https://schema.org/InStock" }
-  ]
-})}</script>
-*/
-
 /* ─────────────────────────────────────────
    PAYMENT CONFIG
 ───────────────────────────────────────── */
@@ -77,11 +27,25 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBZepl7eijkaiajLUwV
 
 /* ─────────────────────────────────────────
    VISITOR COUNTER CONFIG
-   Uses countapi.xyz — free, no signup needed.
-   First visit auto-creates the counter.
+   
+   Uses api.counterapi.dev — free, no signup.
+   This is the updated replacement for the
+   deprecated countapi.xyz service.
+
+   HOW IT WORKS:
+   1. On first load, calls /hit/ to increment and get count
+   2. The namespace+key auto-creates on first hit
+   3. Counter persists permanently on their servers
+
+   SETUP (one-time):
+   - Just deploy. On first visit it auto-creates.
+   - To view your count anytime:
+     GET https://api.counterapi.dev/v1/yarwngmathematics/site-visitors-2026/get
 ───────────────────────────────────────── */
 const COUNTER_NAMESPACE = "yarwngmathematics";
 const COUNTER_KEY = "site-visitors-2026";
+// Full API URL: https://api.counterapi.dev/v1/{namespace}/{key}/up
+const COUNTER_HIT_URL = `https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/up`;
 
 const SLOTS = {
   "Class 10": { days: "Monday & Wednesday", time: "5:00 PM – 7:00 PM" },
@@ -158,23 +122,74 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [countdown, setCountdown] = useState(3);
 
-  /* ── Visitor counter ── */
+  /* ── Visitor counter state ── */
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
+  const [counterLoading, setCounterLoading] = useState(true);
+  const [counterError, setCounterError] = useState(false);
 
   const sheetSubmittedRef = useRef(false);
+  const counterHitRef = useRef(false); // Prevent double-counting in StrictMode
 
-  /* ── Visitor counter: hit on first load ── */
+  /* ─────────────────────────────────────────
+     VISITOR COUNTER: Hit on first load only.
+     
+     api.counterapi.dev returns JSON:
+     { "namespace": "...", "key": "...", "count": 42 }
+     
+     We use /up endpoint to increment by 1 and
+     get the new count in one request.
+  ───────────────────────────────────────── */
   useEffect(() => {
-    fetch(`https://api.countapi.xyz/hit/${COUNTER_NAMESPACE}/${COUNTER_KEY}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data && typeof data.value === "number") {
-          setVisitorCount(data.value);
+    if (counterHitRef.current) return; // StrictMode guard
+    counterHitRef.current = true;
+
+    const hitCounter = async () => {
+      setCounterLoading(true);
+      setCounterError(false);
+      try {
+        const response = await fetch(COUNTER_HIT_URL, {
+          method: "GET", // counterapi.dev uses GET for /up
+          headers: { "Accept": "application/json" },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
-      })
-      .catch(() => {
-        // Silently fail — counter is non-critical
-      });
+
+        const data = await response.json();
+
+        // counterapi.dev returns { count: number }
+        if (data && typeof data.count === "number") {
+          setVisitorCount(data.count);
+        } else {
+          throw new Error("Unexpected response format");
+        }
+      } catch (err) {
+        console.warn("Visitor counter failed:", err);
+        setCounterError(true);
+        // Optionally try to at least GET the count (without incrementing)
+        tryGetCount();
+      } finally {
+        setCounterLoading(false);
+      }
+    };
+
+    // Fallback: just read current count without incrementing
+    const tryGetCount = async () => {
+      try {
+        const getUrl = `https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/get`;
+        const res = await fetch(getUrl, { headers: { "Accept": "application/json" } });
+        const data = await res.json();
+        if (data && typeof data.count === "number") {
+          setVisitorCount(data.count);
+          setCounterError(false);
+        }
+      } catch {
+        // Both failed — counter stays hidden
+      }
+    };
+
+    hitCounter();
   }, []);
 
   /* ── Scroll spy & nav shadow ── */
@@ -271,18 +286,9 @@ export default function Home() {
       if (!sheetSubmittedRef.current) {
         sheetSubmittedRef.current = true;
         submitToSheet({
-          name,
-          whatsapp,
-          studentClass,
-          board,
-          medium,
-          schoolName,
-          address,
-          mode,
-          utr: confirmedOrderId,
-          status: "paid_cashfree",
-          paidAmount: String(pay.offer),
-          timestamp: new Date().toISOString(),
+          name, whatsapp, studentClass, board, medium, schoolName, address, mode,
+          utr: confirmedOrderId, status: "paid_cashfree",
+          paidAmount: String(pay.offer), timestamp: new Date().toISOString(),
         });
       }
       setStep("done");
@@ -307,6 +313,12 @@ export default function Home() {
     }, 1000);
     return () => clearInterval(t);
   }, [step]);
+
+  /* ── Helper: display the visitor count nicely ── */
+  const displayCount = (count: number | null) => {
+    if (count === null) return "—";
+    return count.toLocaleString("en-IN");
+  };
 
   /* ─── AD VARIANTS ─── */
   const adVariants = [
@@ -426,14 +438,51 @@ export default function Home() {
           content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
           width: 4px; height: 4px; border-radius: 50%; background: var(--gold);
         }
+
+        /* ── VISITOR PILL (navbar) ── */
         .ym-nav-visitor {
           display: flex; align-items: center; gap: 6px;
           background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
           border-radius: 100px; padding: 5px 12px;
+          transition: opacity 0.4s;
         }
-        .ym-nav-visitor-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
+        .ym-nav-visitor.loading { opacity: 0.5; }
+        .ym-nav-visitor-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: #22c55e;
+          animation: visitorPulse 2s ease infinite;
+          flex-shrink: 0;
+        }
+        .ym-nav-visitor-dot.error { background: #f59e0b; animation: none; }
         .ym-nav-visitor-text { color: rgba(255,255,255,0.6); font-size: 12px; white-space: nowrap; }
         .ym-nav-visitor-count { color: #fff; font-weight: 700; font-size: 12px; }
+
+        /* ── SKELETON SHIMMER ── */
+        @keyframes skeletonShimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .ym-skeleton {
+          display: inline-block;
+          background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 75%);
+          background-size: 200% auto;
+          animation: skeletonShimmer 1.5s linear infinite;
+          border-radius: 4px;
+          height: 1em;
+          width: 40px;
+          vertical-align: middle;
+        }
+        .ym-skeleton-light {
+          background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.06) 75%);
+          background-size: 200% auto;
+          animation: skeletonShimmer 1.5s linear infinite;
+          border-radius: 4px;
+          height: 1em;
+          width: 60px;
+          display: inline-block;
+          vertical-align: middle;
+        }
+
         @keyframes visitorPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
         .ym-nav-cta {
           background: var(--gold); color: #1a0a00;
@@ -474,20 +523,17 @@ export default function Home() {
           border-radius: 12px; padding: 12px 16px; margin-top: 8px;
         }
         .ym-mobile-visitor-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
+        .ym-mobile-visitor-dot.error { background: #f59e0b; animation: none; }
         .ym-mobile-visitor-label { color: rgba(255,255,255,0.5); font-size: 13px; }
         .ym-mobile-visitor-count { color: #fff; font-size: 18px; font-weight: 700; }
 
-        @media (max-width: 1100px) {
-          .ym-nav-visitor { display: none; }
-        }
+        @media (max-width: 1100px) { .ym-nav-visitor { display: none; } }
         @media (max-width: 900px) {
           .ym-nav-links { display: none; }
           .ym-hamburger { display: flex; flex-direction: column; }
           .ym-nav-cta { display: none; }
         }
-        @media (max-width: 600px) {
-          .ym-nav-enroll { font-size: 12px; padding: 8px 14px; }
-        }
+        @media (max-width: 600px) { .ym-nav-enroll { font-size: 12px; padding: 8px 14px; } }
 
         /* ── HERO ── */
         @keyframes heroShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
@@ -500,6 +546,7 @@ export default function Home() {
         @keyframes glowPulse { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.45)} 50%{box-shadow:0 0 0 16px rgba(245,158,11,0)} }
         @keyframes cfPulse { 0%,100%{box-shadow:0 0 0 0 rgba(29,78,216,0.45)} 50%{box-shadow:0 0 0 14px rgba(29,78,216,0)} }
         @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes countUp { from{opacity:0;transform:translateY(12px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
 
         .hero-section {
           background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 40%, #0f2d6b 65%, #0d1b4b 85%, #060f2e 100%);
@@ -671,15 +718,128 @@ export default function Home() {
         .ym-about-card-sub { color: #3b82f6; font-size: 12px; margin-top: 4px; }
         @media (max-width: 800px) { .ym-about-grid { grid-template-columns: 1fr; gap: 40px; } }
 
-        /* ── VISITOR COUNTER SECTION ── */
-        .ym-visitor-section { background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 100%); padding: 48px 24px; }
-        .ym-visitor-inner { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 24px; }
-        .ym-visitor-label { color: rgba(255,255,255,0.5); font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
-        .ym-visitor-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 32px 48px; display: flex; align-items: center; gap: 16px; }
-        .ym-visitor-card-dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
-        .ym-visitor-card-count { font-size: clamp(2.8rem, 6vw, 4rem); font-weight: 800; color: #fff; line-height: 1; font-family: 'Cormorant Garamond', serif; }
-        .ym-visitor-card-label { color: rgba(255,255,255,0.5); font-size: 14px; margin-top: 4px; }
-        .ym-visitor-sub { color: rgba(255,255,255,0.35); font-size: 12px; text-align: center; }
+        /* ═══════════════════════════════════════════
+           VISITOR COUNTER SECTION — Redesigned
+           Beautiful full-width dark stats banner
+        ═══════════════════════════════════════════ */
+        .ym-visitor-section {
+          background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 50%, #0a1f5e 100%);
+          padding: 64px 24px;
+          position: relative;
+          overflow: hidden;
+        }
+        /* Decorative background circles */
+        .ym-visitor-section::before {
+          content: '';
+          position: absolute;
+          top: -80px; right: -80px;
+          width: 320px; height: 320px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(29,78,216,0.2) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .ym-visitor-section::after {
+          content: '';
+          position: absolute;
+          bottom: -60px; left: -60px;
+          width: 240px; height: 240px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .ym-visitor-inner {
+          max-width: 1200px; margin: 0 auto;
+          display: flex; flex-direction: column; align-items: center; gap: 32px;
+          position: relative; z-index: 1;
+        }
+        .ym-visitor-header {
+          text-align: center;
+        }
+        .ym-visitor-eyebrow {
+          display: inline-flex; align-items: center; gap: 8px;
+          background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 100px; padding: 6px 16px;
+          color: #93c5fd; font-size: 12px; font-weight: 600;
+          letter-spacing: 0.08em; text-transform: uppercase;
+          margin-bottom: 16px;
+        }
+        .ym-visitor-title {
+          color: #fff; font-size: clamp(1.4rem, 3vw, 2rem);
+          font-weight: 700; margin-bottom: 6px;
+        }
+        .ym-visitor-subtitle {
+          color: rgba(255,255,255,0.4); font-size: 14px;
+        }
+        /* The big counter card */
+        .ym-visitor-card {
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 28px;
+          padding: 40px 60px;
+          display: flex; align-items: center; gap: 24px;
+          box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+          position: relative; overflow: hidden;
+          min-width: 320px;
+        }
+        .ym-visitor-card::before {
+          content: '';
+          position: absolute; inset: 0;
+          background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%);
+          pointer-events: none;
+        }
+        .ym-visitor-card-left {
+          display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+        .ym-visitor-card-dot {
+          width: 14px; height: 14px; border-radius: 50%;
+          background: #22c55e;
+          box-shadow: 0 0 0 4px rgba(34,197,94,0.2);
+          animation: visitorPulse 2s ease infinite;
+          flex-shrink: 0;
+        }
+        .ym-visitor-card-dot.error { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,0.2); animation: none; }
+        .ym-visitor-card-divider {
+          width: 1px; height: 60px;
+          background: rgba(255,255,255,0.12);
+        }
+        .ym-visitor-card-right {}
+        .ym-visitor-card-count {
+          font-size: clamp(3rem, 8vw, 5rem);
+          font-weight: 800; color: #fff;
+          line-height: 1;
+          font-family: 'Cormorant Garamond', serif;
+          animation: countUp 0.6s ease both;
+          letter-spacing: -0.02em;
+        }
+        .ym-visitor-card-count.loading {
+          animation: none;
+        }
+        .ym-visitor-card-label {
+          color: rgba(255,255,255,0.45);
+          font-size: 15px; margin-top: 6px;
+          font-weight: 400;
+        }
+        /* Mini stat pills below the big counter */
+        .ym-visitor-stats {
+          display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+        }
+        .ym-visitor-stat-pill {
+          display: flex; align-items: center; gap: 8px;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 12px; padding: 10px 16px;
+        }
+        .ym-visitor-stat-pill-icon { font-size: 16px; }
+        .ym-visitor-stat-pill-text { color: rgba(255,255,255,0.55); font-size: 13px; }
+        .ym-visitor-stat-pill-val { color: #fff; font-weight: 700; font-size: 13px; }
+        .ym-visitor-poweredby {
+          color: rgba(255,255,255,0.2); font-size: 11px; text-align: center;
+          margin-top: -16px;
+        }
+        @media (max-width: 500px) {
+          .ym-visitor-card { padding: 28px 32px; min-width: unset; flex-direction: column; text-align: center; gap: 16px; }
+          .ym-visitor-card-divider { display: none; }
+        }
 
         /* ── CONTACT ── */
         .ym-contact-section { background: var(--navy); }
@@ -711,14 +871,27 @@ export default function Home() {
         .ym-footer-h4 { color: rgba(255,255,255,0.8); font-weight: 600; font-size: 14px; margin-bottom: 14px; }
         .ym-footer-item { font-size: 13px; margin-bottom: 8px; line-height: 1.5; }
         .ym-footer-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin-bottom: 20px; }
+
+        /* ── FOOTER VISITOR BAR — refined ── */
         .ym-footer-visitor-bar {
-          display: flex; align-items: center; justify-content: center; gap: 12px;
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 14px; padding: 14px 24px; margin-bottom: 28px;
+          display: flex; align-items: center; justify-content: center; gap: 14px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px; padding: 16px 28px;
+          margin-bottom: 28px;
+          flex-wrap: wrap;
         }
-        .ym-footer-visitor-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
-        .ym-footer-visitor-count { color: #fff; font-weight: 700; font-size: 20px; }
+        .ym-footer-visitor-dot {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: #22c55e;
+          animation: visitorPulse 2s ease infinite;
+          flex-shrink: 0;
+        }
+        .ym-footer-visitor-dot.error { background: #f59e0b; animation: none; }
+        .ym-footer-visitor-count { color: #fff; font-weight: 700; font-size: 20px; font-family: 'Cormorant Garamond', serif; }
         .ym-footer-visitor-label { color: rgba(255,255,255,0.4); font-size: 13px; }
+        .ym-footer-visitor-sep { color: rgba(255,255,255,0.15); font-size: 18px; }
+
         .ym-footer-policy-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 20px; margin-bottom: 16px; }
         .ym-footer-policy-link { font-size: 12px; color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.2s; }
         .ym-footer-policy-link:hover { color: #93c5fd; }
@@ -783,15 +956,11 @@ export default function Home() {
         .ym-done-close-btn:hover { background: var(--gray-200); }
         .ym-spin { animation: spin 0.8s linear infinite; }
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-
-        /* ── MEDIUM BADGE ── */
-        .ym-medium-badge { display: inline-flex; align-items: center; gap: 6px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 6px 12px; font-size: 13px; color: #1e40af; font-weight: 600; }
       `}</style>
 
       {/* ══════════════════ NAVBAR ══════════════════ */}
       <nav className={`ym-nav${scrolled ? " scrolled" : ""}`} role="navigation" aria-label="Main navigation">
         <div className="ym-nav-inner">
-          {/* Brand */}
           <a href="#home" className="ym-nav-brand" onClick={(e) => { e.preventDefault(); scrollToSection("home"); }}>
             <img src="/Logo.png" alt="Yarwng Mathematics Logo" className="ym-nav-logo" />
             <div>
@@ -800,41 +969,32 @@ export default function Home() {
             </div>
           </a>
 
-          {/* Desktop Nav Links */}
           <div className="ym-nav-links" role="menubar">
             {NAV_LINKS.map((l) => (
-              <button
-                key={l.id}
-                role="menuitem"
-                onClick={() => scrollToSection(l.id)}
+              <button key={l.id} role="menuitem" onClick={() => scrollToSection(l.id)}
                 className={`ym-nav-link${activeSection === l.id ? " active active-dot" : ""}`}
-                aria-current={activeSection === l.id ? "page" : undefined}
-              >
+                aria-current={activeSection === l.id ? "page" : undefined}>
                 {l.label}
               </button>
             ))}
           </div>
 
-          {/* Visitor counter pill in nav (desktop only) */}
-          {visitorCount !== null && (
-            <div className="ym-nav-visitor" title="Total site visitors">
-              <span className="ym-nav-visitor-dot" />
-              <span className="ym-nav-visitor-count">{visitorCount.toLocaleString("en-IN")}</span>
-              <span className="ym-nav-visitor-text">visitors</span>
-            </div>
-          )}
+          {/* Visitor pill — shows loading skeleton or real count */}
+          <div className={`ym-nav-visitor${counterLoading ? " loading" : ""}`} title="Total site visitors">
+            <span className={`ym-nav-visitor-dot${counterError ? " error" : ""}`} />
+            {counterLoading ? (
+              <span className="ym-skeleton" style={{ width: 32 }} />
+            ) : (
+              <span className="ym-nav-visitor-count">{displayCount(visitorCount)}</span>
+            )}
+            <span className="ym-nav-visitor-text">visitors</span>
+          </div>
 
-          {/* Right side CTA */}
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <a href="/login" className="ym-nav-cta">Login / Register</a>
             <button onClick={() => openModal()} className="ym-nav-enroll">Enroll Now →</button>
-            {/* Hamburger */}
-            <button
-              className="ym-hamburger"
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileMenuOpen}
-            >
+            <button className="ym-hamburger" onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"} aria-expanded={mobileMenuOpen}>
               <span style={{ transform: mobileMenuOpen ? "rotate(45deg) translate(5px,5px)" : "none" }} />
               <span style={{ opacity: mobileMenuOpen ? 0 : 1 }} />
               <span style={{ transform: mobileMenuOpen ? "rotate(-45deg) translate(5px,-5px)" : "none" }} />
@@ -854,16 +1014,17 @@ export default function Home() {
         <button onClick={() => { openModal(); setMobileMenuOpen(false); }} className="ym-nav-enroll" style={{ borderRadius: "12px" }}>
           Enroll Now →
         </button>
-        {/* Visitor counter in mobile menu */}
-        {visitorCount !== null && (
-          <div className="ym-mobile-visitor">
-            <span className="ym-mobile-visitor-dot" />
-            <div>
-              <div className="ym-mobile-visitor-count">{visitorCount.toLocaleString("en-IN")}</div>
-              <div className="ym-mobile-visitor-label">total visitors to this site</div>
-            </div>
+        <div className="ym-mobile-visitor">
+          <span className={`ym-mobile-visitor-dot${counterError ? " error" : ""}`} />
+          <div>
+            {counterLoading ? (
+              <div className="ym-skeleton" style={{ width: 60, height: "1.4em" }} />
+            ) : (
+              <div className="ym-mobile-visitor-count">{displayCount(visitorCount)}</div>
+            )}
+            <div className="ym-mobile-visitor-label">total visitors to this site</div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* ══════════════════ HERO ══════════════════ */}
@@ -880,25 +1041,19 @@ export default function Home() {
         ].map((s, i) => (
           <span key={i} className="math-sym" aria-hidden="true" style={{ top: s.top, left: s.left, fontSize: s.size, animationDuration: s.dur, animationDelay: s.delay }}>{s.sym}</span>
         ))}
-
         <div className="hero-inner">
           <div className="hero-left">
             <div className="hero-badge fade-up-1">
               <span className="hero-badge-dot" />
               <span className="hero-badge-text">Mathematics · English Medium</span>
             </div>
-            <h1 className="hero-h1 fade-up-2">
-              Master Mathematics<br />
-              <span className="hero-h1-accent">With Confidence</span>
-            </h1>
+            <h1 className="hero-h1 fade-up-2">Master Mathematics<br /><span className="hero-h1-accent">With Confidence</span></h1>
             <div className="hero-tagline-row fade-up-3">
               <div className="hero-tagline-line" />
               <p className="hero-tagline">"Amani Kok Kokborok bai Swrwngwi Mannai"</p>
               <div className="hero-tagline-line" />
             </div>
-            <p className="hero-desc fade-up-3">
-              Expert coaching for <strong style={{ color: "#fff" }}>Class 10, 11 & 12</strong> by an IIT Delhi graduate — Online via Google Meet & Offline at Khumulwng.
-            </p>
+            <p className="hero-desc fade-up-3">Expert coaching for <strong style={{ color: "#fff" }}>Class 10, 11 & 12</strong> by an IIT Delhi graduate — Online via Google Meet & Offline at Khumulwng.</p>
             <div className="hero-btns fade-up-4">
               <button onClick={() => openModal()} className="ym-btn-gold">Enroll Khwlaidi →</button>
               <button onClick={() => scrollToSection("classes")} className="ym-btn-ghost">View Schedule</button>
@@ -917,7 +1072,6 @@ export default function Home() {
               ))}
             </div>
           </div>
-
           <div className="hero-right fade-up-2">
             <div className="hero-card">
               <div className="hero-card-glow" />
@@ -976,7 +1130,6 @@ export default function Home() {
             <div className="ym-section-line" style={{ background: "#22c55e" }} />
             <p className="ym-section-desc">Live interactive sessions via Google Meet. Join from anywhere across India.</p>
           </div>
-
           <div className="ym-classes-grid">
             {Object.entries(PAYMENT.classes).map(([cls], idx) => (
               <div key={cls} className={`ym-class-card${idx === 1 ? " featured" : ""}`}>
@@ -993,8 +1146,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-
-          {/* Slot Accordion */}
           <div className="ym-slots-wrap">
             <button onClick={() => { setSlotsOpen(!slotsOpen); setSelectedSlot(null); }} className="ym-slots-toggle">
               <span>📅 View Detailed Class Slots</span>
@@ -1005,8 +1156,7 @@ export default function Home() {
                 {["Class 10", "Class 11", "Class 12"].map((cls) => (
                   <div key={cls}>
                     <button onClick={() => setSelectedSlot(selectedSlot === cls ? null : cls)} className={`ym-slot-btn${selectedSlot === cls ? " active" : ""}`}>
-                      <span>{cls}</span>
-                      <span>{selectedSlot === cls ? "▲" : "▼"}</span>
+                      <span>{cls}</span><span>{selectedSlot === cls ? "▲" : "▼"}</span>
                     </button>
                     {selectedSlot === cls && (
                       <div className="ym-slot-detail">
@@ -1119,21 +1269,56 @@ export default function Home() {
       </section>
 
       {/* ══════════════════ VISITOR COUNTER SECTION ══════════════════ */}
-      {visitorCount !== null && (
-        <section className="ym-visitor-section" aria-label="Visitor counter">
-          <div className="ym-visitor-inner">
-            <p className="ym-visitor-label">🌐 Live Site Statistics</p>
-            <div className="ym-visitor-card">
-              <span className="ym-visitor-card-dot" />
-              <div>
-                <div className="ym-visitor-card-count">{visitorCount.toLocaleString("en-IN")}</div>
-                <div className="ym-visitor-card-label">total visitors</div>
+      <section className="ym-visitor-section" aria-label="Visitor statistics">
+        <div className="ym-visitor-inner">
+          <div className="ym-visitor-header">
+            <div className="ym-visitor-eyebrow">
+              <span>🌐</span> Live Site Statistics
+            </div>
+            <h2 className="ym-visitor-title">People Who've Discovered Yarwng Mathematics</h2>
+            <p className="ym-visitor-subtitle">Counter updates with every new visit</p>
+          </div>
+
+          {/* Big counter card */}
+          <div className="ym-visitor-card">
+            <div className="ym-visitor-card-left">
+              <span className={`ym-visitor-card-dot${counterError ? " error" : ""}`} />
+            </div>
+            <div className="ym-visitor-card-divider" />
+            <div className="ym-visitor-card-right">
+              {counterLoading ? (
+                <div className="ym-skeleton" style={{ width: 120, height: "3.5rem", borderRadius: 8 }} />
+              ) : (
+                <div className="ym-visitor-card-count">{displayCount(visitorCount)}</div>
+              )}
+              <div className="ym-visitor-card-label">
+                {counterError ? "⚠️ Counter unavailable right now" : "total visitors since launch"}
               </div>
             </div>
-            <p className="ym-visitor-sub">Counter updates with every new visit · Powered by countapi.xyz</p>
           </div>
-        </section>
-      )}
+
+          {/* Stat pills */}
+          <div className="ym-visitor-stats">
+            <div className="ym-visitor-stat-pill">
+              <span className="ym-visitor-stat-pill-icon">📅</span>
+              <span className="ym-visitor-stat-pill-text">Classes start</span>
+              <span className="ym-visitor-stat-pill-val">3rd June 2026</span>
+            </div>
+            <div className="ym-visitor-stat-pill">
+              <span className="ym-visitor-stat-pill-icon">🎓</span>
+              <span className="ym-visitor-stat-pill-text">Taught by</span>
+              <span className="ym-visitor-stat-pill-val">IIT Delhi M.Sc</span>
+            </div>
+            <div className="ym-visitor-stat-pill">
+              <span className="ym-visitor-stat-pill-icon">📍</span>
+              <span className="ym-visitor-stat-pill-text">Based in</span>
+              <span className="ym-visitor-stat-pill-val">Khumulwng, Tripura</span>
+            </div>
+          </div>
+
+          <p className="ym-visitor-poweredby">Powered by counterapi.dev · counts increment on each visit</p>
+        </div>
+      </section>
 
       {/* ══════════════════ CONTACT ══════════════════ */}
       <section id="contact" className="ym-section ym-contact-section">
@@ -1208,14 +1393,21 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── Visitor counter bar in footer ── */}
-          {visitorCount !== null && (
-            <div className="ym-footer-visitor-bar">
-              <span className="ym-footer-visitor-dot" />
-              <span className="ym-footer-visitor-count">{visitorCount.toLocaleString("en-IN")}</span>
-              <span className="ym-footer-visitor-label">people have visited this site</span>
-            </div>
-          )}
+          {/* Footer visitor bar */}
+          <div className="ym-footer-visitor-bar">
+            <span className={`ym-footer-visitor-dot${counterError ? " error" : ""}`} />
+            {counterLoading ? (
+              <span className="ym-skeleton" style={{ width: 48, height: "1.3em" }} />
+            ) : (
+              <span className="ym-footer-visitor-count">{displayCount(visitorCount)}</span>
+            )}
+            <span className="ym-footer-visitor-sep">·</span>
+            <span className="ym-footer-visitor-label">people have visited this site</span>
+            <span className="ym-footer-visitor-sep">·</span>
+            <span className="ym-footer-visitor-label" style={{ color: counterError ? "#f59e0b" : "#22c55e", fontSize: "11px" }}>
+              {counterError ? "⚠ counter offline" : "● live"}
+            </span>
+          </div>
 
           <hr className="ym-footer-divider" />
           <div className="ym-footer-policy-links">
@@ -1239,7 +1431,6 @@ export default function Home() {
       {showModal && (
         <div className="ym-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }} role="dialog" aria-modal="true" aria-label="Registration modal">
           <div className="ym-modal">
-            {/* Header */}
             <div className="ym-modal-head">
               <button onClick={closeModal} className="ym-modal-close" aria-label="Close modal">×</button>
               <div className="ym-modal-steps">
@@ -1267,7 +1458,6 @@ export default function Home() {
             </div>
 
             <div className="ym-modal-body">
-              {/* STEP 1: FORM */}
               {step === "form" && (
                 <form onSubmit={handleSubmit}>
                   <div className="ym-form-info">
@@ -1275,43 +1465,18 @@ export default function Home() {
                     <span>Your details will be saved after successful payment.</span>
                   </div>
                   <div className="ym-form-stack">
-
-                    {/* Student Name */}
                     <div className="ym-form-group">
                       <label className="ym-form-label">Student Name *</label>
-                      <input
-                        type="text"
-                        placeholder="Full name of the student"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                        className="ym-input"
-                      />
+                      <input type="text" placeholder="Full name of the student" value={name} onChange={(e) => setName(e.target.value)} required className="ym-input" />
                     </div>
-
-                    {/* WhatsApp */}
                     <div className="ym-form-group">
                       <label className="ym-form-label">WhatsApp Number *</label>
-                      <input
-                        type="tel"
-                        placeholder="10-digit WhatsApp number"
-                        value={whatsapp}
-                        onChange={(e) => setWhatsapp(e.target.value)}
-                        required
-                        className="ym-input"
-                      />
+                      <input type="tel" placeholder="10-digit WhatsApp number" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} required className="ym-input" />
                     </div>
-
-                    {/* Class & Board on same row */}
                     <div className="ym-form-row">
                       <div className="ym-form-group">
                         <label className="ym-form-label">Class *</label>
-                        <select
-                          value={studentClass}
-                          onChange={(e) => setStudentClass(e.target.value)}
-                          required
-                          className="ym-input"
-                        >
+                        <select value={studentClass} onChange={(e) => setStudentClass(e.target.value)} required className="ym-input">
                           <option value="">Select Class</option>
                           <option>Class 10</option>
                           <option>Class 11</option>
@@ -1320,12 +1485,7 @@ export default function Home() {
                       </div>
                       <div className="ym-form-group">
                         <label className="ym-form-label">Board *</label>
-                        <select
-                          value={board}
-                          onChange={(e) => setBoard(e.target.value)}
-                          required
-                          className="ym-input"
-                        >
+                        <select value={board} onChange={(e) => setBoard(e.target.value)} required className="ym-input">
                           <option value="">Select Board</option>
                           <option value="CBSE">CBSE</option>
                           <option value="TBSE">TBSE</option>
@@ -1333,17 +1493,10 @@ export default function Home() {
                         </select>
                       </div>
                     </div>
-
-                    {/* Medium & Mode on same row */}
                     <div className="ym-form-row">
                       <div className="ym-form-group">
                         <label className="ym-form-label">Medium *</label>
-                        <select
-                          value={medium}
-                          onChange={(e) => setMedium(e.target.value)}
-                          required
-                          className="ym-input"
-                        >
+                        <select value={medium} onChange={(e) => setMedium(e.target.value)} required className="ym-input">
                           <option value="English">English</option>
                           <option value="Bengali">Bengali</option>
                           <option value="Kokborok">Kokborok</option>
@@ -1351,53 +1504,25 @@ export default function Home() {
                       </div>
                       <div className="ym-form-group">
                         <label className="ym-form-label">Mode *</label>
-                        <select
-                          value={mode}
-                          onChange={(e) => setMode(e.target.value)}
-                          required
-                          className="ym-input"
-                        >
+                        <select value={mode} onChange={(e) => setMode(e.target.value)} required className="ym-input">
                           <option value="">Select Mode</option>
                           <option value="Online">Online</option>
                           <option value="Offline">Offline</option>
                         </select>
                       </div>
                     </div>
-
-                    {/* School Name */}
                     <div className="ym-form-group">
                       <label className="ym-form-label">School Name *</label>
-                      <input
-                        type="text"
-                        placeholder="Name of the school"
-                        value={schoolName}
-                        onChange={(e) => setSchoolName(e.target.value)}
-                        required
-                        className="ym-input"
-                      />
+                      <input type="text" placeholder="Name of the school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} required className="ym-input" />
                     </div>
-
-                    {/* Address */}
                     <div className="ym-form-group">
                       <label className="ym-form-label">Address *</label>
-                      <input
-                        type="text"
-                        placeholder="Village / Town / Area"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        required
-                        className="ym-input"
-                      />
+                      <input type="text" placeholder="Village / Town / Area" value={address} onChange={(e) => setAddress(e.target.value)} required className="ym-input" />
                     </div>
-
-                    {/* Medium note */}
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "10px", padding: "10px 14px" }}>
                       <span style={{ fontSize: "16px" }}>📢</span>
-                      <span style={{ fontSize: "13px", color: "#15803d", fontWeight: 500 }}>
-                        Classes are taught in <strong>English Medium</strong>. Select your school medium above for our records.
-                      </span>
+                      <span style={{ fontSize: "13px", color: "#15803d", fontWeight: 500 }}>Classes are taught in <strong>English Medium</strong>. Select your school medium above for our records.</span>
                     </div>
-
                     <p className="ym-policy-text">
                       By registering you agree to our{" "}
                       <a href={POLICY.terms} target="_blank" rel="noopener noreferrer">Terms & Conditions</a>,{" "}
@@ -1412,16 +1537,12 @@ export default function Home() {
                 </form>
               )}
 
-              {/* STEP 2: PAYMENT */}
               {step === "payment" && pay && (
                 <div>
                   <div className="ym-pay-summary">
                     <div>
                       <p className="ym-pay-class">{studentClass} · {board} · {mode}</p>
-                      <p>
-                        <span className="ym-pay-amount">₹{pay.offer}</span>
-                        <span className="ym-pay-unit"> /month</span>
-                      </p>
+                      <p><span className="ym-pay-amount">₹{pay.offer}</span><span className="ym-pay-unit"> /month</span></p>
                       {TEST_MODE && <p style={{ fontSize: "12px", color: "#ea580c", fontWeight: 700, marginTop: "4px" }}>⚠️ Test Mode — ₹1 charge</p>}
                     </div>
                     <div className="ym-pay-discount">
@@ -1429,7 +1550,6 @@ export default function Home() {
                       <span style={{ textDecoration: "line-through", color: "#9ca3af", fontSize: "12px" }}>₹{pay.original}</span>
                     </div>
                   </div>
-                  {/* Student summary */}
                   <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: "12px", padding: "12px 16px", marginBottom: "20px", fontSize: "13px", color: "#374151", lineHeight: 1.8 }}>
                     <p><strong>Name:</strong> {name}</p>
                     <p><strong>WhatsApp:</strong> {whatsapp}</p>
@@ -1439,13 +1559,7 @@ export default function Home() {
                   </div>
                   <button onClick={handleCashfreePay} disabled={payLoading} className="ym-pay-btn">
                     {payLoading ? (
-                      <>
-                        <svg className="ym-spin" width="22" height="22" viewBox="0 0 24 24" fill="none">
-                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
-                          <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" />
-                        </svg>
-                        Verifying payment…
-                      </>
+                      <><svg className="ym-spin" width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" /><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" /></svg>Verifying payment…</>
                     ) : <>💳 Pay ₹{pay.offer} Securely</>}
                   </button>
                   {payLoading && <p className="ym-pay-verify-msg">⏳ Confirming with bank — do not close this window.</p>}
@@ -1457,7 +1571,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* STEP 3: DONE */}
               {step === "done" && pay && (
                 <div className="ym-done-wrap">
                   <div className="ym-done-confetti">🎉</div>
@@ -1467,9 +1580,7 @@ export default function Home() {
                     <p className="ym-done-wa-title">✅ Opening {studentClass} WhatsApp Group…</p>
                     <p className="ym-done-wa-sub">{countdown > 0 ? `Redirecting in ${countdown}s` : "WhatsApp should be open now!"}</p>
                   </div>
-                  <a href={pay.whatsapp} target="_blank" rel="noopener noreferrer" className="ym-done-wa-btn">
-                    💬 Open {studentClass} WhatsApp Group
-                  </a>
+                  <a href={pay.whatsapp} target="_blank" rel="noopener noreferrer" className="ym-done-wa-btn">💬 Open {studentClass} WhatsApp Group</a>
                   <p style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "16px" }}>If WhatsApp didn't open, tap the button above.</p>
                   <button onClick={closeModal} className="ym-done-close-btn">Close</button>
                 </div>
