@@ -33,17 +33,17 @@ const SLOTS = {
   "Class 10": {
     days: "Monday & Wednesday",
     time: "5:00 PM – 7:00 PM",
-    desc: " Algebra, Geometry, Trigonometry, Statistics & more. Regular tests and doubt sessions included.",
+    desc: ["Algebra", "Geometry", "Trigonometry", "Statistics & more", "Regular tests and doubt sessions included."],
   },
   "Class 11": {
     days: "Tuesday & Friday",
     time: "5:00 PM – 7:00 PM",
-    desc: "Sets, Relations, Trigonometry, Calculus basics, Statistics & Probability. Strong foundation for Class 12 and competitive exams.",
+    desc: ["Sets & Relations", "Trigonometry", "Calculus basics", "Statistics & Probability", "Strong foundation for Class 12 and competitive exams."],
   },
   "Class 12": {
     days: "Thursday & Saturday",
     time: "5:00 PM – 7:00 PM",
-    desc: "Calculus, Vectors, 3D Geometry, Probability & Linear Programming. Board exam focused with previous year paper practice.",
+    desc: ["Calculus", "Vectors", "3D Geometry", "Probability & Linear Programming", "Board exam focused with previous year paper practice."],
   },
 };
 
@@ -889,12 +889,19 @@ export default function Home() {
                         <div className="ym-slot-detail">
                           {/* Days */}
                           <div className="ym-slot-row">
-                            <span className="ym-slot-row-icon">📆</span>
-                            <div>
-                              <p className="ym-slot-row-label">{SLOTS[cls].days}</p>
-                              <p className="ym-slot-row-sub">Every week</p>
-                            </div>
-                          </div>
+  <span className="ym-slot-row-icon">📋</span>
+  <div>
+    <p className="ym-slot-row-label">What you'll learn</p>
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "6px" }}>
+      {SLOTS[cls].desc.map((item, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+          <span style={{ color: "#2563eb", fontSize: "16px", lineHeight: "1.4", flexShrink: 0 }}>›</span>
+          <span className="ym-slot-desc" style={{ margin: 0 }}>{item}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
                           {/* Time */}
                           <div className="ym-slot-row">
                             <span className="ym-slot-row-icon">🕐</span>
