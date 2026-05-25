@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://yarwngmathematicsonline.vercel.app/sitemap.xml',
+    sitemap: 'https://yarwngmathematics.com/sitemap.xml',
   }
 }
