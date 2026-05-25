@@ -890,13 +890,13 @@ export default function Home() {
                           {/* Days */}
                           <div className="ym-slot-row">
   <span className="ym-slot-row-icon">📋</span>
-  <div>
+  <div style={{ flex: 1 }}>
     <p className="ym-slot-row-label">What you'll learn</p>
     <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "6px" }}>
-      {SLOTS[cls].desc.map((item, i) => (
+      {(SLOTS[cls].desc as string[]).map((item, i) => (
         <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
           <span style={{ color: "#2563eb", fontSize: "16px", lineHeight: "1.4", flexShrink: 0 }}>›</span>
-          <span className="ym-slot-desc" style={{ margin: 0 }}>{item}</span>
+          <span style={{ color: "#1e40af", fontSize: "13px", lineHeight: "1.65" }}>{item}</span>
         </div>
       ))}
     </div>
