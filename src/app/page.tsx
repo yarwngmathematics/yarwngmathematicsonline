@@ -28,10 +28,23 @@ const COUNTER_NAMESPACE = "yarwngmathematics";
 const COUNTER_KEY = "site-visitors-2026";
 const COUNTER_HIT_URL = `https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/up`;
 
+// ── UPDATED: added desc field to each class ──
 const SLOTS = {
-  "Class 10": { days: "Monday & Wednesday", time: "5:00 PM – 7:00 PM" },
-  "Class 11": { days: "Tuesday & Friday", time: "5:00 PM – 7:00 PM" },
-  "Class 12": { days: "Thursday & Saturday", time: "5:00 PM – 7:00 PM" },
+  "Class 10": {
+    days: "Monday & Wednesday",
+    time: "5:00 PM – 7:00 PM",
+    desc: "Full CBSE/TBSE syllabus coverage. Algebra, Geometry, Trigonometry, Statistics & more. Regular tests and doubt sessions included.",
+  },
+  "Class 11": {
+    days: "Tuesday & Friday",
+    time: "5:00 PM – 7:00 PM",
+    desc: "Sets, Relations, Trigonometry, Calculus basics, Statistics & Probability. Strong foundation for Class 12 and competitive exams.",
+  },
+  "Class 12": {
+    days: "Thursday & Saturday",
+    time: "5:00 PM – 7:00 PM",
+    desc: "Calculus, Vectors, 3D Geometry, Probability & Linear Programming. Board exam focused with previous year paper practice.",
+  },
 };
 
 async function submitToSheet(payload: Record<string, string>, maxAttempts = 4) {
@@ -277,6 +290,12 @@ export default function Home() {
     return count.toLocaleString("en-IN");
   };
 
+  // Helper: real offer price (not ₹1 test price)
+  const realOffer = (cls: string) => {
+    const p = PAYMENT.classes[cls as keyof typeof PAYMENT.classes];
+    return p.offer === 1 ? p.original : p.offer;
+  };
+
   const adVariants = [
     <div key="v1" className="ym-ad-card ym-ad-dark">
       <div className="ym-ad-content">
@@ -504,6 +523,7 @@ export default function Home() {
         .ym-slot-row-icon { font-size: 20px; }
         .ym-slot-row-label { font-weight: 600; color: #1e40af; font-size: 14px; }
         .ym-slot-row-sub { color: #3b82f6; font-size: 12px; margin-top: 2px; }
+        .ym-slot-desc { color: #1e40af; font-size: 13px; line-height: 1.65; margin-top: 2px; }
 
         /* ── OFFLINE ── */
         .ym-offline-section { background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%); border-top: 1px solid #fed7aa; border-bottom: 1px solid #fed7aa; }
@@ -837,13 +857,15 @@ export default function Home() {
                 <p className="ym-class-days">{SLOTS[cls as keyof typeof SLOTS].days}</p>
                 <p className="ym-class-time">{SLOTS[cls as keyof typeof SLOTS].time}</p>
                 <div className="ym-class-price-row">
-                  <span className="ym-class-price">₹{PAYMENT.classes[cls as keyof typeof PAYMENT.classes].offer === 1 ? PAYMENT.classes[cls as keyof typeof PAYMENT.classes].original : PAYMENT.classes[cls as keyof typeof PAYMENT.classes].offer}</span>
+                  <span className="ym-class-price">₹{realOffer(cls)}</span>
                   <span className="ym-class-price-unit">/month</span>
                 </div>
                 <button onClick={() => openModal()} className="ym-class-btn ym-class-btn-primary">Join {cls}</button>
               </div>
             ))}
           </div>
+
+          {/* ── SLOTS ACCORDION ── */}
           <div className="ym-slots-wrap">
             <button onClick={() => { setSlotsOpen(!slotsOpen); setSelectedSlot(null); }} className="ym-slots-toggle">
               <span>📅 View Detailed Class Slots</span>
@@ -851,31 +873,57 @@ export default function Home() {
             </button>
             {slotsOpen && (
               <div className="ym-slots-body">
-                {["Class 10", "Class 11", "Class 12"].map((cls) => (
-                  <div key={cls}>
-                    <button onClick={() => setSelectedSlot(selectedSlot === cls ? null : cls)}
-                      className={`ym-slot-btn${selectedSlot === cls ? " active" : ""}`}>
-                      <span>{cls}</span><span>{selectedSlot === cls ? "▲" : "▼"}</span>
-                    </button>
-                    {selectedSlot === cls && (
-                      <div className="ym-slot-detail">
-                        {[
-                          { icon: "📆", label: SLOTS[cls as keyof typeof SLOTS].days, sub: "Every week" },
-                          { icon: "🕐", label: SLOTS[cls as keyof typeof SLOTS].time, sub: "Evening · 2 hours" },
-                          { icon: "💰", label: `₹${PAYMENT.classes[cls as keyof typeof PAYMENT.classes].offer === 1 ? PAYMENT.classes[cls as keyof typeof PAYMENT.classes].original : PAYMENT.classes[cls as keyof typeof PAYMENT.classes].offer}/month`, sub: `Regular: ₹${PAYMENT.classes[cls as keyof typeof PAYMENT.classes].original}` },
-                        ].map((r) => (
-                          <div key={r.label} className="ym-slot-row">
-                            <span className="ym-slot-row-icon">{r.icon}</span>
+                {(["Class 10", "Class 11", "Class 12"] as const).map((cls) => {
+                  const p = PAYMENT.classes[cls];
+                  const offerPrice = p.offer === 1 ? p.original : p.offer;
+                  return (
+                    <div key={cls}>
+                      <button
+                        onClick={() => setSelectedSlot(selectedSlot === cls ? null : cls)}
+                        className={`ym-slot-btn${selectedSlot === cls ? " active" : ""}`}
+                      >
+                        <span>{cls}</span>
+                        <span>{selectedSlot === cls ? "▲" : "▼"}</span>
+                      </button>
+                      {selectedSlot === cls && (
+                        <div className="ym-slot-detail">
+                          {/* Days */}
+                          <div className="ym-slot-row">
+                            <span className="ym-slot-row-icon">📆</span>
                             <div>
-                              <p className="ym-slot-row-label">{r.label}</p>
-                              <p className="ym-slot-row-sub">{r.sub}</p>
+                              <p className="ym-slot-row-label">{SLOTS[cls].days}</p>
+                              <p className="ym-slot-row-sub">Every week</p>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                          {/* Time */}
+                          <div className="ym-slot-row">
+                            <span className="ym-slot-row-icon">🕐</span>
+                            <div>
+                              <p className="ym-slot-row-label">{SLOTS[cls].time}</p>
+                              <p className="ym-slot-row-sub">Evening · 2 hours</p>
+                            </div>
+                          </div>
+                          {/* Price — fixed: always shows real price */}
+                          <div className="ym-slot-row">
+                            <span className="ym-slot-row-icon">💰</span>
+                            <div>
+                              <p className="ym-slot-row-label">₹{offerPrice}/month</p>
+                              <p className="ym-slot-row-sub">Regular: ₹{p.original}/month</p>
+                            </div>
+                          </div>
+                          {/* ── NEW: Description ── */}
+                          <div className="ym-slot-row">
+                            <span className="ym-slot-row-icon">📋</span>
+                            <div>
+                              <p className="ym-slot-row-label">What you'll learn</p>
+                              <p className="ym-slot-desc">{SLOTS[cls].desc}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
