@@ -918,14 +918,7 @@ export default function Home() {
                               <p className="ym-slot-row-sub">Regular: ₹{p.original}/month</p>
                             </div>
                           </div>
-                          {/* ── NEW: Description ── */}
-                          <div className="ym-slot-row">
-                            <span className="ym-slot-row-icon">📋</span>
-                            <div>
-                              <p className="ym-slot-row-label">What you'll learn</p>
-                              <p className="ym-slot-desc">{SLOTS[cls].desc}</p>
-                            </div>
-                          </div>
+                        
                         </div>
                       )}
                     </div>
