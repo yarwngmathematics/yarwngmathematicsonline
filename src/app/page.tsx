@@ -33,7 +33,7 @@ const SLOTS = {
   "Class 10": {
     days: "Monday & Wednesday",
     time: "5:00 PM – 7:00 PM",
-    desc: "Full CBSE/TBSE syllabus coverage. Algebra, Geometry, Trigonometry, Statistics & more. Regular tests and doubt sessions included.",
+    desc: " Algebra, Geometry, Trigonometry, Statistics & more. Regular tests and doubt sessions included.",
   },
   "Class 11": {
     days: "Tuesday & Friday",
