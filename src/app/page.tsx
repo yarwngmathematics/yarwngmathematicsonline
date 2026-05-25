@@ -15,36 +15,17 @@ const PAYMENT = {
   },
 };
 
-const DOMAIN = "https://yarwngmathematicsonline.vercel.app";
+const DOMAIN = "https://yarwngmathematics.com";
 const POLICY = {
   terms: `${DOMAIN}/terms`,
   privacy: `${DOMAIN}/privacy`,
   refund: `${DOMAIN}/refund`,
-  shipping: `${DOMAIN}/shipping`,
 };
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBZepl7eijkaiajLUwVlY_udCJhCcAJNUBBNfgz_IcSABbbLqdWOvtNlg1s8h4KFAOqA/exec";
 
-/* ─────────────────────────────────────────
-   VISITOR COUNTER CONFIG
-   
-   Uses api.counterapi.dev — free, no signup.
-   This is the updated replacement for the
-   deprecated countapi.xyz service.
-
-   HOW IT WORKS:
-   1. On first load, calls /hit/ to increment and get count
-   2. The namespace+key auto-creates on first hit
-   3. Counter persists permanently on their servers
-
-   SETUP (one-time):
-   - Just deploy. On first visit it auto-creates.
-   - To view your count anytime:
-     GET https://api.counterapi.dev/v1/yarwngmathematics/site-visitors-2026/get
-───────────────────────────────────────── */
 const COUNTER_NAMESPACE = "yarwngmathematics";
 const COUNTER_KEY = "site-visitors-2026";
-// Full API URL: https://api.counterapi.dev/v1/{namespace}/{key}/up
 const COUNTER_HIT_URL = `https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/up`;
 
 const SLOTS = {
@@ -85,9 +66,6 @@ function loadCashfreeSDK(): Promise<void> {
   });
 }
 
-/* ═══════════════════════════════════════════════════
-   NAV LINKS CONFIG
-═══════════════════════════════════════════════════ */
 const NAV_LINKS = [
   { label: "Home", href: "#home", id: "home" },
   { label: "About", href: "#about", id: "about" },
@@ -109,7 +87,6 @@ export default function Home() {
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState("");
 
-  /* ── Form state ── */
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [studentClass, setStudentClass] = useState("");
@@ -122,25 +99,15 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [countdown, setCountdown] = useState(3);
 
-  /* ── Visitor counter state ── */
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
   const [counterLoading, setCounterLoading] = useState(true);
   const [counterError, setCounterError] = useState(false);
 
   const sheetSubmittedRef = useRef(false);
-  const counterHitRef = useRef(false); // Prevent double-counting in StrictMode
+  const counterHitRef = useRef(false);
 
-  /* ─────────────────────────────────────────
-     VISITOR COUNTER: Hit on first load only.
-     
-     api.counterapi.dev returns JSON:
-     { "namespace": "...", "key": "...", "count": 42 }
-     
-     We use /up endpoint to increment by 1 and
-     get the new count in one request.
-  ───────────────────────────────────────── */
   useEffect(() => {
-    if (counterHitRef.current) return; // StrictMode guard
+    if (counterHitRef.current) return;
     counterHitRef.current = true;
 
     const hitCounter = async () => {
@@ -148,17 +115,11 @@ export default function Home() {
       setCounterError(false);
       try {
         const response = await fetch(COUNTER_HIT_URL, {
-          method: "GET", // counterapi.dev uses GET for /up
+          method: "GET",
           headers: { "Accept": "application/json" },
         });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-
-        // counterapi.dev returns { count: number }
         if (data && typeof data.count === "number") {
           setVisitorCount(data.count);
         } else {
@@ -167,14 +128,12 @@ export default function Home() {
       } catch (err) {
         console.warn("Visitor counter failed:", err);
         setCounterError(true);
-        // Optionally try to at least GET the count (without incrementing)
         tryGetCount();
       } finally {
         setCounterLoading(false);
       }
     };
 
-    // Fallback: just read current count without incrementing
     const tryGetCount = async () => {
       try {
         const getUrl = `https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/get`;
@@ -185,14 +144,13 @@ export default function Home() {
           setCounterError(false);
         }
       } catch {
-        // Both failed — counter stays hidden
+        // Both failed
       }
     };
 
     hitCounter();
   }, []);
 
-  /* ── Scroll spy & nav shadow ── */
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -314,13 +272,11 @@ export default function Home() {
     return () => clearInterval(t);
   }, [step]);
 
-  /* ── Helper: display the visitor count nicely ── */
   const displayCount = (count: number | null) => {
     if (count === null) return "—";
     return count.toLocaleString("en-IN");
   };
 
-  /* ─── AD VARIANTS ─── */
   const adVariants = [
     <div key="v1" className="ym-ad-card ym-ad-dark">
       <div className="ym-ad-content">
@@ -358,215 +314,85 @@ export default function Home() {
     </div>,
   ];
 
-  /* ═══════════════════════════════════════════════════
-     RENDER
-  ═══════════════════════════════════════════════════ */
   return (
     <main id="home" className="ym-page">
-
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
-
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         :root {
-          --navy: #060f2e;
-          --navy-mid: #0d1b4b;
-          --blue-bright: #1d4ed8;
-          --blue-light: #3b82f6;
-          --gold: #f59e0b;
-          --gold-light: #fcd34d;
-          --gold-pale: #fef3c7;
-          --white: #ffffff;
-          --gray-50: #f9fafb;
-          --gray-100: #f3f4f6;
-          --gray-200: #e5e7eb;
-          --gray-400: #9ca3af;
-          --gray-500: #6b7280;
-          --gray-600: #4b5563;
-          --gray-700: #374151;
-          --gray-800: #1f2937;
-          --gray-900: #111827;
-          --green: #16a34a;
-          --green-light: #dcfce7;
-          --red: #dc2626;
-          --red-light: #fee2e2;
-          --radius-sm: 8px;
-          --radius-md: 12px;
-          --radius-lg: 20px;
-          --radius-xl: 28px;
-          --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-          --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
-          --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
+          --navy: #060f2e; --navy-mid: #0d1b4b; --blue-bright: #1d4ed8; --blue-light: #3b82f6;
+          --gold: #f59e0b; --gold-light: #fcd34d; --gold-pale: #fef3c7; --white: #ffffff;
+          --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-400: #9ca3af;
+          --gray-500: #6b7280; --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937;
+          --gray-900: #111827; --green: #16a34a; --green-light: #dcfce7; --red: #dc2626;
+          --red-light: #fee2e2; --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px;
+          --radius-xl: 28px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+          --shadow-md: 0 4px 16px rgba(0,0,0,0.1); --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
         }
-
         html { scroll-behavior: smooth; }
         body { font-family: 'Outfit', sans-serif; color: var(--gray-900); background: #fff; }
         .ym-page { font-family: 'Outfit', sans-serif; }
         .ym-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
 
         /* ── NAVBAR ── */
-        .ym-nav {
-          position: sticky; top: 0; z-index: 100;
-          background: rgba(6,15,46,0.97);
-          backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(255,255,255,0.07);
-          transition: box-shadow 0.3s;
-        }
+        .ym-nav { position: sticky; top: 0; z-index: 100; background: rgba(6,15,46,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.07); transition: box-shadow 0.3s; }
         .ym-nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
-        .ym-nav-inner {
-          max-width: 1200px; margin: 0 auto;
-          padding: 0 24px;
-          height: 68px;
-          display: flex; align-items: center; justify-content: space-between; gap: 24px;
-        }
+        .ym-nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
         .ym-nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
         .ym-nav-logo { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); }
         .ym-nav-name { font-weight: 700; font-size: 17px; color: #fff; line-height: 1.2; }
         .ym-nav-sub { font-size: 11px; color: #93c5fd; font-weight: 400; }
         .ym-nav-links { display: flex; align-items: center; gap: 4px; }
-        .ym-nav-link {
-          padding: 7px 14px; border-radius: 8px;
-          font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7);
-          cursor: pointer; transition: all 0.2s; background: transparent; border: none;
-          text-decoration: none;
-        }
+        .ym-nav-link { padding: 7px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.2s; background: transparent; border: none; text-decoration: none; }
         .ym-nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
         .ym-nav-link.active { color: #fff; background: rgba(59,130,246,0.2); }
         .ym-nav-link.active-dot { position: relative; }
-        .ym-nav-link.active-dot::after {
-          content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
-          width: 4px; height: 4px; border-radius: 50%; background: var(--gold);
-        }
-
-        /* ── VISITOR PILL (navbar) ── */
-        .ym-nav-visitor {
-          display: flex; align-items: center; gap: 6px;
-          background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 100px; padding: 5px 12px;
-          transition: opacity 0.4s;
-        }
+        .ym-nav-link.active-dot::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+        .ym-nav-visitor { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 100px; padding: 5px 12px; transition: opacity 0.4s; }
         .ym-nav-visitor.loading { opacity: 0.5; }
-        .ym-nav-visitor-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: #22c55e;
-          animation: visitorPulse 2s ease infinite;
-          flex-shrink: 0;
-        }
+        .ym-nav-visitor-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
         .ym-nav-visitor-dot.error { background: #f59e0b; animation: none; }
         .ym-nav-visitor-text { color: rgba(255,255,255,0.6); font-size: 12px; white-space: nowrap; }
         .ym-nav-visitor-count { color: #fff; font-weight: 700; font-size: 12px; }
-
-        /* ── SKELETON SHIMMER ── */
-        @keyframes skeletonShimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        .ym-skeleton {
-          display: inline-block;
-          background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 75%);
-          background-size: 200% auto;
-          animation: skeletonShimmer 1.5s linear infinite;
-          border-radius: 4px;
-          height: 1em;
-          width: 40px;
-          vertical-align: middle;
-        }
-        .ym-skeleton-light {
-          background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.06) 75%);
-          background-size: 200% auto;
-          animation: skeletonShimmer 1.5s linear infinite;
-          border-radius: 4px;
-          height: 1em;
-          width: 60px;
-          display: inline-block;
-          vertical-align: middle;
-        }
-
+        @keyframes skeletonShimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+        .ym-skeleton { display: inline-block; background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 75%); background-size: 200% auto; animation: skeletonShimmer 1.5s linear infinite; border-radius: 4px; height: 1em; width: 40px; vertical-align: middle; }
         @keyframes visitorPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
-        .ym-nav-cta {
-          background: var(--gold); color: #1a0a00;
-          padding: 9px 20px; border-radius: 10px;
-          font-weight: 700; font-size: 13px;
-          text-decoration: none; transition: all 0.2s;
-          white-space: nowrap; border: none; cursor: pointer;
-        }
+        .ym-nav-cta { background: var(--gold); color: #1a0a00; padding: 9px 20px; border-radius: 10px; font-weight: 700; font-size: 13px; text-decoration: none; transition: all 0.2s; white-space: nowrap; border: none; cursor: pointer; }
         .ym-nav-cta:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,0.35); }
-        .ym-nav-enroll {
-          background: linear-gradient(135deg, #1d4ed8, #1e40af);
-          color: #fff; padding: 9px 20px; border-radius: 10px;
-          font-weight: 700; font-size: 13px;
-          border: none; cursor: pointer; transition: all 0.2s;
-          white-space: nowrap;
-        }
+        .ym-nav-enroll { background: linear-gradient(135deg, #1d4ed8, #1e40af); color: #fff; padding: 9px 20px; border-radius: 10px; font-weight: 700; font-size: 13px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .ym-nav-enroll:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(29,78,216,0.35); }
         .ym-hamburger { display: none; background: transparent; border: none; cursor: pointer; padding: 6px; }
         .ym-hamburger span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; transition: all 0.3s; }
         .ym-hamburger span + span { margin-top: 5px; }
-        .ym-mobile-menu {
-          display: none; position: fixed; top: 68px; left: 0; right: 0; bottom: 0;
-          background: rgba(6,15,46,0.98); backdrop-filter: blur(20px);
-          z-index: 99; flex-direction: column; padding: 24px;
-          gap: 8px; overflow-y: auto;
-        }
+        .ym-mobile-menu { display: none; position: fixed; top: 68px; left: 0; right: 0; bottom: 0; background: rgba(6,15,46,0.98); backdrop-filter: blur(20px); z-index: 99; flex-direction: column; padding: 24px; gap: 8px; overflow-y: auto; }
         .ym-mobile-menu.open { display: flex; }
-        .ym-mobile-link {
-          padding: 14px 18px; border-radius: 12px;
-          font-size: 16px; font-weight: 500; color: rgba(255,255,255,0.8);
-          cursor: pointer; background: transparent; border: none; text-align: left; transition: all 0.2s;
-        }
+        .ym-mobile-link { padding: 14px 18px; border-radius: 12px; font-size: 16px; font-weight: 500; color: rgba(255,255,255,0.8); cursor: pointer; background: transparent; border: none; text-align: left; transition: all 0.2s; }
         .ym-mobile-link:hover, .ym-mobile-link.active { background: rgba(59,130,246,0.15); color: #fff; }
         .ym-mobile-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0; }
-        .ym-mobile-visitor {
-          display: flex; align-items: center; gap: 8px;
-          background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 12px; padding: 12px 16px; margin-top: 8px;
-        }
+        .ym-mobile-visitor { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 16px; margin-top: 8px; }
         .ym-mobile-visitor-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
         .ym-mobile-visitor-dot.error { background: #f59e0b; animation: none; }
         .ym-mobile-visitor-label { color: rgba(255,255,255,0.5); font-size: 13px; }
         .ym-mobile-visitor-count { color: #fff; font-size: 18px; font-weight: 700; }
-
         @media (max-width: 1100px) { .ym-nav-visitor { display: none; } }
-        @media (max-width: 900px) {
-          .ym-nav-links { display: none; }
-          .ym-hamburger { display: flex; flex-direction: column; }
-          .ym-nav-cta { display: none; }
-        }
+        @media (max-width: 900px) { .ym-nav-links { display: none; } .ym-hamburger { display: flex; flex-direction: column; } .ym-nav-cta { display: none; } }
         @media (max-width: 600px) { .ym-nav-enroll { font-size: 12px; padding: 8px 14px; } }
 
         /* ── HERO ── */
         @keyframes heroShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-        @keyframes floatUp {
-          0%,100%{transform:translateY(0) rotate(0deg); opacity:0.07}
-          50%{transform:translateY(-30px) rotate(8deg); opacity:0.13}
-        }
+        @keyframes floatUp { 0%,100%{transform:translateY(0) rotate(0deg); opacity:0.07} 50%{transform:translateY(-30px) rotate(8deg); opacity:0.13} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
         @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
         @keyframes glowPulse { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.45)} 50%{box-shadow:0 0 0 16px rgba(245,158,11,0)} }
         @keyframes cfPulse { 0%,100%{box-shadow:0 0 0 0 rgba(29,78,216,0.45)} 50%{box-shadow:0 0 0 14px rgba(29,78,216,0)} }
         @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         @keyframes countUp { from{opacity:0;transform:translateY(12px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
-
-        .hero-section {
-          background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 40%, #0f2d6b 65%, #0d1b4b 85%, #060f2e 100%);
-          background-size: 300% 300%;
-          animation: heroShift 14s ease infinite;
-          clip-path: polygon(0 0, 100% 0, 100% 93%, 0 100%);
-          position: relative; overflow: hidden;
-          padding: 96px 24px 140px;
-        }
+        .hero-section { background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 40%, #0f2d6b 65%, #0d1b4b 85%, #060f2e 100%); background-size: 300% 300%; animation: heroShift 14s ease infinite; clip-path: polygon(0 0, 100% 0, 100% 93%, 0 100%); position: relative; overflow: hidden; padding: 96px 24px 140px; }
         .math-sym { position: absolute; color: #fff; font-weight: 900; pointer-events: none; animation: floatUp ease-in-out infinite; font-family: 'Cormorant Garamond', serif; }
         .hero-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 64px; }
         .hero-left { flex: 1; }
         .hero-right { width: 320px; flex-shrink: 0; }
-        .hero-badge {
-          display: inline-flex; align-items: center; gap: 8px;
-          background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 75%);
-          background-size: 200% auto; animation: shimmer 3s linear infinite;
-          border: 1px solid rgba(255,255,255,0.18); border-radius: 100px;
-          padding: 8px 18px; margin-bottom: 24px;
-        }
+        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 75%); background-size: 200% auto; animation: shimmer 3s linear infinite; border: 1px solid rgba(255,255,255,0.18); border-radius: 100px; padding: 8px 18px; margin-bottom: 24px; }
         .hero-badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
         .hero-badge-text { color: #fcd34d; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
         .hero-h1 { font-size: clamp(2.6rem, 5.5vw, 4rem); font-weight: 800; color: #fff; line-height: 1.07; margin-bottom: 20px; }
@@ -595,21 +421,14 @@ export default function Home() {
         .hero-card-row-val { color: #93c5fd; font-size: 11px; margin-top: 2px; }
         .hero-card-btn { width: 100%; background: var(--gold); color: #1a0a00; font-weight: 800; padding: 13px; border-radius: 12px; border: none; cursor: pointer; font-size: 14px; transition: all 0.2s; margin-top: 20px; }
         .hero-card-btn:hover { background: var(--gold-light); }
-
         .fade-up-1 { animation: fadeUp 0.7s ease both; animation-delay: 0.1s; }
         .fade-up-2 { animation: fadeUp 0.7s ease both; animation-delay: 0.25s; }
         .fade-up-3 { animation: fadeUp 0.7s ease both; animation-delay: 0.4s; }
         .fade-up-4 { animation: fadeUp 0.7s ease both; animation-delay: 0.55s; }
         .fade-up-5 { animation: fadeUp 0.7s ease both; animation-delay: 0.7s; }
+        @media (max-width: 900px) { .hero-section { padding: 72px 20px 110px; clip-path: polygon(0 0, 100% 0, 100% 96%, 0 100%); } .hero-inner { flex-direction: column; gap: 40px; } .hero-right { width: 100%; } .hero-h1 { font-size: clamp(2.2rem, 7vw, 3rem); } }
 
-        @media (max-width: 900px) {
-          .hero-section { padding: 72px 20px 110px; clip-path: polygon(0 0, 100% 0, 100% 96%, 0 100%); }
-          .hero-inner { flex-direction: column; gap: 40px; }
-          .hero-right { width: 100%; }
-          .hero-h1 { font-size: clamp(2.2rem, 7vw, 3rem); }
-        }
-
-        /* ── SECTION COMMON ── */
+        /* ── SECTIONS ── */
         .ym-section { padding: 88px 24px; }
         .ym-section-inner { max-width: 1200px; margin: 0 auto; }
         .ym-section-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
@@ -651,13 +470,9 @@ export default function Home() {
         .ym-btn-yellow:hover { background: var(--gold-light); }
         .ym-btn-blue-solid { background: #2563eb; color: #fff; padding: 12px 28px; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .ym-btn-blue-solid:hover { background: #1d4ed8; }
-        @media (max-width: 700px) {
-          .ym-ad-card { flex-direction: column; }
-          .ym-ad-cta { padding: 20px; min-width: unset; background: rgba(255,255,255,0.05); }
-          .ym-ad-stripe { width: 100%; height: 5px; }
-        }
+        @media (max-width: 700px) { .ym-ad-card { flex-direction: column; } .ym-ad-cta { padding: 20px; min-width: unset; background: rgba(255,255,255,0.05); } .ym-ad-stripe { width: 100%; height: 5px; } }
 
-        /* ── CLASSES SECTION ── */
+        /* ── CLASSES ── */
         .ym-classes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 44px; }
         .ym-class-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 20px; padding: 28px 24px; text-align: center; transition: all 0.25s; box-shadow: var(--shadow-sm); }
         .ym-class-card:hover { border-color: #93c5fd; box-shadow: var(--shadow-md); transform: translateY(-4px); }
@@ -669,7 +484,6 @@ export default function Home() {
         .ym-class-price-row { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-bottom: 20px; }
         .ym-class-price { font-size: 28px; font-weight: 800; color: #2563eb; }
         .ym-class-price-unit { font-size: 14px; color: var(--gray-400); }
-        .ym-class-original { font-size: 13px; color: var(--gray-400); text-decoration: line-through; }
         .ym-class-btn { width: 100%; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; }
         .ym-class-btn-primary { background: #2563eb; color: #fff; }
         .ym-class-btn-primary:hover { background: #1d4ed8; }
@@ -677,7 +491,7 @@ export default function Home() {
         @media (max-width: 800px) { .ym-classes-grid { grid-template-columns: 1fr; } }
         @media (min-width: 600px) and (max-width: 800px) { .ym-classes-grid { grid-template-columns: repeat(2, 1fr); } }
 
-        /* ── SLOT ACCORDION ── */
+        /* ── SLOTS ── */
         .ym-slots-wrap { max-width: 680px; margin: 0 auto; }
         .ym-slots-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; background: #2563eb; color: #fff; padding: 16px 24px; border-radius: 16px; font-weight: 700; font-size: 16px; border: none; cursor: pointer; transition: background 0.2s; margin-bottom: 12px; }
         .ym-slots-toggle:hover { background: #1d4ed8; }
@@ -691,7 +505,7 @@ export default function Home() {
         .ym-slot-row-label { font-weight: 600; color: #1e40af; font-size: 14px; }
         .ym-slot-row-sub { color: #3b82f6; font-size: 12px; margin-top: 2px; }
 
-        /* ── OFFLINE SECTION ── */
+        /* ── OFFLINE ── */
         .ym-offline-section { background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%); border-top: 1px solid #fed7aa; border-bottom: 1px solid #fed7aa; }
         .ym-offline-card { background: #fff; border: 1.5px solid #fed7aa; border-radius: 28px; padding: 56px 48px; text-align: center; box-shadow: var(--shadow-sm); max-width: 640px; margin: 0 auto; }
         .ym-offline-loc { display: inline-flex; align-items: center; gap: 6px; color: #c2410c; font-weight: 700; font-size: 17px; margin-bottom: 12px; }
@@ -718,128 +532,30 @@ export default function Home() {
         .ym-about-card-sub { color: #3b82f6; font-size: 12px; margin-top: 4px; }
         @media (max-width: 800px) { .ym-about-grid { grid-template-columns: 1fr; gap: 40px; } }
 
-        /* ═══════════════════════════════════════════
-           VISITOR COUNTER SECTION — Redesigned
-           Beautiful full-width dark stats banner
-        ═══════════════════════════════════════════ */
-        .ym-visitor-section {
-          background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 50%, #0a1f5e 100%);
-          padding: 64px 24px;
-          position: relative;
-          overflow: hidden;
-        }
-        /* Decorative background circles */
-        .ym-visitor-section::before {
-          content: '';
-          position: absolute;
-          top: -80px; right: -80px;
-          width: 320px; height: 320px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(29,78,216,0.2) 0%, transparent 70%);
-          pointer-events: none;
-        }
-        .ym-visitor-section::after {
-          content: '';
-          position: absolute;
-          bottom: -60px; left: -60px;
-          width: 240px; height: 240px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 70%);
-          pointer-events: none;
-        }
-        .ym-visitor-inner {
-          max-width: 1200px; margin: 0 auto;
-          display: flex; flex-direction: column; align-items: center; gap: 32px;
-          position: relative; z-index: 1;
-        }
-        .ym-visitor-header {
-          text-align: center;
-        }
-        .ym-visitor-eyebrow {
-          display: inline-flex; align-items: center; gap: 8px;
-          background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 100px; padding: 6px 16px;
-          color: #93c5fd; font-size: 12px; font-weight: 600;
-          letter-spacing: 0.08em; text-transform: uppercase;
-          margin-bottom: 16px;
-        }
-        .ym-visitor-title {
-          color: #fff; font-size: clamp(1.4rem, 3vw, 2rem);
-          font-weight: 700; margin-bottom: 6px;
-        }
-        .ym-visitor-subtitle {
-          color: rgba(255,255,255,0.4); font-size: 14px;
-        }
-        /* The big counter card */
-        .ym-visitor-card {
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.12);
-          border-radius: 28px;
-          padding: 40px 60px;
-          display: flex; align-items: center; gap: 24px;
-          box-shadow: 0 8px 40px rgba(0,0,0,0.3);
-          position: relative; overflow: hidden;
-          min-width: 320px;
-        }
-        .ym-visitor-card::before {
-          content: '';
-          position: absolute; inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%);
-          pointer-events: none;
-        }
-        .ym-visitor-card-left {
-          display: flex; flex-direction: column; align-items: center; gap: 8px;
-        }
-        .ym-visitor-card-dot {
-          width: 14px; height: 14px; border-radius: 50%;
-          background: #22c55e;
-          box-shadow: 0 0 0 4px rgba(34,197,94,0.2);
-          animation: visitorPulse 2s ease infinite;
-          flex-shrink: 0;
-        }
+        /* ── VISITOR SECTION ── */
+        .ym-visitor-section { background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 50%, #0a1f5e 100%); padding: 64px 24px; position: relative; overflow: hidden; }
+        .ym-visitor-section::before { content: ''; position: absolute; top: -80px; right: -80px; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(29,78,216,0.2) 0%, transparent 70%); pointer-events: none; }
+        .ym-visitor-section::after { content: ''; position: absolute; bottom: -60px; left: -60px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 70%); pointer-events: none; }
+        .ym-visitor-inner { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 32px; position: relative; z-index: 1; }
+        .ym-visitor-header { text-align: center; }
+        .ym-visitor-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 100px; padding: 6px 16px; color: #93c5fd; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px; }
+        .ym-visitor-title { color: #fff; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; margin-bottom: 6px; }
+        .ym-visitor-subtitle { color: rgba(255,255,255,0.4); font-size: 14px; }
+        .ym-visitor-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 40px 60px; display: flex; align-items: center; gap: 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.3); position: relative; overflow: hidden; min-width: 320px; }
+        .ym-visitor-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%); pointer-events: none; }
+        .ym-visitor-card-left { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .ym-visitor-card-dot { width: 14px; height: 14px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,0.2); animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
         .ym-visitor-card-dot.error { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,0.2); animation: none; }
-        .ym-visitor-card-divider {
-          width: 1px; height: 60px;
-          background: rgba(255,255,255,0.12);
-        }
-        .ym-visitor-card-right {}
-        .ym-visitor-card-count {
-          font-size: clamp(3rem, 8vw, 5rem);
-          font-weight: 800; color: #fff;
-          line-height: 1;
-          font-family: 'Cormorant Garamond', serif;
-          animation: countUp 0.6s ease both;
-          letter-spacing: -0.02em;
-        }
-        .ym-visitor-card-count.loading {
-          animation: none;
-        }
-        .ym-visitor-card-label {
-          color: rgba(255,255,255,0.45);
-          font-size: 15px; margin-top: 6px;
-          font-weight: 400;
-        }
-        /* Mini stat pills below the big counter */
-        .ym-visitor-stats {
-          display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
-        }
-        .ym-visitor-stat-pill {
-          display: flex; align-items: center; gap: 8px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 12px; padding: 10px 16px;
-        }
+        .ym-visitor-card-divider { width: 1px; height: 60px; background: rgba(255,255,255,0.12); }
+        .ym-visitor-card-count { font-size: clamp(3rem, 8vw, 5rem); font-weight: 800; color: #fff; line-height: 1; font-family: 'Cormorant Garamond', serif; animation: countUp 0.6s ease both; letter-spacing: -0.02em; }
+        .ym-visitor-card-label { color: rgba(255,255,255,0.45); font-size: 15px; margin-top: 6px; font-weight: 400; }
+        .ym-visitor-stats { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+        .ym-visitor-stat-pill { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 16px; }
         .ym-visitor-stat-pill-icon { font-size: 16px; }
         .ym-visitor-stat-pill-text { color: rgba(255,255,255,0.55); font-size: 13px; }
         .ym-visitor-stat-pill-val { color: #fff; font-weight: 700; font-size: 13px; }
-        .ym-visitor-poweredby {
-          color: rgba(255,255,255,0.2); font-size: 11px; text-align: center;
-          margin-top: -16px;
-        }
-        @media (max-width: 500px) {
-          .ym-visitor-card { padding: 28px 32px; min-width: unset; flex-direction: column; text-align: center; gap: 16px; }
-          .ym-visitor-card-divider { display: none; }
-        }
+        .ym-visitor-poweredby { color: rgba(255,255,255,0.2); font-size: 11px; text-align: center; margin-top: -16px; }
+        @media (max-width: 500px) { .ym-visitor-card { padding: 28px 32px; min-width: unset; flex-direction: column; text-align: center; gap: 16px; } .ym-visitor-card-divider { display: none; } }
 
         /* ── CONTACT ── */
         .ym-contact-section { background: var(--navy); }
@@ -871,27 +587,12 @@ export default function Home() {
         .ym-footer-h4 { color: rgba(255,255,255,0.8); font-weight: 600; font-size: 14px; margin-bottom: 14px; }
         .ym-footer-item { font-size: 13px; margin-bottom: 8px; line-height: 1.5; }
         .ym-footer-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin-bottom: 20px; }
-
-        /* ── FOOTER VISITOR BAR — refined ── */
-        .ym-footer-visitor-bar {
-          display: flex; align-items: center; justify-content: center; gap: 14px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 16px; padding: 16px 28px;
-          margin-bottom: 28px;
-          flex-wrap: wrap;
-        }
-        .ym-footer-visitor-dot {
-          width: 8px; height: 8px; border-radius: 50%;
-          background: #22c55e;
-          animation: visitorPulse 2s ease infinite;
-          flex-shrink: 0;
-        }
+        .ym-footer-visitor-bar { display: flex; align-items: center; justify-content: center; gap: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px 28px; margin-bottom: 28px; flex-wrap: wrap; }
+        .ym-footer-visitor-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
         .ym-footer-visitor-dot.error { background: #f59e0b; animation: none; }
         .ym-footer-visitor-count { color: #fff; font-weight: 700; font-size: 20px; font-family: 'Cormorant Garamond', serif; }
         .ym-footer-visitor-label { color: rgba(255,255,255,0.4); font-size: 13px; }
         .ym-footer-visitor-sep { color: rgba(255,255,255,0.15); font-size: 18px; }
-
         .ym-footer-policy-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 20px; margin-bottom: 16px; }
         .ym-footer-policy-link { font-size: 12px; color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.2s; }
         .ym-footer-policy-link:hover { color: #93c5fd; }
@@ -968,7 +669,6 @@ export default function Home() {
               <div className="ym-nav-sub">Rakesh Debbarma · M.Sc, IIT Delhi</div>
             </div>
           </a>
-
           <div className="ym-nav-links" role="menubar">
             {NAV_LINKS.map((l) => (
               <button key={l.id} role="menuitem" onClick={() => scrollToSection(l.id)}
@@ -978,8 +678,6 @@ export default function Home() {
               </button>
             ))}
           </div>
-
-          {/* Visitor pill — shows loading skeleton or real count */}
           <div className={`ym-nav-visitor${counterLoading ? " loading" : ""}`} title="Total site visitors">
             <span className={`ym-nav-visitor-dot${counterError ? " error" : ""}`} />
             {counterLoading ? (
@@ -989,7 +687,6 @@ export default function Home() {
             )}
             <span className="ym-nav-visitor-text">visitors</span>
           </div>
-
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <a href="/login" className="ym-nav-cta">Login / Register</a>
             <button onClick={() => openModal()} className="ym-nav-enroll">Enroll Now →</button>
@@ -1114,7 +811,8 @@ export default function Home() {
         <div className="ym-ad-inner">
           <div className="ym-ad-dots">
             {[0, 1, 2].map((i) => (
-              <button key={i} onClick={() => setAdVariant(i)} className="ym-ad-dot" style={{ background: adVariant === i ? "#2563eb" : "#d1d5db" }} aria-label={`Ad variant ${i + 1}`} />
+              <button key={i} onClick={() => setAdVariant(i)} className="ym-ad-dot"
+                style={{ background: adVariant === i ? "#2563eb" : "#d1d5db" }} aria-label={`Ad variant ${i + 1}`} />
             ))}
           </div>
           {adVariants[adVariant]}
@@ -1155,7 +853,8 @@ export default function Home() {
               <div className="ym-slots-body">
                 {["Class 10", "Class 11", "Class 12"].map((cls) => (
                   <div key={cls}>
-                    <button onClick={() => setSelectedSlot(selectedSlot === cls ? null : cls)} className={`ym-slot-btn${selectedSlot === cls ? " active" : ""}`}>
+                    <button onClick={() => setSelectedSlot(selectedSlot === cls ? null : cls)}
+                      className={`ym-slot-btn${selectedSlot === cls ? " active" : ""}`}>
                       <span>{cls}</span><span>{selectedSlot === cls ? "▲" : "▼"}</span>
                     </button>
                     {selectedSlot === cls && (
@@ -1268,18 +967,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ══════════════════ VISITOR COUNTER SECTION ══════════════════ */}
+      {/* ══════════════════ VISITOR COUNTER ══════════════════ */}
       <section className="ym-visitor-section" aria-label="Visitor statistics">
         <div className="ym-visitor-inner">
           <div className="ym-visitor-header">
-            <div className="ym-visitor-eyebrow">
-              <span>🌐</span> Live Site Statistics
-            </div>
+            <div className="ym-visitor-eyebrow"><span>🌐</span> Live Site Statistics</div>
             <h2 className="ym-visitor-title">People Who've Discovered Yarwng Mathematics</h2>
             <p className="ym-visitor-subtitle">Counter updates with every new visit</p>
           </div>
-
-          {/* Big counter card */}
           <div className="ym-visitor-card">
             <div className="ym-visitor-card-left">
               <span className={`ym-visitor-card-dot${counterError ? " error" : ""}`} />
@@ -1296,8 +991,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-
-          {/* Stat pills */}
           <div className="ym-visitor-stats">
             <div className="ym-visitor-stat-pill">
               <span className="ym-visitor-stat-pill-icon">📅</span>
@@ -1315,7 +1008,6 @@ export default function Home() {
               <span className="ym-visitor-stat-pill-val">Khumulwng, Tripura</span>
             </div>
           </div>
-
           <p className="ym-visitor-poweredby">Powered by counterapi.dev · counts increment on each visit</p>
         </div>
       </section>
@@ -1392,8 +1084,6 @@ export default function Home() {
               <p className="ym-footer-item" style={{ color: "#fb923c", marginTop: "12px" }}>🏫 Offline: Khumulwng (Launching Soon)</p>
             </div>
           </div>
-
-          {/* Footer visitor bar */}
           <div className="ym-footer-visitor-bar">
             <span className={`ym-footer-visitor-dot${counterError ? " error" : ""}`} />
             {counterLoading ? (
@@ -1408,14 +1098,12 @@ export default function Home() {
               {counterError ? "⚠ counter offline" : "● live"}
             </span>
           </div>
-
           <hr className="ym-footer-divider" />
           <div className="ym-footer-policy-links">
             {[
               { label: "Terms & Conditions", href: POLICY.terms },
               { label: "Privacy Policy", href: POLICY.privacy },
               { label: "Refund & Cancellation Policy", href: POLICY.refund },
-              { label: "Shipping & Delivery Policy", href: POLICY.shipping },
             ].map((l) => (
               <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="ym-footer-policy-link">{l.label}</a>
             ))}
@@ -1456,7 +1144,6 @@ export default function Home() {
                 {step === "form" ? "Fill your details to proceed" : step === "payment" ? `${studentClass} · ₹${pay?.offer}/month` : "Welcome to Yarwng Mathematics"}
               </div>
             </div>
-
             <div className="ym-modal-body">
               {step === "form" && (
                 <form onSubmit={handleSubmit}>
@@ -1526,9 +1213,8 @@ export default function Home() {
                     <p className="ym-policy-text">
                       By registering you agree to our{" "}
                       <a href={POLICY.terms} target="_blank" rel="noopener noreferrer">Terms & Conditions</a>,{" "}
-                      <a href={POLICY.privacy} target="_blank" rel="noopener noreferrer">Privacy Policy</a>,{" "}
-                      <a href={POLICY.refund} target="_blank" rel="noopener noreferrer">Refund Policy</a> and{" "}
-                      <a href={POLICY.shipping} target="_blank" rel="noopener noreferrer">Shipping Policy</a>.
+                      <a href={POLICY.privacy} target="_blank" rel="noopener noreferrer">Privacy Policy</a> and{" "}
+                      <a href={POLICY.refund} target="_blank" rel="noopener noreferrer">Refund Policy</a>.
                     </p>
                     <button type="submit" disabled={submitting} className="ym-submit-btn">
                       {submitting ? "Please wait…" : "Next: Pay & Join →"}
@@ -1536,7 +1222,6 @@ export default function Home() {
                   </div>
                 </form>
               )}
-
               {step === "payment" && pay && (
                 <div>
                   <div className="ym-pay-summary">
@@ -1570,7 +1255,6 @@ export default function Home() {
                   </div>
                 </div>
               )}
-
               {step === "done" && pay && (
                 <div className="ym-done-wrap">
                   <div className="ym-done-confetti">🎉</div>

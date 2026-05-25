@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Rakesh Debbarma" }],
   creator: "Rakesh Debbarma",
   robots: "index, follow",
-  metadataBase: new URL("https://yarwngmathematicsonline.vercel.app"),
+  metadataBase: new URL("https://yarwngmathematics.com"),
   alternates: {
     canonical: "/",
   },
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    url: "https://yarwngmathematicsonline.vercel.app",
+    url: "https://yarwngmathematics.com",
     title: "Yarwng Mathematics – IIT Delhi Math Coaching | Class 10, 11, 12",
     description:
       "Expert mathematics coaching by an IIT Delhi M.Sc graduate. Online via Google Meet. Classes 10–12. Starting 3rd June 2026.",
@@ -89,8 +89,8 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "EducationalOrganization",
               "name": "Yarwng Mathematics",
-              "url": "https://yarwngmathematicsonline.vercel.app",
-              "logo": "https://yarwngmathematicsonline.vercel.app/Logo.png",
+              "url": "https://yarwngmathematics.com",
+              "logo": "https://yarwngmathematics.com/Logo.png",
               "description": "Mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
               "founder": {
                 "@type": "Person",
