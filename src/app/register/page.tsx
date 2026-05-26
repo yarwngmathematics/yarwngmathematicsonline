@@ -1,7 +1,5 @@
 "use client";
-
 import { useState } from "react";
-
 import {
   createUserWithEmailAndPassword,
 } from "firebase/auth";
@@ -53,7 +51,6 @@ export default function RegisterPage() {
 
         <div className="space-y-4">
 
-          {/* Student Name */}
           <input
             type="text"
             placeholder="Student Name"
@@ -62,7 +59,7 @@ export default function RegisterPage() {
             className="w-full border p-4 rounded-xl"
           />
 
-          {/* Phone */}
+    
           <input
             type="text"
             placeholder="Whatsapp Number"
@@ -71,7 +68,7 @@ export default function RegisterPage() {
             className="w-full border p-4 rounded-xl"
           />
 
-          {/* Class */}
+         
           <select
             value={studentClass}
             onChange={(e) => setStudentClass(e.target.value)}
@@ -83,7 +80,7 @@ export default function RegisterPage() {
             <option>Class 12</option>
           </select>
 
-          {/* Email */}
+         
           <input
             type="email"
             placeholder="Email Address"
@@ -92,7 +89,7 @@ export default function RegisterPage() {
             className="w-full border p-4 rounded-xl"
           />
 
-          {/* Password */}
+        
           <input
             type="password"
             placeholder="Create Password"
@@ -101,7 +98,7 @@ export default function RegisterPage() {
             className="w-full border p-4 rounded-xl"
           />
 
-          {/* Register Button */}
+         
           <button
             onClick={handleRegister}
             className="
@@ -119,7 +116,7 @@ export default function RegisterPage() {
             Register
           </button>
 
-          {/* Login Link */}
+         
           <a
             href="/login"
             className="

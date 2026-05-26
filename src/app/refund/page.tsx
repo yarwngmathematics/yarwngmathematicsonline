@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-
 export const metadata: Metadata = {
   title: "Refund & Cancellation Policy | Yarwng Mathematics",
   description: "Refund and Cancellation Policy for Yarwng Mathematics coaching services.",
 };
-
 export default function RefundPage() {
   return (
     <main style={{ maxWidth: 800, margin: "0 auto", padding: "60px 24px", fontFamily: "sans-serif", lineHeight: 1.8, color: "#1f2937" }}>

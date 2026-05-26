@@ -10,7 +10,6 @@ const WHATSAPP_LINKS: Record<string, string> = {
   "Class 11": "https://chat.whatsapp.com/E9FN3Nh6dLx3dKa7VGENkI?s=cl&p=a&mlu=1",
   "Class 12": "https://chat.whatsapp.com/HUe0D5AybDc7aBivxsp426?s=cl&p=a&mlu=1",
 };
-
 async function submitToSheet(payload: Record<string, string>) {
   try {
     await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", keepalive: true, body: JSON.stringify(payload) });
@@ -18,8 +17,6 @@ async function submitToSheet(payload: Record<string, string>) {
     console.warn("Sheet submission failed:", e);
   }
 }
-
-// ── inner component that uses useSearchParams ──
 function PaymentStatus() {
   const params       = useSearchParams();
   const router       = useRouter();
@@ -166,8 +163,6 @@ function PaymentStatus() {
     </div>
   );
 }
-
-// ── outer page wraps inner component in Suspense ──
 export default function PaymentStatusPage() {
   return (
     <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#060f2e,#0d1b4b)", fontFamily: "'Outfit',sans-serif", padding: "20px" }}>
