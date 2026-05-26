@@ -1,3 +1,11 @@
+// app/api/phonepe/create-order/route.ts
+// PhonePe Payment Gateway v2 (2025) — OAuth2 + PG Checkout
+//
+// ENV VARIABLES needed in Vercel / .env.local:
+// PHONEPE_CLIENT_ID=SU260525204137642778219
+// PHONEPE_CLIENT_SECRET=<click Show Key in dashboard>
+// PHONEPE_CLIENT_VERSION=1
+// NEXT_PUBLIC_APP_URL=https://yarwngmathematics.com
 
 import { NextRequest, NextResponse } from "next/server";
 
@@ -6,11 +14,15 @@ const CLIENT_SECRET  = process.env.PHONEPE_CLIENT_SECRET!;
 const CLIENT_VERSION = process.env.PHONEPE_CLIENT_VERSION ?? "1";
 const APP_URL        = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-const PHONEPE_BASE = "https://api.phonepe.com/apis/pg";
+// Correct base URLs for PhonePe PG v2
+const TOKEN_URL = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
+const PAY_URL   = "https://api.phonepe.com/apis/pg/checkout/v2/pay";
 
-// ── Step 1: Get short-lived OAuth token ──────────────────
+// ── Get OAuth access token ────────────────────────────────
 async function getAccessToken(): Promise<string> {
-  const res = await fetch(`${PHONEPE_BASE}/v1/oauth/token`, {
+  console.log("[PhonePe] Fetching token | client_id:", CLIENT_ID, "| has_secret:", !!CLIENT_SECRET);
+
+  const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -21,20 +33,25 @@ async function getAccessToken(): Promise<string> {
     }),
   });
 
+  const rawText = await res.text();
+  console.log("[PhonePe] Token response:", res.status, rawText);
+
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`PhonePe token fetch failed ${res.status}: ${err}`);
+    throw new Error(`PhonePe token failed ${res.status}: ${rawText}`);
   }
 
-  const data = await res.json();
+  let data: any;
+  try { data = JSON.parse(rawText); } catch {
+    throw new Error("Token response not JSON: " + rawText);
+  }
+
   if (!data.access_token) {
-    throw new Error(`No access_token returned: ${JSON.stringify(data)}`);
+    throw new Error("No access_token: " + JSON.stringify(data));
   }
   return data.access_token as string;
 }
 
 // ── POST /api/phonepe/create-order ───────────────────────
-// Body: { amount: number, name: string, phone: string, studentClass: string }
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -48,27 +65,27 @@ export async function POST(req: NextRequest) {
     }
 
     if (!CLIENT_ID || !CLIENT_SECRET) {
-      console.error("PhonePe env vars not set — check PHONEPE_CLIENT_ID and PHONEPE_CLIENT_SECRET");
+      console.error("[PhonePe] Env vars missing — set PHONEPE_CLIENT_ID and PHONEPE_CLIENT_SECRET in Vercel");
       return NextResponse.json(
         { success: false, error: { message: "Payment gateway not configured. Contact support." } },
         { status: 500 }
       );
     }
 
-    // Unique order ID — max 38 chars, alphanumeric + hyphens only
+    // Unique order ID: alphanumeric + hyphens, max 38 chars
     const merchantOrderId = `YM-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
-    // PhonePe requires amount in paise (₹1 = 100 paise)
+    // Amount in paise (₹1 = 100 paise)
     const amountInPaise = Math.round(Number(amount) * 100);
 
-    // Get OAuth access token
+    // Get token
     const accessToken = await getAccessToken();
 
-    // Build checkout payload
+    // Build payload
     const payload = {
       merchantOrderId,
       amount: amountInPaise,
-      expireAfter: 1200, // seconds — 20 minutes
+      expireAfter: 1200,
       metaInfo: {
         udf1: name,
         udf2: phone.replace(/\D/g, "").slice(-10),
@@ -76,15 +93,16 @@ export async function POST(req: NextRequest) {
       },
       paymentFlow: {
         type: "PG_CHECKOUT",
-        message: `Yarwng Mathematics – ${studentClass} Enrollment`,
+        message: `Yarwng Mathematics - ${studentClass} Enrollment`,
         merchantUrls: {
           redirectUrl: `${APP_URL}/api/phonepe/status?txnId=${merchantOrderId}`,
         },
       },
     };
 
-    // Initiate payment order
-    const orderRes = await fetch(`${PHONEPE_BASE}/checkout/v2/pay`, {
+    console.log("[PhonePe] Creating order:", merchantOrderId, "amount:", amountInPaise);
+
+    const orderRes = await fetch(PAY_URL, {
       method: "POST",
       headers: {
         "Content-Type":  "application/json",
@@ -93,9 +111,14 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(payload),
     });
 
-    const orderData = await orderRes.json();
+    const rawOrder = await orderRes.text();
+    console.log("[PhonePe] Order response:", orderRes.status, rawOrder);
 
-    // Success — PhonePe returns a redirectUrl to the payment page
+    let orderData: any;
+    try { orderData = JSON.parse(rawOrder); } catch {
+      throw new Error("Order response not JSON: " + rawOrder);
+    }
+
     if (orderRes.ok && orderData.redirectUrl) {
       return NextResponse.json({
         success: true,
@@ -104,8 +127,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // PhonePe returned an error
-    console.error("PhonePe order error:", JSON.stringify(orderData));
     return NextResponse.json({
       success: false,
       error: {
@@ -118,7 +139,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (err: any) {
-    console.error("PhonePe create-order exception:", err?.message ?? err);
+    console.error("[PhonePe] create-order exception:", err?.message ?? err);
     return NextResponse.json(
       { success: false, error: { message: "Server error. Please try again." } },
       { status: 500 }
