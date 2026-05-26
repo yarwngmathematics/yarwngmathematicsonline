@@ -15,10 +15,6 @@ const PAYMENT = {
   },
 };
 
-// PhonePe Business UPI ID — replace with your actual UPI ID
-const PHONEPE_UPI_ID = "yarwngmathematics@ybl";
-const MERCHANT_NAME = "Yarwng Mathematics";
-
 const DOMAIN = "https://yarwngmathematics.com";
 const POLICY = {
   terms: `${DOMAIN}/terms`,
@@ -50,20 +46,6 @@ const SLOTS = {
   },
 };
 
-// FIX: submitToSheet now has a guard so it only fires once per registration
-async function submitToSheet(payload: Record<string, string>, maxAttempts = 4) {
-  const body = JSON.stringify(payload);
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", keepalive: true, body });
-      return; // return immediately on first success
-    } catch {
-      if (attempt === maxAttempts) return;
-      await new Promise((res) => setTimeout(res, 1000 * Math.pow(2, attempt - 1)));
-    }
-  }
-}
-
 const NAV_LINKS = [
   { label: "Home", href: "#home", id: "home" },
   { label: "About", href: "#about", id: "about" },
@@ -82,7 +64,6 @@ export default function Home() {
   const [adVariant, setAdVariant] = useState(0);
   const [slotsOpen, setSlotsOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState("");
 
   const [name, setName] = useState("");
@@ -94,10 +75,6 @@ export default function Home() {
   const [address, setAddress] = useState("");
   const [mode, setMode] = useState("");
 
-  // PhonePe payment state
-  const [utrInput, setUtrInput] = useState("");
-  const [upiStep, setUpiStep] = useState<"qr" | "confirm">("qr");
-
   const [submitting, setSubmitting] = useState(false);
   const [countdown, setCountdown] = useState(3);
 
@@ -105,8 +82,6 @@ export default function Home() {
   const [counterLoading, setCounterLoading] = useState(true);
   const [counterError, setCounterError] = useState(false);
 
-  // FIX: single ref to prevent double submission
-  const sheetSubmittedRef = useRef(false);
   const counterHitRef = useRef(false);
 
   useEffect(() => {
@@ -155,12 +130,11 @@ export default function Home() {
   const scrollToSection = (id: string) => { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); };
 
   const openModal = (preMode?: string) => {
-    // FIX: reset submission guard every time modal opens fresh
-    sheetSubmittedRef.current = false;
     setStep("form");
     setName(""); setWhatsapp(""); setStudentClass(""); setBoard("");
     setMedium("English"); setSchoolName(""); setAddress(""); setMode(preMode ?? "");
-    setPayError(""); setUtrInput(""); setUpiStep("qr");
+    setPayError("");
+    setSubmitting(false);
     setShowModal(true);
   };
 
@@ -170,44 +144,41 @@ export default function Home() {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
-    setSubmitting(false);
-    setStep("payment");
-    setUpiStep("qr");
-  };
-
-  // PhonePe UPI deep link
-  const getUpiLink = () => {
-    if (!pay) return "#";
-    const params = new URLSearchParams({
-      pa: PHONEPE_UPI_ID,
-      pn: MERCHANT_NAME,
-      am: String(pay.offer),
-      cu: "INR",
-      tn: `${studentClass} fee - ${name}`,
-    });
-    return `upi://pay?${params.toString()}`;
-  };
-
-  // PhonePe: student clicks "I've Paid" — submit to sheet once with UTR
-  const handleUpiConfirm = async () => {
-    if (!pay) return;
-    if (!utrInput.trim()) { setPayError("Please enter your UTR / Transaction ID to confirm payment."); return; }
-    if (sheetSubmittedRef.current) return; // FIX: prevent double submission
-    sheetSubmittedRef.current = true;
-    setPayLoading(true);
     setPayError("");
+
     try {
-      await submitToSheet({
-        name, whatsapp, studentClass, board, medium, schoolName, address, mode,
-        utr: utrInput.trim(), status: "paid_phonepe_upi",
-        paidAmount: String(pay.offer), timestamp: new Date().toISOString(),
+      const res = await fetch("/api/phonepe/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: pay?.offer,
+          name,
+          phone: whatsapp,
+          studentClass,
+        }),
       });
-      setStep("done");
+
+      const data = await res.json();
+
+      if (!data.success || !data.redirectUrl) {
+        setPayError(data.error?.message || "Could not initiate payment. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      // Save registration data so status page can submit to Google Sheet
+      sessionStorage.setItem(
+        `ym_reg_${data.merchantTransactionId}`,
+        JSON.stringify({ name, whatsapp, studentClass, board, medium, schoolName, address, mode })
+      );
+
+      // Redirect to PhonePe
+      window.location.href = data.redirectUrl;
+
     } catch {
-      sheetSubmittedRef.current = false; // allow retry on error
-      setPayError("Submission failed. Please try again or contact us on WhatsApp.");
+      setPayError("Network error. Please try again.");
+      setSubmitting(false);
     }
-    setPayLoading(false);
   };
 
   const pay = studentClass ? PAYMENT.classes[studentClass as keyof typeof PAYMENT.classes] : null;
@@ -224,9 +195,6 @@ export default function Home() {
 
   const displayCount = (count: number | null) => { if (count === null) return "—"; return count.toLocaleString("en-IN"); };
   const realOffer = (cls: string) => { const p = PAYMENT.classes[cls as keyof typeof PAYMENT.classes]; return p.offer === 1 ? p.original : p.offer; };
-
-  // Generate QR code URL via Google Charts API
-  const qrUrl = pay ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(getUpiLink())}` : "";
 
   const adVariants = [
     <div key="v1" className="ym-ad-card ym-ad-dark">
@@ -312,11 +280,10 @@ export default function Home() {
         @media (max-width: 900px) { .ym-nav-links { display: none; } .ym-hamburger { display: flex; } }
         @media (max-width: 500px) { .ym-nav-enroll { font-size: 11px; padding: 7px 12px; } .ym-nav-name { font-size: 13px; } .ym-nav-sub { display: none; } }
 
-        /* ── HERO — MOBILE FIXED ── */
+        /* ── HERO ── */
         @keyframes heroShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
         @keyframes floatUp { 0%,100%{transform:translateY(0) rotate(0deg); opacity:0.06} 50%{transform:translateY(-20px) rotate(6deg); opacity:0.11} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
         @keyframes glowPulse { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.4)} 50%{box-shadow:0 0 0 12px rgba(245,158,11,0)} }
         @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
         @keyframes countUp { from{opacity:0;transform:translateY(10px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
@@ -365,17 +332,11 @@ export default function Home() {
           .hero-right { width: 100%; max-width: 380px; margin: 0 auto; }
           .hero-h1 { font-size: clamp(1.7rem, 6vw, 2.4rem); }
           .hero-desc { font-size: 14px; }
-          .hero-btns { gap: 10px; }
           .ym-btn-gold, .ym-btn-ghost { padding: 12px 22px; font-size: 14px; }
         }
         @media (max-width: 480px) {
           .hero-section { padding: 36px 14px 80px; }
           .hero-h1 { font-size: clamp(1.5rem, 7vw, 2rem); }
-          .hero-badge { padding: 5px 11px; }
-          .hero-badge-text { font-size: 10px; }
-          .hero-stats { gap: 8px; }
-          .hero-stat { padding: 10px 12px; min-width: 70px; }
-          .hero-stat-num { font-size: 17px; }
         }
 
         /* ── SECTIONS ── */
@@ -482,7 +443,7 @@ export default function Home() {
         .ym-about-card-sub { color: #3b82f6; font-size: 11px; margin-top: 3px; }
         @media (max-width: 760px) { .ym-about-grid { grid-template-columns: 1fr; gap: 36px; } }
 
-        /* ── VISITOR SECTION — only in footer area ── */
+        /* ── VISITOR SECTION ── */
         .ym-visitor-section { background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 50%, #0a1f5e 100%); padding: 56px 20px; position: relative; overflow: hidden; }
         .ym-visitor-section::before { content: ''; position: absolute; top: -60px; right: -60px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle, rgba(29,78,216,0.18) 0%, transparent 70%); pointer-events: none; }
         .ym-visitor-inner { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 28px; position: relative; z-index: 1; }
@@ -542,8 +503,6 @@ export default function Home() {
         .ym-footer-visitor-sep { color: rgba(255,255,255,0.13); font-size: 16px; }
         .ym-skeleton { display: inline-block; background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% auto; animation: skeletonShimmer 1.5s linear infinite; border-radius: 4px; height: 1em; width: 40px; vertical-align: middle; }
         @keyframes skeletonShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
-
-        /* ── POLICY LINKS — professional ── */
         .ym-footer-policy-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 0; margin-bottom: 14px; }
         .ym-footer-policy-link { font-size: 11px; color: rgba(255,255,255,0.35); text-decoration: none; transition: color 0.2s; padding: 4px 12px; border-right: 1px solid rgba(255,255,255,0.1); }
         .ym-footer-policy-link:last-child { border-right: none; }
@@ -583,35 +542,21 @@ export default function Home() {
         .ym-submit-btn:hover { background: #1d4ed8; }
         .ym-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* ── PHONEPE PAYMENT UI ── */
+        /* ── PAYMENT STEP ── */
         .ym-pay-summary { background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .ym-pay-class { font-size: 11px; color: #3b82f6; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
         .ym-pay-amount { font-size: 26px; font-weight: 800; color: #1d4ed8; }
         .ym-pay-unit { font-size: 12px; color: var(--gray-400); }
         .ym-pay-discount { background: #dcfce7; color: #15803d; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 10px; text-align: center; }
-        .ym-phonepe-box { background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%); border-radius: 16px; padding: 20px; margin-bottom: 16px; text-align: center; }
-        .ym-phonepe-logo { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
-        .ym-phonepe-logo-icon { width: 32px; height: 32px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .ym-phonepe-logo-text { color: #fff; font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
-        .ym-phonepe-upi { color: rgba(255,255,255,0.7); font-size: 12px; margin-bottom: 14px; }
-        .ym-phonepe-upi strong { color: #e9d5ff; font-size: 14px; }
-        .ym-qr-wrap { background: #fff; border-radius: 12px; padding: 12px; display: inline-block; margin-bottom: 12px; }
-        .ym-qr-img { width: 160px; height: 160px; display: block; }
-        .ym-phonepe-pay-btn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #5b21b6; padding: 11px 24px; border-radius: 10px; font-weight: 800; font-size: 14px; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; }
-        .ym-phonepe-pay-btn:hover { background: #f5f3ff; }
-        .ym-phonepe-note { color: rgba(255,255,255,0.55); font-size: 11px; margin-top: 8px; }
-        .ym-utr-box { background: #f9fafb; border: 1.5px solid var(--gray-200); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
-        .ym-utr-title { font-size: 13px; font-weight: 700; color: var(--gray-800); margin-bottom: 3px; }
-        .ym-utr-sub { font-size: 11px; color: var(--gray-500); margin-bottom: 10px; }
-        .ym-confirm-btn { width: 100%; background: #16a34a; color: #fff; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .ym-confirm-btn:hover:not(:disabled) { background: #15803d; }
+        .ym-confirm-btn { width: 100%; background: #5b21b6; color: #fff; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .ym-confirm-btn:hover:not(:disabled) { background: #4c1d95; }
         .ym-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .ym-pay-err { background: #fee2e2; border: 1px solid #fecaca; border-radius: 11px; padding: 11px 14px; color: #dc2626; font-size: 13px; text-align: center; margin-top: 10px; }
         .ym-pay-secure { text-align: center; margin-top: 12px; font-size: 11px; color: var(--gray-400); }
         .ym-spin { animation: spin 0.8s linear infinite; }
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
 
-        /* Done */
+        /* ── DONE ── */
         .ym-done-wrap { text-align: center; padding: 14px 0; }
         .ym-done-confetti { font-size: 52px; margin-bottom: 14px; }
         .ym-done-name { font-size: 20px; font-weight: 800; color: var(--gray-900); margin-bottom: 5px; }
@@ -808,7 +753,6 @@ export default function Home() {
                       </button>
                       {selectedSlot === cls && (
                         <div className="ym-slot-detail">
-                          {/* What you'll learn */}
                           <div className="ym-slot-row">
                             <span className="ym-slot-row-icon">📋</span>
                             <div style={{ flex: 1 }}>
@@ -823,7 +767,6 @@ export default function Home() {
                               </div>
                             </div>
                           </div>
-                          {/* Days */}
                           <div className="ym-slot-row">
                             <span className="ym-slot-row-icon">📆</span>
                             <div>
@@ -831,7 +774,6 @@ export default function Home() {
                               <p className="ym-slot-row-sub">Every week</p>
                             </div>
                           </div>
-                          {/* Time */}
                           <div className="ym-slot-row">
                             <span className="ym-slot-row-icon">🕐</span>
                             <div>
@@ -839,7 +781,6 @@ export default function Home() {
                               <p className="ym-slot-row-sub">Evening · 2 hours</p>
                             </div>
                           </div>
-                          {/* Price */}
                           <div className="ym-slot-row">
                             <span className="ym-slot-row-icon">💰</span>
                             <div>
@@ -943,7 +884,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ══════════════════ VISITOR COUNTER — only here ══════════════════ */}
+      {/* ══════════════════ VISITOR COUNTER ══════════════════ */}
       <section className="ym-visitor-section" aria-label="Visitor statistics">
         <div className="ym-visitor-inner">
           <div style={{ textAlign: "center" }}>
@@ -1055,7 +996,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Visitor bar — only in footer */}
+          {/* Visitor bar in footer */}
           <div className="ym-footer-visitor-bar">
             <span className={`ym-footer-visitor-dot${counterError ? " error" : ""}`} />
             {counterLoading ? (
@@ -1073,7 +1014,6 @@ export default function Home() {
 
           <hr className="ym-footer-divider" />
 
-          {/* Policy links — professional pill style */}
           <div className="ym-footer-policy-links">
             {[
               { label: "Terms & Conditions", href: POLICY.terms },
@@ -1111,7 +1051,7 @@ export default function Home() {
               </div>
               <div className="ym-modal-emoji">{step === "form" ? "📝" : step === "payment" ? "💜" : "✅"}</div>
               <div className="ym-modal-title">
-                {step === "form" ? "Join Yarwng Mathematics" : step === "payment" ? "Pay via PhonePe / UPI" : "Registration Complete!"}
+                {step === "form" ? "Join Yarwng Mathematics" : step === "payment" ? "Pay via PhonePe" : "Registration Complete!"}
               </div>
               <div className="ym-modal-sub">
                 {step === "form" ? "Fill your details to proceed" : step === "payment" ? `${studentClass} · ₹${pay?.offer}/month` : "Welcome to Yarwng Mathematics"}
@@ -1119,9 +1059,10 @@ export default function Home() {
             </div>
 
             <div className="ym-modal-body">
+
               {/* ── STEP 1: FORM ── */}
               {step === "form" && (
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={(e) => { e.preventDefault(); setStep("payment"); }}>
                   <div className="ym-form-info">
                     <span>ℹ️</span>
                     <span>Your details will be saved after confirming payment.</span>
@@ -1191,22 +1132,30 @@ export default function Home() {
                       <a href={POLICY.privacy} target="_blank" rel="noopener noreferrer">Privacy Policy</a> and{" "}
                       <a href={POLICY.refund} target="_blank" rel="noopener noreferrer">Refund Policy</a>.
                     </p>
-                    <button type="submit" disabled={submitting} className="ym-submit-btn">
-                      {submitting ? "Please wait…" : "Next: Pay & Join →"}
+                    <button type="submit" className="ym-submit-btn">
+                      Next: Pay & Join →
                     </button>
                   </div>
                 </form>
               )}
 
-              {/* ── STEP 2: PHONEPE PAYMENT ── */}
+              {/* ── STEP 2: PHONEPE REDIRECT ── */}
               {step === "payment" && pay && (
-                <div>
-                  {/* Amount summary */}
+                <div style={{ textAlign: "center", padding: "20px 0" }}>
+                  <div style={{ fontSize: 52, marginBottom: 16 }}>💜</div>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Complete Your Payment</h3>
+                  <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>
+                    You'll be securely redirected to PhonePe to complete the payment.
+                  </p>
+
+                  {/* Order summary */}
                   <div className="ym-pay-summary">
                     <div>
                       <p className="ym-pay-class">{studentClass} · {board} · {mode}</p>
-                      <p><span className="ym-pay-amount">₹{pay.offer}</span><span className="ym-pay-unit"> /month</span></p>
-                      {TEST_MODE && <p style={{ fontSize: "11px", color: "#ea580c", fontWeight: 700, marginTop: "3px" }}>⚠️ Test Mode — ₹1 charge</p>}
+                      <p>
+                        <span className="ym-pay-amount">₹{pay.offer}</span>
+                        <span className="ym-pay-unit"> /month</span>
+                      </p>
                     </div>
                     <div className="ym-pay-discount">
                       {discount}% OFF<br />
@@ -1214,51 +1163,36 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* PhonePe QR + Pay button */}
-                  <div className="ym-phonepe-box">
-                    <div className="ym-phonepe-logo">
-                      <div className="ym-phonepe-logo-icon">💜</div>
-                      <span className="ym-phonepe-logo-text">PhonePe / Any UPI App</span>
-                    </div>
-                    <p className="ym-phonepe-upi">Pay to UPI ID: <strong>{PHONEPE_UPI_ID}</strong></p>
-
-                    {/* QR Code */}
-                    <div className="ym-qr-wrap">
-                      <img src={qrUrl} alt="UPI QR Code" className="ym-qr-img" />
-                    </div>
-
-                    {/* Deep link button for mobile */}
-                    <div>
-                      <a href={getUpiLink()} className="ym-phonepe-pay-btn">
-                        💜 Open PhonePe / UPI App
-                      </a>
-                    </div>
-                    <p className="ym-phonepe-note">Scan QR with any UPI app · or tap button on mobile</p>
-                  </div>
-
-                  {/* Confirm with UTR */}
-                  <div className="ym-utr-box">
-                    <p className="ym-utr-title">✅ After paying, enter your Transaction ID</p>
-                    <p className="ym-utr-sub">Find it in your UPI app under payment history (UTR / Ref No.)</p>
-                    <input
-                      type="text"
-                      placeholder="e.g. 506123456789"
-                      value={utrInput}
-                      onChange={(e) => { setUtrInput(e.target.value); setPayError(""); }}
-                      className="ym-input"
-                      style={{ marginBottom: 0 }}
-                    />
-                  </div>
-
-                  <button onClick={handleUpiConfirm} disabled={payLoading || !utrInput.trim()} className="ym-confirm-btn">
-                    {payLoading ? (
-                      <><svg className="ym-spin" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" /><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" /></svg>Confirming…</>
-                    ) : <>✅ I've Paid — Confirm Registration</>}
+                  {/* PhonePe pay button */}
+                  <button
+                    onClick={handleSubmit as any}
+                    disabled={submitting}
+                    className="ym-confirm-btn"
+                  >
+                    {submitting ? (
+                      <>
+                        <svg className="ym-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
+                          <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" />
+                        </svg>
+                        Redirecting to PhonePe…
+                      </>
+                    ) : (
+                      <>💜 Pay ₹{pay.offer} via PhonePe</>
+                    )}
                   </button>
 
                   {payError && <div className="ym-pay-err">⚠️ {payError}</div>}
 
-                  <p className="ym-pay-secure">🔒 Your data is safe · Powered by UPI / PhonePe Business</p>
+                  <p className="ym-pay-secure">🔒 Powered by PhonePe Payment Gateway · SSL Secured</p>
+
+                  {/* Back button */}
+                  <button
+                    onClick={() => { setStep("form"); setPayError(""); setSubmitting(false); }}
+                    style={{ marginTop: 14, background: "none", border: "none", color: "#6b7280", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}
+                  >
+                    ← Edit details
+                  </button>
                 </div>
               )}
 
@@ -1272,11 +1206,14 @@ export default function Home() {
                     <p className="ym-done-wa-title">✅ Opening {studentClass} WhatsApp Group…</p>
                     <p className="ym-done-wa-sub">{countdown > 0 ? `Redirecting in ${countdown}s` : "WhatsApp should be open now!"}</p>
                   </div>
-                  <a href={pay.whatsapp} target="_blank" rel="noopener noreferrer" className="ym-done-wa-btn">💬 Open {studentClass} WhatsApp Group</a>
+                  <a href={pay.whatsapp} target="_blank" rel="noopener noreferrer" className="ym-done-wa-btn">
+                    💬 Open {studentClass} WhatsApp Group
+                  </a>
                   <p style={{ fontSize: "11px", color: "#9ca3af", marginBottom: "14px" }}>If WhatsApp didn't open, tap the button above.</p>
                   <button onClick={closeModal} className="ym-done-close-btn">Close</button>
                 </div>
               )}
+
             </div>
           </div>
         </div>
