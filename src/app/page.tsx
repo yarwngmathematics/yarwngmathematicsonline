@@ -140,46 +140,74 @@ export default function Home() {
 
   const closeModal = () => setShowModal(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting) return;
-    setSubmitting(true);
-    setPayError("");
+  // ─────────────────────────────────────────────────────────────────────────────
+// Replace your existing handleSubmit function in page.tsx with this one.
+// It sends isMobile to the API and handles both INTENT (mobile) and
+// PG_CHECKOUT (desktop) responses from PhonePe.
+// ─────────────────────────────────────────────────────────────────────────────
 
-    try {
-      const res = await fetch("/api/phonepe/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: pay?.offer,
-          name,
-          phone: whatsapp,
-          studentClass,
-        }),
-      });
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (submitting) return;
+  setSubmitting(true);
+  setPayError("");
 
-      const data = await res.json();
+  // Detect mobile on the client — more reliable than server-side UA sniffing
+  const isMobile = /android|iphone|ipad|ipod|mobile|phone/i.test(navigator.userAgent)
+    || window.innerWidth < 768;
 
-      if (!data.success || !data.redirectUrl) {
-        setPayError(data.error?.message || "Could not initiate payment. Please try again.");
-        setSubmitting(false);
-        return;
-      }
+  try {
+    const res = await fetch("/api/phonepe/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: pay?.offer,
+        name,
+        phone: whatsapp,
+        studentClass,
+        board,
+        medium,
+        schoolName,
+        address,
+        mode,
+        isMobile,   // ← tells the API which payment flow to use
+      }),
+    });
 
-      // Save registration data so status page can submit to Google Sheet
-      sessionStorage.setItem(
-        `ym_reg_${data.merchantTransactionId}`,
-        JSON.stringify({ name, whatsapp, studentClass, board, medium, schoolName, address, mode })
-      );
+    const data = await res.json();
 
-      // Redirect to PhonePe
+    if (!data.success) {
+      setPayError(data.error?.message || "Could not initiate payment. Please try again.");
+      setSubmitting(false);
+      return;
+    }
+
+    // Save registration data so payment/status page can submit to Google Sheet
+    sessionStorage.setItem(
+      `ym_reg_${data.merchantTransactionId}`,
+      JSON.stringify({
+        name, whatsapp, studentClass, board, medium, schoolName, address, mode,
+      })
+    );
+
+    if (data.flowType === "intent" && data.intentUrl) {
+      // ── MOBILE: open the UPI intent URL directly ────────────────────────
+      // This launches the UPI app chooser (GPay, PhonePe, Paytm, etc.)
+      // After payment the app redirects back to data.redirectUrl (our status page)
+      window.location.href = data.intentUrl;
+    } else if (data.redirectUrl) {
+      // ── DESKTOP: redirect to PhonePe hosted checkout page ──────────────
       window.location.href = data.redirectUrl;
-
-    } catch {
-      setPayError("Network error. Please try again.");
+    } else {
+      setPayError("Unexpected response from payment gateway. Please try again.");
       setSubmitting(false);
     }
-  };
+
+  } catch {
+    setPayError("Network error. Please try again.");
+    setSubmitting(false);
+  }
+};
 
   const pay = studentClass ? PAYMENT.classes[studentClass as keyof typeof PAYMENT.classes] : null;
   const discount = pay ? Math.round(((pay.original - pay.offer) / pay.original) * 100) : 0;
