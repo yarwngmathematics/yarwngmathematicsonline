@@ -25,114 +25,84 @@ async function submitToSheet(payload: Record<string, string>) {
 }
 
 function PaymentStatus() {
-  const params  = useSearchParams();
-  const router  = useRouter();
-  const txnId   = params.get("txnId") || "";
+  const params = useSearchParams();
+  const router = useRouter();
+  const txnId  = params.get("txnId") || "";
 
-  // studentClass is read from sessionStorage (PhonePe doesn't forward custom params)
   const [studentClass, setStudentClass] = useState("");
-  const [studentName, setStudentName]   = useState("");
-
-  const [status, setStatus]       = useState<"checking" | "success" | "failed" | "pending">("checking");
-  const [attempts, setAttempts]   = useState(0);
+  const [studentName,  setStudentName]  = useState("");
+  const [status, setStatus] = useState<"checking" | "success" | "failed" | "pending">("checking");
   const [countdown, setCountdown] = useState(5);
   const sheetDone = useRef(false);
   const waOpened  = useRef(false);
 
-  // ── Poll PhonePe verify-order API ────────────────────────────────────────
+  // ── Single verify call — no polling ──────────────────────────────────────
   useEffect(() => {
     if (!txnId) { setStatus("failed"); return; }
 
-    let tries = 0;
-    const maxTries = 8;
-
-    const poll = async () => {
+    const verify = async () => {
       try {
         const res  = await fetch(`/api/phonepe/verify-order?txnId=${encodeURIComponent(txnId)}`);
         const data = await res.json();
-        tries++;
-        setAttempts(tries);
 
         if (data.code === "PAYMENT_SUCCESS" || data.status === "COMPLETED") {
-          setStatus("success");
-
-          // Submit to Google Sheet exactly once
-          if (!sheetDone.current) {
+          // Read reg data from sessionStorage
+          const stored = sessionStorage.getItem(`ym_reg_${txnId}`);
+          if (stored && !sheetDone.current) {
             sheetDone.current = true;
-            const stored = sessionStorage.getItem(`ym_reg_${txnId}`);
-            if (stored) {
-              const reg = JSON.parse(stored);
-
-              // Lift class + name into state so the UI can use them
-              setStudentClass(reg.studentClass || "");
-              setStudentName(reg.name || "");
-
-              await submitToSheet({
-                ...reg,
-                transactionId: data.transactionId || txnId,
-                status:        "paid_phonepe_pg",
-                paidAmount:    String((data.amount || 0) / 100),
-                timestamp:     new Date().toISOString(),
-              });
-              sessionStorage.removeItem(`ym_reg_${txnId}`);
-            }
+            const reg = JSON.parse(stored);
+            setStudentClass(reg.studentClass || "");
+            setStudentName(reg.name || "");
+            await submitToSheet({
+              ...reg,
+              transactionId: data.transactionId || txnId,
+              status:        "paid_phonepe_pg",
+              paidAmount:    String((data.amount || 0) / 100),
+              timestamp:     new Date().toISOString(),
+            });
+            sessionStorage.removeItem(`ym_reg_${txnId}`);
           }
+          setStatus("success");
           return;
         }
 
-        if (
-          data.code === "PAYMENT_DECLINED" ||
-          data.code === "TIMED_OUT" ||
-          data.status === "FAILED"
-        ) {
+        if (data.code === "PAYMENT_DECLINED" || data.status === "FAILED") {
           setStatus("failed");
           return;
         }
 
-        // Still pending — keep polling
-        if (tries < maxTries) setTimeout(poll, 3000);
-        else setStatus("pending");
-
+        setStatus("pending");
       } catch {
-        if (tries < maxTries) setTimeout(poll, 3000);
-        else setStatus("pending");
+        setStatus("pending");
       }
     };
 
-    poll();
+    verify();
   }, [txnId]);
 
-  // ── Auto-open WhatsApp + countdown to home ────────────────────────────────
+  // ── Auto-open WhatsApp + countdown on success ─────────────────────────────
   useEffect(() => {
     if (status !== "success") return;
 
-    // Wait a tick so studentClass state has been set
     const openWA = setTimeout(() => {
       if (!waOpened.current && studentClass && WHATSAPP_LINKS[studentClass]) {
         waOpened.current = true;
         window.open(WHATSAPP_LINKS[studentClass], "_blank", "noopener,noreferrer");
       }
-    }, 800);
+    }, 600);
 
     let c = 5;
     const t = setInterval(() => {
       c -= 1;
       setCountdown(c);
-      if (c <= 0) {
-        clearInterval(t);
-        router.push("/");
-      }
+      if (c <= 0) { clearInterval(t); router.push("/"); }
     }, 1000);
 
-    return () => {
-      clearTimeout(openWA);
-      clearInterval(t);
-    };
+    return () => { clearTimeout(openWA); clearInterval(t); };
   }, [status, studentClass, router]);
 
   const waLink = WHATSAPP_LINKS[studentClass] || "/";
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div style={{
       background: "#fff", borderRadius: 24, padding: "40px 32px",
@@ -147,15 +117,9 @@ function PaymentStatus() {
           <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#111827" }}>
             Verifying Payment…
           </h2>
-          <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>
-            Confirming your payment with PhonePe. Please wait.
+          <p style={{ color: "#6b7280", fontSize: 14 }}>
+            Please wait a moment.
           </p>
-          <div style={{
-            background: "#eff6ff", borderRadius: 12,
-            padding: "12px 16px", fontSize: 13, color: "#1d4ed8",
-          }}>
-            Check {attempts}/8 · Polling every 3s
-          </div>
         </>
       )}
 
@@ -168,11 +132,9 @@ function PaymentStatus() {
           </h2>
           <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>
             {studentName ? `Welcome, ${studentName}! ` : ""}
-            You're registered for <strong>{studentClass || "your class"}</strong>.<br />
-            Opening WhatsApp group now…
+            You're registered for <strong>{studentClass || "your class"}</strong>.
           </p>
 
-          {/* WhatsApp box */}
           <div style={{
             background: "#f0fdf4", border: "1.5px solid #bbf7d0",
             borderRadius: 14, padding: 16, marginBottom: 16,
@@ -181,43 +143,31 @@ function PaymentStatus() {
               ✅ {studentClass || "Class"} WhatsApp Group
             </p>
             <p style={{ color: "#16a34a", fontSize: 12 }}>
-              {countdown > 0
-                ? `Redirecting to home in ${countdown}s`
-                : "Redirecting…"}
+              {countdown > 0 ? `Redirecting to home in ${countdown}s` : "Redirecting…"}
             </p>
           </div>
 
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "block", background: "#16a34a", color: "#fff",
-              padding: "14px", borderRadius: 12, fontWeight: 700,
-              fontSize: 15, textDecoration: "none", marginBottom: 10,
-            }}
-          >
+          <a href={waLink} target="_blank" rel="noopener noreferrer" style={{
+            display: "block", background: "#16a34a", color: "#fff",
+            padding: "14px", borderRadius: 12, fontWeight: 700,
+            fontSize: 15, textDecoration: "none", marginBottom: 12,
+          }}>
             💬 Open WhatsApp Group
           </a>
 
-          {/* Transaction ID */}
           <div style={{
-            background: "#f9fafb", border: "1px solid #e5e7eb",
-            borderRadius: 10, padding: "10px 14px",
-            fontSize: 11, color: "#9ca3af", marginBottom: 12,
-            wordBreak: "break-all", textAlign: "left",
+            background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10,
+            padding: "10px 14px", fontSize: 11, color: "#9ca3af",
+            marginBottom: 12, wordBreak: "break-all", textAlign: "left",
           }}>
             <span style={{ fontWeight: 600 }}>Txn ID: </span>{txnId}
           </div>
 
-          <button
-            onClick={() => router.push("/")}
-            style={{
-              width: "100%", background: "#f3f4f6", color: "#374151",
-              padding: "12px", borderRadius: 12, fontWeight: 600,
-              fontSize: 14, border: "none", cursor: "pointer",
-            }}
-          >
+          <button onClick={() => router.push("/")} style={{
+            width: "100%", background: "#f3f4f6", color: "#374151",
+            padding: "12px", borderRadius: 12, fontWeight: 600,
+            fontSize: 14, border: "none", cursor: "pointer",
+          }}>
             Back to Home
           </button>
         </>
@@ -233,14 +183,11 @@ function PaymentStatus() {
           <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>
             Your payment could not be completed. No amount has been deducted.
           </p>
-          <button
-            onClick={() => router.push("/")}
-            style={{
-              width: "100%", background: "#2563eb", color: "#fff",
-              padding: "14px", borderRadius: 12, fontWeight: 700,
-              fontSize: 15, border: "none", cursor: "pointer", marginBottom: 10,
-            }}
-          >
+          <button onClick={() => router.push("/")} style={{
+            width: "100%", background: "#2563eb", color: "#fff",
+            padding: "14px", borderRadius: 12, fontWeight: 700,
+            fontSize: 15, border: "none", cursor: "pointer", marginBottom: 10,
+          }}>
             Try Again
           </button>
           <p style={{ fontSize: 12, color: "#9ca3af" }}>
@@ -269,26 +216,18 @@ function PaymentStatus() {
           }}>
             Transaction ID: <strong>{txnId}</strong>
           </div>
-          <a
-            href="https://wa.me/919366030347"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "block", background: "#16a34a", color: "#fff",
-              padding: "14px", borderRadius: 12, fontWeight: 700,
-              fontSize: 15, textDecoration: "none", marginBottom: 10,
-            }}
-          >
+          <a href="https://wa.me/919366030347" target="_blank" rel="noopener noreferrer" style={{
+            display: "block", background: "#16a34a", color: "#fff",
+            padding: "14px", borderRadius: 12, fontWeight: 700,
+            fontSize: 15, textDecoration: "none", marginBottom: 10,
+          }}>
             💬 Contact on WhatsApp
           </a>
-          <button
-            onClick={() => router.push("/")}
-            style={{
-              width: "100%", background: "#f3f4f6", color: "#374151",
-              padding: "12px", borderRadius: 12, fontWeight: 600,
-              fontSize: 14, border: "none", cursor: "pointer",
-            }}
-          >
+          <button onClick={() => router.push("/")} style={{
+            width: "100%", background: "#f3f4f6", color: "#374151",
+            padding: "12px", borderRadius: 12, fontWeight: 600,
+            fontSize: 14, border: "none", cursor: "pointer",
+          }}>
             Back to Home
           </button>
         </>
@@ -315,7 +254,7 @@ export default function PaymentStatusPage() {
           maxWidth: 420, width: "100%", textAlign: "center",
         }}>
           <div style={{ fontSize: 52, marginBottom: 16 }}>⏳</div>
-          <p style={{ color: "#6b7280", fontSize: 14 }}>Loading payment status…</p>
+          <p style={{ color: "#6b7280", fontSize: 14 }}>Loading…</p>
         </div>
       }>
         <PaymentStatus />

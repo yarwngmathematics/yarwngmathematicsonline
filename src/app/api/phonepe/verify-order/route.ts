@@ -1,60 +1,105 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PHONEPE_BASE_URL = "https://api.phonepe.com/apis/hermes";
+// ✅ Correct base URLs for PhonePe PG v2 API
+const TOKEN_URL  = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
+const STATUS_URL = "https://api.phonepe.com/apis/pg/checkout/v2/order"; // /{orderId}/status
 
-async function getAccessToken() {
-  const res = await fetch(`${PHONEPE_BASE_URL}/v1/oauth/token`, {
+async function getAccessToken(): Promise<string> {
+  const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       client_id:      process.env.PHONEPE_CLIENT_ID!,
       client_secret:  process.env.PHONEPE_CLIENT_SECRET!,
-      client_version: process.env.PHONEPE_CLIENT_VERSION!,
+      client_version: process.env.PHONEPE_CLIENT_VERSION ?? "1",
       grant_type:     "client_credentials",
     }),
   });
 
-  const data = await res.json();
-  if (!data.access_token) throw new Error("Failed to get PhonePe access token");
+  const rawText = await res.text();
+  console.log("[PhonePe verify] Token response:", res.status, rawText);
+
+  if (!res.ok) throw new Error(`Token fetch failed ${res.status}: ${rawText}`);
+
+  let data: any;
+  try { data = JSON.parse(rawText); } catch {
+    throw new Error("Token response not JSON: " + rawText);
+  }
+
+  if (!data.access_token) throw new Error("No access_token in response: " + JSON.stringify(data));
   return data.access_token as string;
 }
 
 export async function GET(req: NextRequest) {
-  const merchantTransactionId = req.nextUrl.searchParams.get("txnId");
+  const txnId = req.nextUrl.searchParams.get("txnId");
 
-  if (!merchantTransactionId) {
+  if (!txnId) {
     return NextResponse.json({ error: "Missing txnId" }, { status: 400 });
   }
+
+  // Strip the -F suffix added by the fallback flow so we check the right order
+  const orderId = txnId.endsWith("-F") ? txnId.slice(0, -2) : txnId;
 
   try {
     const accessToken = await getAccessToken();
 
-    const res = await fetch(`${PHONEPE_BASE_URL}/checkout/v2/order/${merchantTransactionId}/status`, {
+    const url = `${STATUS_URL}/${orderId}/status`;
+    console.log("[PhonePe verify] Checking status:", url);
+
+    const res = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type":  "application/json",
         "Authorization": `O-Bearer ${accessToken}`,
       },
+      // No caching — always fetch fresh status
+      cache: "no-store",
     });
 
-    const data = await res.json();
+    const rawText = await res.text();
+    console.log("[PhonePe verify] Status response:", res.status, rawText);
+
+    if (!res.ok) {
+      return NextResponse.json({
+        success: false,
+        code:    "VERIFICATION_ERROR",
+        status:  "ERROR",
+        raw:     rawText,
+      }, { status: res.status });
+    }
+
+    let data: any;
+    try { data = JSON.parse(rawText); } catch {
+      throw new Error("Status response not JSON: " + rawText);
+    }
 
     /*
-      data.state values:
-        COMPLETED  — payment successful
-        PENDING    — still pending
-        FAILED     — payment failed
+      PhonePe PG v2 state values:
+        COMPLETED — payment successful
+        PENDING   — still processing
+        FAILED    — payment failed
     */
+    const state = data.state ?? data.status ?? "";
+
+    const code =
+      state === "COMPLETED" ? "PAYMENT_SUCCESS"  :
+      state === "FAILED"    ? "PAYMENT_DECLINED" :
+                              "PAYMENT_PENDING";
+
     return NextResponse.json({
-      success: data.state === "COMPLETED",
-      code:    data.state === "COMPLETED" ? "PAYMENT_SUCCESS" : data.state === "FAILED" ? "PAYMENT_DECLINED" : "PAYMENT_PENDING",
-      status:  data.state,
-      amount:  data.amount,
-      transactionId:        data.transactionId,
-      merchantTransactionId: data.merchantOrderId,
+      success:               state === "COMPLETED",
+      code,
+      status:                state,
+      amount:                data.amount,
+      transactionId:         data.transactionId,
+      merchantTransactionId: data.merchantOrderId ?? orderId,
     });
-  } catch (err) {
-    console.error("PhonePe verify exception:", err);
-    return NextResponse.json({ error: "Verification failed" }, { status: 500 });
+
+  } catch (err: any) {
+    console.error("[PhonePe verify] Exception:", err?.message ?? err);
+    return NextResponse.json(
+      { success: false, code: "VERIFICATION_ERROR", error: "Verification failed" },
+      { status: 500 }
+    );
   }
 }
