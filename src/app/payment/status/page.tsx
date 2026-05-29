@@ -32,10 +32,11 @@ function PaymentStatus() {
   const [studentClass, setStudentClass] = useState("");
   const [studentName,  setStudentName]  = useState("");
   const [status, setStatus] = useState<"checking" | "success" | "failed" | "pending">("checking");
+  const [countdown, setCountdown] = useState(5);
   const sheetDone = useRef(false);
   const waOpened  = useRef(false);
 
-  // ── Single verify call ────────────────────────────────────────────────────
+  // ── Single verify call — no polling ──────────────────────────────────────
   useEffect(() => {
     if (!txnId) { setStatus("failed"); return; }
 
@@ -45,6 +46,7 @@ function PaymentStatus() {
         const data = await res.json();
 
         if (data.code === "PAYMENT_SUCCESS" || data.status === "COMPLETED") {
+          // Read reg data from sessionStorage
           const stored = sessionStorage.getItem(`ym_reg_${txnId}`);
           if (stored && !sheetDone.current) {
             sheetDone.current = true;
@@ -78,18 +80,26 @@ function PaymentStatus() {
     verify();
   }, [txnId]);
 
-  // ── Auto-open WhatsApp once on success — NO auto-redirect ────────────────
+  // ── Auto-open WhatsApp + countdown on success ─────────────────────────────
   useEffect(() => {
     if (status !== "success") return;
+
     const openWA = setTimeout(() => {
       if (!waOpened.current && studentClass && WHATSAPP_LINKS[studentClass]) {
         waOpened.current = true;
         window.open(WHATSAPP_LINKS[studentClass], "_blank", "noopener,noreferrer");
       }
     }, 600);
-    return () => clearTimeout(openWA);
-    // ✅ No countdown. No router.push. Student stays on this page.
-  }, [status, studentClass]);
+
+    let c = 5;
+    const t = setInterval(() => {
+      c -= 1;
+      setCountdown(c);
+      if (c <= 0) { clearInterval(t); router.push("/"); }
+    }, 1000);
+
+    return () => { clearTimeout(openWA); clearInterval(t); };
+  }, [status, studentClass, router]);
 
   const waLink = WHATSAPP_LINKS[studentClass] || "/";
 
@@ -125,55 +135,41 @@ function PaymentStatus() {
             You're registered for <strong>{studentClass || "your class"}</strong>.
           </p>
 
-          {/* WhatsApp join box */}
           <div style={{
             background: "#f0fdf4", border: "1.5px solid #bbf7d0",
-            borderRadius: 16, padding: "20px", marginBottom: 16,
+            borderRadius: 14, padding: 16, marginBottom: 16,
           }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>💬</div>
-            <p style={{ color: "#15803d", fontWeight: 800, fontSize: 15, marginBottom: 6 }}>
-              Join your {studentClass} WhatsApp Group
+            <p style={{ color: "#15803d", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
+              ✅ {studentClass || "Class"} WhatsApp Group
             </p>
-            <p style={{ color: "#16a34a", fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>
-              Tap the button below to join. Stay in the group to receive class updates, schedules and doubt support.
+            <p style={{ color: "#16a34a", fontSize: 12 }}>
+              {countdown > 0 ? `Redirecting to home in ${countdown}s` : "Redirecting…"}
             </p>
-            <a
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "block", background: "#16a34a", color: "#fff",
-                padding: "14px", borderRadius: 12, fontWeight: 700,
-                fontSize: 15, textDecoration: "none",
-              }}
-            >
-              ✅ Join WhatsApp Group Now
-            </a>
           </div>
 
-          {/* Txn ID */}
+          <a href={waLink} target="_blank" rel="noopener noreferrer" style={{
+            display: "block", background: "#16a34a", color: "#fff",
+            padding: "14px", borderRadius: 12, fontWeight: 700,
+            fontSize: 15, textDecoration: "none", marginBottom: 12,
+          }}>
+            💬 Open WhatsApp Group
+          </a>
+
           <div style={{
             background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10,
             padding: "10px 14px", fontSize: 11, color: "#9ca3af",
-            marginBottom: 16, wordBreak: "break-all", textAlign: "left",
+            marginBottom: 12, wordBreak: "break-all", textAlign: "left",
           }}>
             <span style={{ fontWeight: 600 }}>Txn ID: </span>{txnId}
           </div>
 
-          {/* Back to home — manual, no auto-redirect */}
-          <button
-            onClick={() => router.push("/")}
-            style={{
-              width: "100%", background: "#f3f4f6", color: "#374151",
-              padding: "12px", borderRadius: 12, fontWeight: 600,
-              fontSize: 14, border: "none", cursor: "pointer",
-            }}
-          >
-            ← Back to Home
+          <button onClick={() => router.push("/")} style={{
+            width: "100%", background: "#f3f4f6", color: "#374151",
+            padding: "12px", borderRadius: 12, fontWeight: 600,
+            fontSize: 14, border: "none", cursor: "pointer",
+          }}>
+            Back to Home
           </button>
-          <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 10 }}>
-            You can come back to this page anytime using the link in your browser history.
-          </p>
         </>
       )}
 
