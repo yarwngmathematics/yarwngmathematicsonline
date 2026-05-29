@@ -17,22 +17,18 @@ export const metadata: Metadata = {
   description:
     "Online & offline mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma (M.Sc, IIT Delhi). Live Google Meet sessions. Enroll now from ₹600/month.",
   keywords: [
-    // ── Brand & person (these get you found by name searches)
     "Yarwng Mathematics",
     "Rakesh Debbarma",
     "Rakesh Debbarma IIT Delhi",
     "Rakesh Debbarma mathematics",
-    // ── Location-based
     "mathematics coaching Tripura",
     "math tuition Khumulwng",
     "online math class Kokborok",
     "math teacher Tripura",
-    // ── Class-based
     "math tuition Class 10 11 12",
     "Class 10 mathematics coaching",
     "Class 11 mathematics coaching",
     "Class 12 mathematics coaching",
-    // ── General
     "IIT Delhi math tutor",
     "online mathematics coaching India",
   ],
@@ -71,6 +67,79 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    // ── 1. WebSite — tells Google the preferred site name shown in search
+    {
+      "@type": "WebSite",
+      "@id": "https://yarwngmathematics.com/#website",
+      "url": "https://yarwngmathematics.com",
+      "name": "Yarwng Mathematics",          // ← this becomes the bold name in SERP
+      "description": "Mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
+      "publisher": { "@id": "https://yarwngmathematics.com/#organization" },
+      "inLanguage": "en-IN",
+    },
+    // ── 2. Organization — logo must use ImageObject for Google to show it
+    {
+      "@type": "EducationalOrganization",
+      "@id": "https://yarwngmathematics.com/#organization",
+      "name": "Yarwng Mathematics",
+      "url": "https://yarwngmathematics.com",
+      "logo": {
+        "@type": "ImageObject",
+        "@id": "https://yarwngmathematics.com/#logo",
+        "url": "https://yarwngmathematics.com/Logo.png",  // must be publicly accessible
+        "width": 512,    // set to actual pixel dimensions of Logo.png
+        "height": 512,
+        "caption": "Yarwng Mathematics",
+      },
+      "image": { "@id": "https://yarwngmathematics.com/#logo" },
+      "description": "Mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
+      "founder": {
+        "@type": "Person",
+        "name": "Rakesh Debbarma",
+        "alumniOf": {
+          "@type": "EducationalOrganization",
+          "name": "IIT Delhi",
+        },
+        "hasCredential": {
+          "@type": "EducationalOccupationalCredential",
+          "credentialCategory": "M.Sc Mathematics",
+        },
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Khumulwng",
+        "addressRegion": "Tripura",
+        "addressCountry": "IN",
+      },
+      "telephone": "+919366030347",
+      "email": "yarwngmathematics@gmail.com",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Class 10 Mathematics",
+          "price": "600",
+          "priceCurrency": "INR",
+        },
+        {
+          "@type": "Offer",
+          "name": "Class 11 Mathematics",
+          "price": "800",
+          "priceCurrency": "INR",
+        },
+        {
+          "@type": "Offer",
+          "name": "Class 12 Mathematics",
+          "price": "900",
+          "priceCurrency": "INR",
+        },
+      ],
+    },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -84,56 +153,7 @@ export default function RootLayout({
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "EducationalOrganization",
-              "name": "Yarwng Mathematics",
-              "url": "https://yarwngmathematics.com",
-              "logo": "https://yarwngmathematics.com/Logo.png",
-              "description": "Mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
-              "founder": {
-                "@type": "Person",
-                "name": "Rakesh Debbarma",
-                "alumniOf": {
-                  "@type": "EducationalOrganization",
-                  "name": "IIT Delhi"
-                },
-                "hasCredential": {
-                  "@type": "EducationalOccupationalCredential",
-                  "credentialCategory": "M.Sc Mathematics"
-                }
-              },
-              "address": {
-                "@type": "PostalAddress",
-                "addressLocality": "Khumulwng",
-                "addressRegion": "Tripura",
-                "addressCountry": "IN"
-              },
-              "telephone": "+919366030347",
-              "email": "yarwngmathematics@gmail.com",
-              "offers": [
-                {
-                  "@type": "Offer",
-                  "name": "Class 10 Mathematics",
-                  "price": "600",
-                  "priceCurrency": "INR"
-                },
-                {
-                  "@type": "Offer",
-                  "name": "Class 11 Mathematics",
-                  "price": "800",
-                  "priceCurrency": "INR"
-                },
-                {
-                  "@type": "Offer",
-                  "name": "Class 12 Mathematics",
-                  "price": "900",
-                  "priceCurrency": "INR"
-                }
-              ]
-            }),
-          }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>
