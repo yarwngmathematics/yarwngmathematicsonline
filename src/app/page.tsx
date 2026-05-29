@@ -267,7 +267,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
         .ym-nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
         .ym-nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
-        .ym-nav-logo { width: 38px; height: 38px; object-fit: contain; border-radius: 9px; border: 1px solid rgba(255,255,255,0.15); }
+        .ym-nav-logo { width: 38px; height: 38px; object-fit: contain; border-radius: 9px; border: 1px solid rgba(255,255,255,0.15); background: #ffffff; }
         .ym-nav-name { font-weight: 700; font-size: 15px; color: #fff; line-height: 1.2; }
         .ym-nav-sub { font-size: 10px; color: #93c5fd; font-weight: 400; }
         .ym-nav-links { display: flex; align-items: center; gap: 2px; }
