@@ -174,7 +174,7 @@ export default function PolicyLayout({
       `}</style>
 
       {/* NAVBAR */}
-      <nav className="ym-nav">
+    
         <div style={{ maxWidth: 900, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
             <img src="/Logo.png" alt="Logo" style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 10, border: "1px solid rgba(255,255,255,0.15)" }} />
@@ -190,7 +190,6 @@ export default function PolicyLayout({
             <Link href="/" style={{ background: "#facc15", color: "#1e3a8a", border: "none", borderRadius: 8, padding: "4px 14px", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>← Home</Link>
           </div>
         </div>
-      </nav>
 
       {/* HERO */}
       <div className="policy-hero">

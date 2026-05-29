@@ -1,10 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-
-/* ─────────────────────────────────────────
-   PAYMENT CONFIG — PhonePe Business
-───────────────────────────────────────── */
 const TEST_MODE = true;
 
 const PAYMENT = {
