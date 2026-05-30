@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     const rawText = await res.text();
 
-    // Log full response so we can see every field PhonePe returns
+    // Log full response to see every field PhonePe returns
     console.log("[PhonePe verify] Full response:", rawText);
 
     if (!res.ok) {
@@ -64,18 +64,33 @@ export async function GET(req: NextRequest) {
       throw new Error("Status response not JSON: " + rawText);
     }
 
-    const state = data.state ?? data.status ?? "";
+    // Log all possible merchant order ID fields so we know exactly what PhonePe returns
+    console.log("[PhonePe verify] merchantOrder fields:", {
+      flat:            data.merchantOrderId,
+      nested:          data.merchantOrder,
+      nestedOrderId:   data.merchantOrder?.orderId,
+      topLevelOrderId: data.orderId,
+    });
+
+    // PhonePe v2 sometimes nests the merchant order ID — check all known locations
+    const merchantOrderId: string =
+      data.merchantOrderId          ||  // flat (some responses)
+      data.merchantOrder?.orderId   ||  // nested object (v2 common)
+      data.orderId                  ||  // alternate flat field
+      orderId;                          // absolute fallback — what we originally sent
 
     // PhonePe PG v2 returns the UPI transaction ref in multiple possible fields.
-    // We try all known field names so the sheet always gets the UTR.
-    const utrOrOrderId =
-      data.paymentDetails?.[0]?.transactionId ||   // UPI UTR number
-      data.paymentDetails?.[0]?.utr             ||   // alternate field
-      data.transactionId                        ||   // top-level
-      data.merchantOrderId                      ||   // our order ID as fallback
-      orderId;                                        // absolute fallback
+    // Try all known field names so the sheet always gets the UTR.
+    const utrOrTransactionId: string =
+      data.paymentDetails?.[0]?.transactionId  ||  // UPI UTR number
+      data.paymentDetails?.[0]?.utr            ||  // alternate UTR field
+      data.paymentDetails?.[0]?.rrn            ||  // RRN (some payment modes)
+      data.transactionId                       ||  // top-level transaction ID
+      merchantOrderId;                             // fallback to merchant order ID
 
-    console.log("[PhonePe verify] state:", state, "| utr/orderId:", utrOrOrderId);
+    const state: string = data.state ?? data.status ?? "";
+
+    console.log("[PhonePe verify] state:", state, "| utr:", utrOrTransactionId, "| merchantOrderId:", merchantOrderId);
 
     const code =
       state === "COMPLETED" ? "PAYMENT_SUCCESS"  :
@@ -87,10 +102,14 @@ export async function GET(req: NextRequest) {
       code,
       status:                state,
       amount:                data.amount,
-      // Return under both names so the client always finds it
-      transactionId:         utrOrOrderId,
-      utr:                   utrOrOrderId,
-      merchantTransactionId: data.merchantOrderId ?? orderId,
+
+      // UTR / bank reference — returned under both names so client always finds it
+      transactionId:         utrOrTransactionId,
+      utr:                   utrOrTransactionId,
+
+      // Merchant order ID — this is what should go into your Google Sheet
+      merchantTransactionId: merchantOrderId,
+      orderId:               merchantOrderId,      // alias so sheet code always finds it
     });
 
   } catch (err: any) {
