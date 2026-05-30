@@ -107,7 +107,7 @@ export default function AboutPage() {
               <p className="story-degree">M.Sc Mathematics</p>
               <p className="story-iit">IIT Delhi</p>
               <div className="story-chips">
-                {["Number Theory","Calculus","Linear Algebra","Statistics","Topology"].map(c=>(
+                {["ODE","Numerical optimization","Linear Algebra","Statistics","Topology"].map(c=>(
                   <span key={c} className="story-chip">{c}</span>
                 ))}
               </div>
@@ -170,9 +170,9 @@ export default function AboutPage() {
           </div>
           <div className="timeline">
             {[
-              { year:"2018–2020", title:"IIT Delhi — M.Sc Mathematics", desc:"Rakesh completed his Master's in Mathematics from one of India's premier institutions, building deep expertise in pure and applied mathematics." },
-              { year:"2020–2024", title:"Teaching & Research", desc:"Years of teaching experience working with students across different levels, refining a unique conceptual approach to mathematics education." },
-              { year:"2025", title:"Yarwng Mathematics Founded", desc:"With a clear vision to democratise quality math education in Northeast India, Yarwng Mathematics was established in Khumulwng, Tripura." },
+              { year:"2024–2026", title:"IIT Delhi — M.Sc Mathematics", desc:"Rakesh completed his Master's in Mathematics from one of India's premier institutions, building deep expertise in pure and applied mathematics." },
+              { year:"2019–2026", title:"Teaching & Research", desc:"Years of teaching experience working with students across different levels, refining a unique conceptual approach to mathematics education." },
+              { year:"2026", title:"Yarwng Mathematics Founded", desc:"With a clear vision to democratise quality math education in Northeast India, Yarwng Mathematics was established in Khumulwng, Tripura." },
               { year:"June 2026", title:"Online Classes Launch", desc:"Expanding reach across India via Google Meet — Classes 10, 11 & 12 with structured weekly sessions and WhatsApp support groups." },
               { year:"Coming Soon", title:"Offline Classroom", desc:"A physical learning centre in Khumulwng to serve local students with face-to-face, personalised attention." },
             ].map(t=>(

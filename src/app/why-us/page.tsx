@@ -102,7 +102,7 @@ export default function WhyUsPage() {
         <div className="feat-grid">
           {[
             { icon:"🧠", bg:"#eff6ff", title:"Conceptual Depth", desc:"We go beyond formulas. Every concept is explained with its origin, intuition, and real-world relevance. Students don't just pass — they understand." },
-            { icon:"👨‍🏫", bg:"#fef3c7", title:"IIT Delhi Faculty", desc:"Direct access to an M.Sc graduate from IIT Delhi. The same rigour that cracked one of India's toughest entrances now teaches your child." },
+            { icon:"👨‍🏫", bg:"#fef3c7", title:"IIT Delhi alumni", desc:"Direct access to an M.Sc graduate from IIT Delhi. The same rigour that cracked one of India's toughest entrances now teaches your child." },
             { icon:"📅", bg:"#f0fdf4", title:"Structured Timetable", desc:"Fixed weekly sessions per class. No cancellations, no confusion. Consistency builds habits, and habits build toppers." },
             { icon:"💬", bg:"#fdf2f8", title:"24/7 WhatsApp Support", desc:"Got a doubt at 11 PM before an exam? Message us. Every batch has a dedicated WhatsApp group for ongoing support." },
             { icon:"🖥️", bg:"#f0f9ff", title:"Live Google Meet Sessions", desc:"High-quality interactive video sessions. See the board, ask questions in real time, and learn from wherever you are in India." },
@@ -139,7 +139,7 @@ export default function WhyUsPage() {
             </thead>
             <tbody>
               {[
-                ["IIT-qualified faculty","✅","❌"],
+                ["IIT-qualified faculty ","✅","❌"],
                 ["Live interactive sessions","✅","Sometimes"],
                 ["WhatsApp doubt support","✅","❌"],
                 ["Small batch (personal attention)","✅","❌"],
@@ -177,31 +177,6 @@ export default function WhyUsPage() {
               <div key={s.label} className="stat-card">
                 <p className="stat-num">{s.num}</p>
                 <p className="stat-label">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* TESTIMONIALS */}
-      <section className="testimonial-section">
-        <div className="testimonial-inner">
-          <div className="sec-head">
-            <div className="sec-tag" style={{ background:"#f0fdf4", color:"#15803d" }}>💬 Student Voices</div>
-            <h2 className="sec-h2">What Our Students Say</h2>
-            <div className="sec-line" style={{ background:"#22c55e" }} />
-          </div>
-          <div className="test-grid">
-            {[
-              { stars:"★★★★★", quote:"Sir explains every concept so clearly. I used to fear calculus — now I actually enjoy it. My board marks improved by 22 marks!", name:"Priya D.", sub:"Class 12, CBSE · Agartala" },
-              { stars:"★★★★★", quote:"The WhatsApp group is a lifesaver. I get answers to my doubts within minutes, even on weekends. No other coaching does this.", name:"Rajan T.", sub:"Class 11, TBSE · Khumulwng" },
-              { stars:"★★★★★", quote:"Finally a teacher who explains WHY, not just HOW. The IIT background really shows in the quality and depth of teaching.", name:"Amrita B.", sub:"Class 10, CBSE · Tripura" },
-            ].map(t=>(
-              <div key={t.name} className="test-card">
-                <div className="test-stars">{t.stars}</div>
-                <p className="test-quote">"{t.quote}"</p>
-                <p className="test-name">{t.name}</p>
-                <p className="test-sub">{t.sub}</p>
               </div>
             ))}
           </div>
