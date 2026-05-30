@@ -65,7 +65,7 @@ function PaymentSuccessInner() {
         const res = await fetch(`/api/phonepe/verify?txnId=${encodeURIComponent(txnId)}`);
         const data = await res.json();
 
-        if (data.success && data.status === "PAYMENT_SUCCESS") {
+        if (data.success && (data.status === "COMPLETED" || data.code === "PAYMENT_SUCCESS")) {
           setState("success");
         } else {
           setState("failed");
