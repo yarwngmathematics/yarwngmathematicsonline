@@ -85,6 +85,13 @@ export default function Home() {
           const getUrl = `https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/get`;
           const res = await fetch(getUrl, { headers: { "Accept": "application/json" } });
           const data = await res.json();
+          useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('enroll') === '1') {
+    const mode = params.get('mode') ?? '';
+    setTimeout(() => openModal(mode), 300);
+  }
+}, []);
           if (data && typeof data.count === "number") { setVisitorCount(data.count); setCounterError(false); }
         } catch { }
       } finally {
@@ -93,7 +100,13 @@ export default function Home() {
     };
     hitCounter();
   }, []);
-
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('enroll') === '1') {
+    const mode = params.get('mode') ?? '';
+    openModal(mode);
+  }
+}, []);
   useEffect(() => { const t = setInterval(() => setLiveDot((v) => !v), 900); return () => clearInterval(t); }, []);
   useEffect(() => { const t = setInterval(() => setAdVariant((v) => (v + 1) % 3), 5000); return () => clearInterval(t); }, []);
 
