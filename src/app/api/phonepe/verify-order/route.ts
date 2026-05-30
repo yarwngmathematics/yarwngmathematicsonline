@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// ✅ Correct base URLs for PhonePe PG v2 API
 const TOKEN_URL  = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
-const STATUS_URL = "https://api.phonepe.com/apis/pg/checkout/v2/order"; // /{orderId}/status
+const STATUS_URL = "https://api.phonepe.com/apis/pg/checkout/v2/order";
 
 async function getAccessToken(): Promise<string> {
   const res = await fetch(TOKEN_URL, {
@@ -17,54 +16,46 @@ async function getAccessToken(): Promise<string> {
   });
 
   const rawText = await res.text();
-  console.log("[PhonePe verify] Token response:", res.status, rawText);
-
   if (!res.ok) throw new Error(`Token fetch failed ${res.status}: ${rawText}`);
 
   let data: any;
   try { data = JSON.parse(rawText); } catch {
     throw new Error("Token response not JSON: " + rawText);
   }
-
-  if (!data.access_token) throw new Error("No access_token in response: " + JSON.stringify(data));
+  if (!data.access_token) throw new Error("No access_token: " + JSON.stringify(data));
   return data.access_token as string;
 }
 
 export async function GET(req: NextRequest) {
   const txnId = req.nextUrl.searchParams.get("txnId");
+  if (!txnId) return NextResponse.json({ error: "Missing txnId" }, { status: 400 });
 
-  if (!txnId) {
-    return NextResponse.json({ error: "Missing txnId" }, { status: 400 });
-  }
-
-  // Strip the -F suffix added by the fallback flow so we check the right order
+  // Strip -F suffix from fallback orders
   const orderId = txnId.endsWith("-F") ? txnId.slice(0, -2) : txnId;
 
   try {
     const accessToken = await getAccessToken();
 
     const url = `${STATUS_URL}/${orderId}/status`;
-    console.log("[PhonePe verify] Checking status:", url);
-
     const res = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type":  "application/json",
         "Authorization": `O-Bearer ${accessToken}`,
       },
-      // No caching — always fetch fresh status
       cache: "no-store",
     });
 
     const rawText = await res.text();
-    console.log("[PhonePe verify] Status response:", res.status, rawText);
+
+    // Log full response so we can see every field PhonePe returns
+    console.log("[PhonePe verify] Full response:", rawText);
 
     if (!res.ok) {
       return NextResponse.json({
         success: false,
         code:    "VERIFICATION_ERROR",
         status:  "ERROR",
-        raw:     rawText,
       }, { status: res.status });
     }
 
@@ -73,13 +64,18 @@ export async function GET(req: NextRequest) {
       throw new Error("Status response not JSON: " + rawText);
     }
 
-    /*
-      PhonePe PG v2 state values:
-        COMPLETED — payment successful
-        PENDING   — still processing
-        FAILED    — payment failed
-    */
     const state = data.state ?? data.status ?? "";
+
+    // PhonePe PG v2 returns the UPI transaction ref in multiple possible fields.
+    // We try all known field names so the sheet always gets the UTR.
+    const utrOrOrderId =
+      data.paymentDetails?.[0]?.transactionId ||   // UPI UTR number
+      data.paymentDetails?.[0]?.utr             ||   // alternate field
+      data.transactionId                        ||   // top-level
+      data.merchantOrderId                      ||   // our order ID as fallback
+      orderId;                                        // absolute fallback
+
+    console.log("[PhonePe verify] state:", state, "| utr/orderId:", utrOrOrderId);
 
     const code =
       state === "COMPLETED" ? "PAYMENT_SUCCESS"  :
@@ -91,7 +87,9 @@ export async function GET(req: NextRequest) {
       code,
       status:                state,
       amount:                data.amount,
-      transactionId:         data.transactionId,
+      // Return under both names so the client always finds it
+      transactionId:         utrOrOrderId,
+      utr:                   utrOrOrderId,
       merchantTransactionId: data.merchantOrderId ?? orderId,
     });
 

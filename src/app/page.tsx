@@ -1,13 +1,15 @@
 "use client";
-
+import Link from "next/link";
+import Navbar from "@/components/Navbar";
 import { useState, useEffect, useRef } from "react";
+
 const TEST_MODE = true;
 
 const PAYMENT = {
   classes: {
-    "Class 10": { original: 700, offer: TEST_MODE ? 1 : 600, whatsapp: "https://chat.whatsapp.com/DDdQ4xpOj3SA5RiVlPZ7Ar?s=cl&p=a&mlu=1" },
-    "Class 11": { original: 900, offer: TEST_MODE ? 1 : 800, whatsapp: "https://chat.whatsapp.com/E9FN3Nh6dLx3dKa7VGENkI?s=cl&p=a&mlu=1" },
-    "Class 12": { original: 1000, offer: TEST_MODE ? 1 : 900, whatsapp: "https://chat.whatsapp.com/HUe0D5AybDc7aBivxsp426?s=cl&p=a&mlu=1" },
+    "Class 10": { original: 700, offer: TEST_MODE ? 1 : 600 },
+    "Class 11": { original: 900, offer: TEST_MODE ? 1 : 800 },
+    "Class 12": { original: 1000, offer: TEST_MODE ? 1 : 900 },
   },
 };
 
@@ -17,8 +19,6 @@ const POLICY = {
   privacy: `${DOMAIN}/privacy`,
   refund: `${DOMAIN}/refund`,
 };
-
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBZepl7eijkaiajLUwVlY_udCJhCcAJNUBBNfgz_IcSABbbLqdWOvtNlg1s8h4KFAOqA/exec";
 
 const COUNTER_NAMESPACE = "yarwngmathematics";
 const COUNTER_KEY = "site-visitors-2026";
@@ -42,20 +42,9 @@ const SLOTS = {
   },
 };
 
-const NAV_LINKS = [
-  { label: "Home", href: "#home", id: "home" },
-  { label: "About", href: "#about", id: "about" },
-  { label: "Classes", href: "#classes", id: "classes" },
-  { label: "Why Us", href: "#why-us", id: "why-us" },
-  { label: "Contact", href: "#contact", id: "contact" },
-];
-
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
-  const [step, setStep] = useState("form");
-  const [activeSection, setActiveSection] = useState("home");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [step, setStep] = useState("form"); // "form" | "payment"
   const [liveDot, setLiveDot] = useState(true);
   const [adVariant, setAdVariant] = useState(0);
   const [slotsOpen, setSlotsOpen] = useState(false);
@@ -70,14 +59,11 @@ export default function Home() {
   const [schoolName, setSchoolName] = useState("");
   const [address, setAddress] = useState("");
   const [mode, setMode] = useState("");
-
   const [submitting, setSubmitting] = useState(false);
-  const [countdown, setCountdown] = useState(3);
 
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
   const [counterLoading, setCounterLoading] = useState(true);
   const [counterError, setCounterError] = useState(false);
-
   const counterHitRef = useRef(false);
 
   useEffect(() => {
@@ -108,22 +94,8 @@ export default function Home() {
     hitCounter();
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-      const sections = NAV_LINKS.map((l) => document.getElementById(l.id)).filter(Boolean) as HTMLElement[];
-      let current = "home";
-      sections.forEach((sec) => { if (window.scrollY >= sec.offsetTop - 100) current = sec.id; });
-      setActiveSection(current);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   useEffect(() => { const t = setInterval(() => setLiveDot((v) => !v), 900); return () => clearInterval(t); }, []);
   useEffect(() => { const t = setInterval(() => setAdVariant((v) => (v + 1) % 3), 5000); return () => clearInterval(t); }, []);
-
-  const scrollToSection = (id: string) => { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); };
 
   const openModal = (preMode?: string) => {
     setStep("form");
@@ -136,66 +108,54 @@ export default function Home() {
 
   const closeModal = () => setShowModal(false);
 
- // Replace your entire handleSubmit in page.tsx with this clean version.
-// No isMobile, no intentUrl — just PG_CHECKOUT for all devices.
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setPayError("");
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (submitting) return;
-  setSubmitting(true);
-  setPayError("");
+    try {
+      const res = await fetch("/api/phonepe/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: pay?.offer,
+          name,
+          phone: whatsapp,
+          studentClass,
+          board,
+          medium,
+          schoolName,
+          address,
+          mode,
+        }),
+      });
 
-  try {
-    const res = await fetch("/api/phonepe/create-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount: pay?.offer,
-        name,
-        phone: whatsapp,
-        studentClass,
-        board,
-        medium,
-        schoolName,
-        address,
-        mode,
-      }),
-    });
+      const data = await res.json();
 
-    const data = await res.json();
+      if (!data.success || !data.redirectUrl) {
+        setPayError(data.error?.message || "Could not initiate payment. Please try again.");
+        setSubmitting(false);
+        return;
+      }
 
-    if (!data.success || !data.redirectUrl) {
-      setPayError(data.error?.message || "Could not initiate payment. Please try again.");
+      // Save registration data so payment/status page can submit to Google Sheet
+      sessionStorage.setItem(
+        `ym_reg_${data.merchantTransactionId}`,
+        JSON.stringify({ name, whatsapp, studentClass, board, medium, schoolName, address, mode })
+      );
+
+      // Redirect to PhonePe hosted checkout
+      window.location.href = data.redirectUrl;
+
+    } catch {
+      setPayError("Network error. Please try again.");
       setSubmitting(false);
-      return;
     }
-
-    // Save registration data so payment/status page can submit to Google Sheet
-    sessionStorage.setItem(
-      `ym_reg_${data.merchantTransactionId}`,
-      JSON.stringify({ name, whatsapp, studentClass, board, medium, schoolName, address, mode })
-    );
-
-    // Redirect to PhonePe hosted checkout (works on both mobile and desktop)
-    window.location.href = data.redirectUrl;
-
-  } catch {
-    setPayError("Network error. Please try again.");
-    setSubmitting(false);
-  }
-};
+  };
 
   const pay = studentClass ? PAYMENT.classes[studentClass as keyof typeof PAYMENT.classes] : null;
   const discount = pay ? Math.round(((pay.original - pay.offer) / pay.original) * 100) : 0;
-
-  useEffect(() => {
-    if (step !== "done" || !pay?.whatsapp) return;
-    setCountdown(3);
-    window.open(pay.whatsapp, "_blank", "noopener,noreferrer");
-    let c = 3;
-    const t = setInterval(() => { c -= 1; setCountdown(c); if (c <= 0) clearInterval(t); }, 1000);
-    return () => clearInterval(t);
-  }, [step]);
 
   const displayCount = (count: number | null) => { if (count === null) return "—"; return count.toLocaleString("en-IN"); };
   const realOffer = (cls: string) => { const p = PAYMENT.classes[cls as keyof typeof PAYMENT.classes]; return p.offer === 1 ? p.original : p.offer; };
@@ -257,34 +217,16 @@ const handleSubmit = async (e: React.FormEvent) => {
         body { font-family: 'Outfit', sans-serif; color: var(--gray-900); background: #fff; }
         .ym-page { font-family: 'Outfit', sans-serif; }
         .ym-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
-
-        /* ── NAVBAR ── */
-        .ym-nav { position: sticky; top: 0; z-index: 100; background: rgba(6,15,46,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.07); transition: box-shadow 0.3s; }
-        .ym-nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
-        .ym-nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-        .ym-nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
-        .ym-nav-logo { width: 38px; height: 38px; object-fit: contain; border-radius: 9px; border: 1px solid rgba(255,255,255,0.15); background: #ffffff; }
-        .ym-nav-name { font-weight: 700; font-size: 15px; color: #fff; line-height: 1.2; }
-        .ym-nav-sub { font-size: 10px; color: #93c5fd; font-weight: 400; }
-        .ym-nav-links { display: flex; align-items: center; gap: 2px; }
-        .ym-nav-link { padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.2s; background: transparent; border: none; text-decoration: none; }
         .ym-nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
         .ym-nav-link.active { color: #fff; background: rgba(59,130,246,0.2); }
         .ym-nav-link.active-dot { position: relative; }
         .ym-nav-link.active-dot::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
-        .ym-nav-enroll { background: linear-gradient(135deg, #1d4ed8, #1e40af); color: #fff; padding: 8px 18px; border-radius: 9px; font-weight: 700; font-size: 13px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .ym-nav-enroll:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); transform: translateY(-1px); }
-        .ym-hamburger { display: none; background: transparent; border: none; cursor: pointer; padding: 6px; flex-direction: column; gap: 5px; }
         .ym-hamburger span { display: block; width: 20px; height: 2px; background: #fff; border-radius: 2px; transition: all 0.3s; }
-        .ym-mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; bottom: 0; background: rgba(6,15,46,0.98); backdrop-filter: blur(20px); z-index: 99; flex-direction: column; padding: 20px; gap: 6px; overflow-y: auto; }
         .ym-mobile-menu.open { display: flex; }
-        .ym-mobile-link { padding: 13px 16px; border-radius: 11px; font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.8); cursor: pointer; background: transparent; border: none; text-align: left; transition: all 0.2s; }
         .ym-mobile-link:hover, .ym-mobile-link.active { background: rgba(59,130,246,0.15); color: #fff; }
-        .ym-mobile-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 0; }
         @media (max-width: 900px) { .ym-nav-links { display: none; } .ym-hamburger { display: flex; } }
         @media (max-width: 500px) { .ym-nav-enroll { font-size: 11px; padding: 7px 12px; } .ym-nav-name { font-size: 13px; } .ym-nav-sub { display: none; } }
-
-        /* ── HERO ── */
         @keyframes heroShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
         @keyframes floatUp { 0%,100%{transform:translateY(0) rotate(0deg); opacity:0.06} 50%{transform:translateY(-20px) rotate(6deg); opacity:0.11} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -308,7 +250,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         .hero-btns { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px; }
         .ym-btn-gold { background: var(--gold); color: #1a0a00; padding: 14px 28px; border-radius: 12px; font-weight: 800; font-size: 15px; border: none; cursor: pointer; transition: all 0.2s; animation: glowPulse 2.4s ease infinite; }
         .ym-btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
-        .ym-btn-ghost { background: rgba(255,255,255,0.07); color: #fff; padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s; }
+        .ym-btn-ghost { background: rgba(255,255,255,0.07); color: #fff; padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; }
         .ym-btn-ghost:hover { background: rgba(255,255,255,0.12); }
         .hero-stats { display: flex; gap: 10px; flex-wrap: wrap; }
         .hero-stat { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 16px; text-align: center; flex: 1; min-width: 80px; }
@@ -338,12 +280,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           .hero-desc { font-size: 14px; }
           .ym-btn-gold, .ym-btn-ghost { padding: 12px 22px; font-size: 14px; }
         }
-        @media (max-width: 480px) {
-          .hero-section { padding: 36px 14px 80px; }
-          .hero-h1 { font-size: clamp(1.5rem, 7vw, 2rem); }
-        }
-
-        /* ── SECTIONS ── */
+        @media (max-width: 480px) { .hero-section { padding: 36px 14px 80px; } .hero-h1 { font-size: clamp(1.5rem, 7vw, 2rem); } }
         .ym-section { padding: 80px 20px; }
         .ym-section-inner { max-width: 1100px; margin: 0 auto; }
         .ym-section-tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; margin-bottom: 14px; }
@@ -355,8 +292,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-section-line { width: 48px; height: 4px; border-radius: 2px; margin: 0 auto 14px; }
         .ym-section-desc { color: var(--gray-500); font-size: 15px; max-width: 500px; margin: 0 auto; line-height: 1.7; }
         .ym-section-head { text-align: center; margin-bottom: 48px; }
-
-        /* ── AD BANNER ── */
         .ym-ad-section { background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); padding: 28px 20px; position: relative; }
         .ym-live-pill { position: absolute; top: 10px; left: 16px; display: flex; align-items: center; gap: 5px; background: #fff; border: 1px solid #fecaca; border-radius: 100px; padding: 4px 10px; box-shadow: var(--shadow-sm); z-index: 10; }
         .ym-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; transition: opacity 0.4s; }
@@ -386,8 +321,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-btn-blue-solid { background: #2563eb; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 700; font-size: 13px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .ym-btn-blue-solid:hover { background: #1d4ed8; }
         @media (max-width: 640px) { .ym-ad-card { flex-direction: column; } .ym-ad-cta { padding: 16px; min-width: unset; background: rgba(255,255,255,0.05); } .ym-ad-stripe { width: 100%; height: 4px; } .ym-ad-content { padding: 20px; } }
-
-        /* ── CLASSES ── */
         .ym-classes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
         .ym-class-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 18px; padding: 24px 20px; text-align: center; transition: all 0.25s; box-shadow: var(--shadow-sm); }
         .ym-class-card:hover { border-color: #93c5fd; box-shadow: var(--shadow-md); transform: translateY(-3px); }
@@ -405,8 +338,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-class-badge { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; margin-bottom: 10px; }
         @media (max-width: 760px) { .ym-classes-grid { grid-template-columns: 1fr; max-width: 380px; margin-left: auto; margin-right: auto; } }
         @media (min-width: 560px) and (max-width: 760px) { .ym-classes-grid { grid-template-columns: repeat(2, 1fr); max-width: 100%; } }
-
-        /* ── SLOTS ── */
         .ym-slots-wrap { max-width: 640px; margin: 0 auto; }
         .ym-slots-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; background: #2563eb; color: #fff; padding: 14px 22px; border-radius: 14px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; transition: background 0.2s; margin-bottom: 10px; }
         .ym-slots-toggle:hover { background: #1d4ed8; }
@@ -419,15 +350,11 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-slot-row-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
         .ym-slot-row-label { font-weight: 600; color: #1e40af; font-size: 13px; }
         .ym-slot-row-sub { color: #3b82f6; font-size: 11px; margin-top: 2px; }
-
-        /* ── OFFLINE ── */
         .ym-offline-section { background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%); border-top: 1px solid #fed7aa; border-bottom: 1px solid #fed7aa; }
         .ym-offline-card { background: #fff; border: 1.5px solid #fed7aa; border-radius: 24px; padding: 48px 40px; text-align: center; box-shadow: var(--shadow-sm); max-width: 580px; margin: 0 auto; }
         .ym-offline-loc { display: inline-flex; align-items: center; gap: 6px; color: #c2410c; font-weight: 700; font-size: 16px; margin-bottom: 10px; }
         .ym-btn-orange { background: #ea580c; color: #fff; padding: 13px 28px; border-radius: 12px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; transition: all 0.2s; }
         .ym-btn-orange:hover { background: #c2410c; }
-
-        /* ── WHY US ── */
         .ym-why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .ym-why-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 18px; padding: 24px; transition: all 0.25s; box-shadow: var(--shadow-sm); }
         .ym-why-card:hover { border-color: #93c5fd; box-shadow: var(--shadow-md); transform: translateY(-3px); }
@@ -436,8 +363,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-why-desc { color: var(--gray-500); font-size: 13px; line-height: 1.65; }
         @media (max-width: 760px) { .ym-why-grid { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 480px) { .ym-why-grid { grid-template-columns: 1fr; } }
-
-        /* ── ABOUT ── */
         .ym-about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
         .ym-about-text p { color: var(--gray-600); font-size: 16px; line-height: 1.8; margin-bottom: 18px; }
         .ym-about-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -446,8 +371,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-about-card-label { font-weight: 700; color: #1e3a8a; font-size: 13px; }
         .ym-about-card-sub { color: #3b82f6; font-size: 11px; margin-top: 3px; }
         @media (max-width: 760px) { .ym-about-grid { grid-template-columns: 1fr; gap: 36px; } }
-
-        /* ── VISITOR SECTION ── */
         .ym-visitor-section { background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 50%, #0a1f5e 100%); padding: 56px 20px; position: relative; overflow: hidden; }
         .ym-visitor-section::before { content: ''; position: absolute; top: -60px; right: -60px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle, rgba(29,78,216,0.18) 0%, transparent 70%); pointer-events: none; }
         .ym-visitor-inner { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 28px; position: relative; z-index: 1; }
@@ -468,8 +391,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-visitor-stat-pill-val { color: #fff; font-weight: 700; font-size: 12px; }
         .ym-visitor-poweredby { color: rgba(255,255,255,0.18); font-size: 10px; text-align: center; }
         @media (max-width: 460px) { .ym-visitor-card { padding: 24px 28px; min-width: unset; flex-direction: column; text-align: center; gap: 14px; } .ym-visitor-card-divider { display: none; } }
-
-        /* ── CONTACT ── */
         .ym-contact-section { background: var(--navy); }
         .ym-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
         .ym-contact-info h3 { color: #fff; font-size: 24px; font-weight: 700; margin-bottom: 7px; }
@@ -486,8 +407,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-contact-enroll-btn { width: 100%; background: var(--gold); color: #1a0a00; padding: 15px; border-radius: 13px; font-weight: 800; font-size: 15px; border: none; cursor: pointer; transition: all 0.2s; }
         .ym-contact-enroll-btn:hover { background: var(--gold-light); }
         @media (max-width: 760px) { .ym-contact-grid { grid-template-columns: 1fr; gap: 32px; } }
-
-        /* ── FOOTER ── */
         .ym-footer { background: #030a1f; color: rgba(255,255,255,0.5); padding: 44px 20px 22px; }
         .ym-footer-inner { max-width: 1100px; margin: 0 auto; }
         .ym-footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 36px; margin-bottom: 36px; }
@@ -513,8 +432,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-footer-policy-link:hover { color: #93c5fd; }
         .ym-footer-copy { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11px; text-align: center; }
         @media (max-width: 760px) { .ym-footer-grid { grid-template-columns: 1fr; gap: 28px; } }
-
-        /* ── MODAL ── */
         .ym-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 14px; backdrop-filter: blur(4px); }
         .ym-modal { background: #fff; border-radius: 24px; width: 100%; max-width: 460px; box-shadow: 0 24px 80px rgba(0,0,0,0.3); overflow: hidden; max-height: 94vh; overflow-y: auto; position: relative; }
         .ym-modal-head { background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%); padding: 24px 28px 20px; color: #fff; position: sticky; top: 0; z-index: 10; }
@@ -545,8 +462,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-submit-btn { width: 100%; background: #2563eb; color: #fff; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; margin-top: 3px; }
         .ym-submit-btn:hover { background: #1d4ed8; }
         .ym-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        /* ── PAYMENT STEP ── */
         .ym-pay-summary { background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .ym-pay-class { font-size: 11px; color: #3b82f6; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
         .ym-pay-amount { font-size: 26px; font-weight: 800; color: #1d4ed8; }
@@ -559,66 +474,12 @@ const handleSubmit = async (e: React.FormEvent) => {
         .ym-pay-secure { text-align: center; margin-top: 12px; font-size: 11px; color: var(--gray-400); }
         .ym-spin { animation: spin 0.8s linear infinite; }
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-
-        /* ── DONE ── */
-        .ym-done-wrap { text-align: center; padding: 14px 0; }
-        .ym-done-confetti { font-size: 52px; margin-bottom: 14px; }
-        .ym-done-name { font-size: 20px; font-weight: 800; color: var(--gray-900); margin-bottom: 5px; }
-        .ym-done-sub { color: var(--gray-500); font-size: 14px; margin-bottom: 20px; }
-        .ym-done-wa-box { background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 14px; padding: 16px; margin-bottom: 18px; }
-        .ym-done-wa-title { color: #15803d; font-weight: 700; font-size: 14px; margin-bottom: 3px; }
-        .ym-done-wa-sub { color: #16a34a; font-size: 12px; }
-        .ym-done-wa-btn { width: 100%; background: #16a34a; color: #fff; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 7px; margin-bottom: 12px; transition: background 0.2s; }
-        .ym-done-wa-btn:hover { background: #15803d; }
-        .ym-done-close-btn { width: 100%; background: var(--gray-100); color: var(--gray-700); padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: background 0.2s; }
-        .ym-done-close-btn:hover { background: var(--gray-200); }
       `}</style>
 
-      {/* ══════════════════ NAVBAR ══════════════════ */}
-      <nav className={`ym-nav${scrolled ? " scrolled" : ""}`} role="navigation" aria-label="Main navigation">
-        <div className="ym-nav-inner">
-          <a href="#home" className="ym-nav-brand" onClick={(e) => { e.preventDefault(); scrollToSection("home"); }}>
-            <img src="/Logo.png" alt="Yarwng Mathematics Logo" className="ym-nav-logo" />
-            <div>
-              <div className="ym-nav-name">Yarwng Mathematics</div>
-              <div className="ym-nav-sub">Rakesh Debbarma · M.Sc, IIT Delhi</div>
-            </div>
-          </a>
-          <div className="ym-nav-links" role="menubar">
-            {NAV_LINKS.map((l) => (
-              <button key={l.id} role="menuitem" onClick={() => scrollToSection(l.id)}
-                className={`ym-nav-link${activeSection === l.id ? " active active-dot" : ""}`}
-                aria-current={activeSection === l.id ? "page" : undefined}>
-                {l.label}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <button onClick={() => openModal()} className="ym-nav-enroll">Enroll Now →</button>
-            <button className="ym-hamburger" onClick={() => setMobileMenuOpen((v) => !v)}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"} aria-expanded={mobileMenuOpen}>
-              <span style={{ transform: mobileMenuOpen ? "rotate(45deg) translate(4px,4px)" : "none" }} />
-              <span style={{ opacity: mobileMenuOpen ? 0 : 1 }} />
-              <span style={{ transform: mobileMenuOpen ? "rotate(-45deg) translate(4px,-4px)" : "none" }} />
-            </button>
-          </div>
-        </div>
-      </nav>
+      {/* NAVBAR */}
+      <Navbar onEnroll={() => openModal()} />
 
-      {/* Mobile Menu */}
-      <div className={`ym-mobile-menu${mobileMenuOpen ? " open" : ""}`} role="dialog" aria-modal="true" aria-label="Mobile navigation">
-        {NAV_LINKS.map((l) => (
-          <button key={l.id} onClick={() => scrollToSection(l.id)} className={`ym-mobile-link${activeSection === l.id ? " active" : ""}`}>
-            {l.label}
-          </button>
-        ))}
-        <div className="ym-mobile-divider" />
-        <button onClick={() => { openModal(); setMobileMenuOpen(false); }} className="ym-nav-enroll" style={{ borderRadius: "11px", padding: "14px" }}>
-          Enroll Now →
-        </button>
-      </div>
-
-      {/* ══════════════════ HERO ══════════════════ */}
+      {/* HERO */}
       <section className="hero-section" aria-label="Hero — Yarwng Mathematics">
         {[
           { sym: "∑", top: "10%", left: "3%", size: 44, dur: "7s", delay: "0s" },
@@ -632,10 +493,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         ))}
         <div className="hero-inner">
           <div className="hero-left">
-            <div className="hero-badge fade-up-1">
-              <span className="hero-badge-dot" />
-              <span className="hero-badge-text">Mathematics · English Medium</span>
-            </div>
+            <div className="hero-badge fade-up-1"><span className="hero-badge-dot" /><span className="hero-badge-text">Mathematics · English Medium</span></div>
             <h1 className="hero-h1 fade-up-2">Master Mathematics<br /><span className="hero-h1-accent">With Confidence</span></h1>
             <div className="hero-tagline-row fade-up-3">
               <div className="hero-tagline-line" />
@@ -645,19 +503,11 @@ const handleSubmit = async (e: React.FormEvent) => {
             <p className="hero-desc fade-up-3">Expert coaching for <strong style={{ color: "#fff" }}>Class 10, 11 & 12</strong> by an IIT Delhi graduate — Online via Google Meet & Offline at Khumulwng.</p>
             <div className="hero-btns fade-up-4">
               <button onClick={() => openModal()} className="ym-btn-gold">Enroll Khwlaidi →</button>
-              <button onClick={() => scrollToSection("classes")} className="ym-btn-ghost">View Schedule</button>
+              <Link href="/classes" className="ym-btn-ghost">View Schedule</Link>
             </div>
             <div className="hero-stats fade-up-5">
-              {[
-                { num: "3", label: "Classes" },
-                { num: "IIT", label: "Delhi Alumni" },
-                { num: "2hrs", label: "Per Session" },
-                { num: "∞", label: "Doubt Support" },
-              ].map((s) => (
-                <div key={s.label} className="hero-stat">
-                  <p className="hero-stat-num">{s.num}</p>
-                  <p className="hero-stat-label">{s.label}</p>
-                </div>
+              {[{ num: "3", label: "Classes" }, { num: "IIT", label: "Delhi Alumni" }, { num: "2hrs", label: "Per Session" }, { num: "∞", label: "Doubt Support" }].map((s) => (
+                <div key={s.label} className="hero-stat"><p className="hero-stat-num">{s.num}</p><p className="hero-stat-label">{s.label}</p></div>
               ))}
             </div>
           </div>
@@ -666,26 +516,11 @@ const handleSubmit = async (e: React.FormEvent) => {
               <div className="hero-card-glow" />
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", position: "relative" }}>
                 <div className="hero-card-avatar">RD</div>
-                <div>
-                  <p className="hero-card-name">Rakesh Debbarma</p>
-                  <p className="hero-card-degree">M.Sc Mathematics</p>
-                  <p className="hero-card-iit">IIT Delhi</p>
-                </div>
+                <div><p className="hero-card-name">Rakesh Debbarma</p><p className="hero-card-degree">M.Sc Mathematics</p><p className="hero-card-iit">IIT Delhi</p></div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "7px", position: "relative" }}>
-                {[
-                  { icon: "🟢", label: "Online", val: "Google Meet · Live" },
-                  { icon: "🏫", label: "Offline", val: "Khumulwng (Soon)" },
-                  { icon: "📅", label: "Schedule", val: "Structured weekly" },
-                  { icon: "💬", label: "Support", val: "WhatsApp batches" },
-                ].map((r) => (
-                  <div key={r.label} className="hero-card-row">
-                    <span style={{ fontSize: "14px" }}>{r.icon}</span>
-                    <div>
-                      <p className="hero-card-row-label">{r.label}</p>
-                      <p className="hero-card-row-val">{r.val}</p>
-                    </div>
-                  </div>
+                {[{ icon: "🟢", label: "Online", val: "Google Meet · Live" }, { icon: "🏫", label: "Offline", val: "Khumulwng (Soon)" }, { icon: "📅", label: "Schedule", val: "Structured weekly" }, { icon: "💬", label: "Support", val: "WhatsApp batches" }].map((r) => (
+                  <div key={r.label} className="hero-card-row"><span style={{ fontSize: "14px" }}>{r.icon}</span><div><p className="hero-card-row-label">{r.label}</p><p className="hero-card-row-val">{r.val}</p></div></div>
                 ))}
               </div>
               <button onClick={() => openModal()} className="hero-card-btn">🚀 Classes Start 3rd June 2026</button>
@@ -694,24 +529,16 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
       </section>
 
-      {/* ══════════════════ LIVE AD BANNER ══════════════════ */}
+      {/* AD BANNER */}
       <div className="ym-ad-section">
-        <div className="ym-live-pill">
-          <span className="ym-live-dot" style={{ opacity: liveDot ? 1 : 0.15 }} />
-          <span className="ym-live-text">Live</span>
-        </div>
+        <div className="ym-live-pill"><span className="ym-live-dot" style={{ opacity: liveDot ? 1 : 0.15 }} /><span className="ym-live-text">Live</span></div>
         <div className="ym-ad-inner">
-          <div className="ym-ad-dots">
-            {[0, 1, 2].map((i) => (
-              <button key={i} onClick={() => setAdVariant(i)} className="ym-ad-dot"
-                style={{ background: adVariant === i ? "#2563eb" : "#d1d5db" }} aria-label={`Ad variant ${i + 1}`} />
-            ))}
-          </div>
+          <div className="ym-ad-dots">{[0, 1, 2].map((i) => (<button key={i} onClick={() => setAdVariant(i)} className="ym-ad-dot" style={{ background: adVariant === i ? "#2563eb" : "#d1d5db" }} aria-label={`Ad variant ${i + 1}`} />))}</div>
           {adVariants[adVariant]}
         </div>
       </div>
 
-      {/* ══════════════════ CLASSES ══════════════════ */}
+      {/* CLASSES */}
       <section id="classes" className="ym-section" style={{ background: "#fff" }}>
         <div className="ym-section-inner">
           <div className="ym-section-head">
@@ -728,20 +555,14 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <h3 className="ym-class-name">{cls}</h3>
                 <p className="ym-class-days">{SLOTS[cls as keyof typeof SLOTS].days}</p>
                 <p className="ym-class-time">{SLOTS[cls as keyof typeof SLOTS].time}</p>
-                <div className="ym-class-price-row">
-                  <span className="ym-class-price">₹{realOffer(cls)}</span>
-                  <span className="ym-class-price-unit">/month</span>
-                </div>
+                <div className="ym-class-price-row"><span className="ym-class-price">₹{realOffer(cls)}</span><span className="ym-class-price-unit">/month</span></div>
                 <button onClick={() => openModal()} className="ym-class-btn ym-class-btn-primary">Join {cls}</button>
               </div>
             ))}
           </div>
-
-          {/* ── SLOTS ACCORDION ── */}
           <div className="ym-slots-wrap">
             <button onClick={() => { setSlotsOpen(!slotsOpen); setSelectedSlot(null); }} className="ym-slots-toggle">
-              <span>📅 View Detailed Class Slots</span>
-              <span style={{ fontSize: "20px" }}>{slotsOpen ? "−" : "+"}</span>
+              <span>📅 View Detailed Class Slots</span><span style={{ fontSize: "20px" }}>{slotsOpen ? "−" : "+"}</span>
             </button>
             {slotsOpen && (
               <div className="ym-slots-body">
@@ -750,48 +571,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                   const offerPrice = p.offer === 1 ? p.original : p.offer;
                   return (
                     <div key={cls}>
-                      <button onClick={() => setSelectedSlot(selectedSlot === cls ? null : cls)}
-                        className={`ym-slot-btn${selectedSlot === cls ? " active" : ""}`}>
-                        <span>{cls}</span>
-                        <span>{selectedSlot === cls ? "▲" : "▼"}</span>
+                      <button onClick={() => setSelectedSlot(selectedSlot === cls ? null : cls)} className={`ym-slot-btn${selectedSlot === cls ? " active" : ""}`}>
+                        <span>{cls}</span><span>{selectedSlot === cls ? "▲" : "▼"}</span>
                       </button>
                       {selectedSlot === cls && (
                         <div className="ym-slot-detail">
-                          <div className="ym-slot-row">
-                            <span className="ym-slot-row-icon">📋</span>
-                            <div style={{ flex: 1 }}>
-                              <p className="ym-slot-row-label">What you'll learn</p>
-                              <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginTop: "5px" }}>
-                                {(SLOTS[cls].desc as string[]).map((item, i) => (
-                                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "7px" }}>
-                                    <span style={{ color: "#2563eb", fontSize: "15px", lineHeight: "1.4", flexShrink: 0 }}>›</span>
-                                    <span style={{ color: "#1e40af", fontSize: "12px", lineHeight: "1.65" }}>{item}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="ym-slot-row">
-                            <span className="ym-slot-row-icon">📆</span>
-                            <div>
-                              <p className="ym-slot-row-label">{SLOTS[cls].days}</p>
-                              <p className="ym-slot-row-sub">Every week</p>
-                            </div>
-                          </div>
-                          <div className="ym-slot-row">
-                            <span className="ym-slot-row-icon">🕐</span>
-                            <div>
-                              <p className="ym-slot-row-label">{SLOTS[cls].time}</p>
-                              <p className="ym-slot-row-sub">Evening · 2 hours</p>
-                            </div>
-                          </div>
-                          <div className="ym-slot-row">
-                            <span className="ym-slot-row-icon">💰</span>
-                            <div>
-                              <p className="ym-slot-row-label">₹{offerPrice}/month</p>
-                              <p className="ym-slot-row-sub">Regular: ₹{p.original}/month</p>
-                            </div>
-                          </div>
+                          <div className="ym-slot-row"><span className="ym-slot-row-icon">📋</span><div style={{ flex: 1 }}><p className="ym-slot-row-label">What you'll learn</p><div style={{ display: "flex", flexDirection: "column", gap: "5px", marginTop: "5px" }}>{(SLOTS[cls].desc as string[]).map((item, i) => (<div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "7px" }}><span style={{ color: "#2563eb", fontSize: "15px", lineHeight: "1.4", flexShrink: 0 }}>›</span><span style={{ color: "#1e40af", fontSize: "12px", lineHeight: "1.65" }}>{item}</span></div>))}</div></div></div>
+                          <div className="ym-slot-row"><span className="ym-slot-row-icon">📆</span><div><p className="ym-slot-row-label">{SLOTS[cls].days}</p><p className="ym-slot-row-sub">Every week</p></div></div>
+                          <div className="ym-slot-row"><span className="ym-slot-row-icon">🕐</span><div><p className="ym-slot-row-label">{SLOTS[cls].time}</p><p className="ym-slot-row-sub">Evening · 2 hours</p></div></div>
+                          <div className="ym-slot-row"><span className="ym-slot-row-icon">💰</span><div><p className="ym-slot-row-label">₹{offerPrice}/month</p><p className="ym-slot-row-sub">Regular: ₹{p.original}/month</p></div></div>
                         </div>
                       )}
                     </div>
@@ -803,7 +591,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
       </section>
 
-      {/* ══════════════════ OFFLINE ══════════════════ */}
+      {/* OFFLINE */}
       <section className="ym-section ym-offline-section">
         <div className="ym-section-inner">
           <div className="ym-section-head">
@@ -815,19 +603,15 @@ const handleSubmit = async (e: React.FormEvent) => {
             <div style={{ fontSize: "44px", marginBottom: "14px" }}>🏫</div>
             <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#111827", marginBottom: "7px" }}>Physical Classroom</h3>
             <div className="ym-offline-loc">📍 Khumulwng, Tripura</div>
-            <p style={{ color: "#6b7280", marginBottom: "20px", maxWidth: "400px", margin: "0 auto 20px", lineHeight: 1.7, fontSize: "14px" }}>
-              Face-to-face classes in a structured environment. Personalised attention. Details will be announced soon.
-            </p>
-            <div style={{ display: "inline-block", background: "#ffedd5", color: "#c2410c", padding: "7px 18px", borderRadius: "10px", fontWeight: 700, fontSize: "13px", marginBottom: "20px" }}>
-              ⏳ Launching Soon — Limited Seats
-            </div>
+            <p style={{ color: "#6b7280", marginBottom: "20px", maxWidth: "400px", margin: "0 auto 20px", lineHeight: 1.7, fontSize: "14px" }}>Face-to-face classes in a structured environment. Personalised attention. Details will be announced soon.</p>
+            <div style={{ display: "inline-block", background: "#ffedd5", color: "#c2410c", padding: "7px 18px", borderRadius: "10px", fontWeight: 700, fontSize: "13px", marginBottom: "20px" }}>⏳ Launching Soon — Limited Seats</div>
             <br />
             <button onClick={() => openModal("Offline")} className="ym-btn-orange">Register Interest</button>
           </div>
         </div>
       </section>
 
-      {/* ══════════════════ WHY US ══════════════════ */}
+      {/* WHY US */}
       <section id="why-us" className="ym-section" style={{ background: "linear-gradient(180deg, #f9fafb 0%, #fff 100%)" }}>
         <div className="ym-section-inner">
           <div className="ym-section-head">
@@ -844,17 +628,13 @@ const handleSubmit = async (e: React.FormEvent) => {
               { icon: "🖥️", title: "Google Meet Sessions", desc: "High-quality online classes via Google Meet — join from anywhere with a good connection." },
               { icon: "📝", title: "Regular Assessments", desc: "Frequent tests and detailed feedback help track progress and identify areas needing improvement." },
             ].map((item) => (
-              <div key={item.title} className="ym-why-card">
-                <div className="ym-why-icon">{item.icon}</div>
-                <h3 className="ym-why-title">{item.title}</h3>
-                <p className="ym-why-desc">{item.desc}</p>
-              </div>
+              <div key={item.title} className="ym-why-card"><div className="ym-why-icon">{item.icon}</div><h3 className="ym-why-title">{item.title}</h3><p className="ym-why-desc">{item.desc}</p></div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ══════════════════ ABOUT ══════════════════ */}
+      {/* ABOUT */}
       <section id="about" className="ym-section" style={{ background: "#fff" }}>
         <div className="ym-section-inner">
           <div className="ym-section-head">
@@ -871,24 +651,15 @@ const handleSubmit = async (e: React.FormEvent) => {
               <button onClick={() => openModal()} className="ym-btn-gold" style={{ marginTop: "6px" }}>Start Learning Today →</button>
             </div>
             <div className="ym-about-cards">
-              {[
-                { icon: "🎓", label: "IIT Delhi Alumni", sub: "M.Sc Mathematics" },
-                { icon: "📚", label: "Classes 10–12", sub: "Full syllabus coverage" },
-                { icon: "🌐", label: "Online & Offline", sub: "Flexible modes" },
-                { icon: "📈", label: "Proven Results", sub: "High scoring students" },
-              ].map((card) => (
-                <div key={card.label} className="ym-about-card">
-                  <div className="ym-about-card-icon">{card.icon}</div>
-                  <p className="ym-about-card-label">{card.label}</p>
-                  <p className="ym-about-card-sub">{card.sub}</p>
-                </div>
+              {[{ icon: "🎓", label: "IIT Delhi Alumni", sub: "M.Sc Mathematics" }, { icon: "📚", label: "Classes 10–12", sub: "Full syllabus coverage" }, { icon: "🌐", label: "Online & Offline", sub: "Flexible modes" }, { icon: "📈", label: "Proven Results", sub: "High scoring students" }].map((card) => (
+                <div key={card.label} className="ym-about-card"><div className="ym-about-card-icon">{card.icon}</div><p className="ym-about-card-label">{card.label}</p><p className="ym-about-card-sub">{card.sub}</p></div>
               ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ══════════════════ VISITOR COUNTER ══════════════════ */}
+      {/* VISITOR COUNTER */}
       <section className="ym-visitor-section" aria-label="Visitor statistics">
         <div className="ym-visitor-inner">
           <div style={{ textAlign: "center" }}>
@@ -900,34 +671,20 @@ const handleSubmit = async (e: React.FormEvent) => {
             <span className={`ym-visitor-card-dot${counterError ? " error" : ""}`} />
             <div className="ym-visitor-card-divider" />
             <div>
-              {counterLoading ? (
-                <div className="ym-skeleton" style={{ width: 110, height: "3rem", borderRadius: 7 }} />
-              ) : (
-                <div className="ym-visitor-card-count">{displayCount(visitorCount)}</div>
-              )}
-              <div className="ym-visitor-card-label">
-                {counterError ? "⚠️ Counter unavailable" : "total visitors since launch"}
-              </div>
+              {counterLoading ? (<div className="ym-skeleton" style={{ width: 110, height: "3rem", borderRadius: 7 }} />) : (<div className="ym-visitor-card-count">{displayCount(visitorCount)}</div>)}
+              <div className="ym-visitor-card-label">{counterError ? "⚠️ Counter unavailable" : "total visitors since launch"}</div>
             </div>
           </div>
           <div className="ym-visitor-stats">
-            {[
-              { icon: "📅", text: "Classes start", val: "3rd June 2026" },
-              { icon: "🎓", text: "Taught by", val: "IIT Delhi M.Sc" },
-              { icon: "📍", text: "Based in", val: "Khumulwng, Tripura" },
-            ].map((s) => (
-              <div key={s.val} className="ym-visitor-stat-pill">
-                <span className="ym-visitor-stat-pill-icon">{s.icon}</span>
-                <span className="ym-visitor-stat-pill-text">{s.text}</span>
-                <span className="ym-visitor-stat-pill-val">{s.val}</span>
-              </div>
+            {[{ icon: "📅", text: "Classes start", val: "3rd June 2026" }, { icon: "🎓", text: "Taught by", val: "IIT Delhi M.Sc" }, { icon: "📍", text: "Based in", val: "Khumulwng, Tripura" }].map((s) => (
+              <div key={s.val} className="ym-visitor-stat-pill"><span className="ym-visitor-stat-pill-icon">{s.icon}</span><span className="ym-visitor-stat-pill-text">{s.text}</span><span className="ym-visitor-stat-pill-val">{s.val}</span></div>
             ))}
           </div>
           <p className="ym-visitor-poweredby">Powered by counterapi.dev · increments on each visit</p>
         </div>
       </section>
 
-      {/* ══════════════════ CONTACT ══════════════════ */}
+      {/* CONTACT */}
       <section id="contact" className="ym-section ym-contact-section">
         <div className="ym-section-inner">
           <div className="ym-section-head">
@@ -945,20 +702,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                 { icon: "✉️", val: <a href="mailto:yarwngmathematics@gmail.com">yarwngmathematics@gmail.com</a>, sub: "" },
                 { icon: "📍", val: "Khumulwng, Tripura", sub: "Offline classes launching soon" },
               ].map((r, i) => (
-                <div key={i} className="ym-contact-row">
-                  <div className="ym-contact-icon">{r.icon}</div>
-                  <div>
-                    <p className="ym-contact-val">{r.val}</p>
-                    {r.sub && <p className="ym-contact-sub">{r.sub}</p>}
-                  </div>
-                </div>
+                <div key={i} className="ym-contact-row"><div className="ym-contact-icon">{r.icon}</div><div><p className="ym-contact-val">{r.val}</p>{r.sub && <p className="ym-contact-sub">{r.sub}</p>}</div></div>
               ))}
             </div>
             <div className="ym-contact-cta">
-              <div>
-                <p className="ym-contact-cta-title">Ready to Excel in Mathematics?</p>
-                <p className="ym-contact-cta-sub">Classes start 3rd June 2026. Limited seats per batch. Enroll now to secure your spot.</p>
-              </div>
+              <div><p className="ym-contact-cta-title">Ready to Excel in Mathematics?</p><p className="ym-contact-cta-sub">Classes start 3rd June 2026. Limited seats per batch. Enroll now to secure your spot.</p></div>
               <button onClick={() => openModal()} className="ym-contact-enroll-btn">🚀 Enroll Now →</button>
               <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
                 {["Class 10 · ₹600/mo", "Class 11 · ₹800/mo", "Class 12 · ₹900/mo"].map((t) => (
@@ -970,7 +718,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
       </section>
 
-      {/* ══════════════════ FOOTER ══════════════════ */}
+      {/* FOOTER */}
       <footer className="ym-footer" role="contentinfo">
         <div className="ym-footer-inner">
           <div className="ym-footer-grid">
@@ -999,31 +747,17 @@ const handleSubmit = async (e: React.FormEvent) => {
               <p className="ym-footer-item" style={{ color: "#fb923c", marginTop: "10px" }}>🏫 Offline: Khumulwng (Launching Soon)</p>
             </div>
           </div>
-
-          {/* Visitor bar in footer */}
           <div className="ym-footer-visitor-bar">
             <span className={`ym-footer-visitor-dot${counterError ? " error" : ""}`} />
-            {counterLoading ? (
-              <span className="ym-skeleton" style={{ width: 44, height: "1.2em" }} />
-            ) : (
-              <span className="ym-footer-visitor-count">{displayCount(visitorCount)}</span>
-            )}
+            {counterLoading ? (<span className="ym-skeleton" style={{ width: 44, height: "1.2em" }} />) : (<span className="ym-footer-visitor-count">{displayCount(visitorCount)}</span>)}
             <span className="ym-footer-visitor-sep">·</span>
             <span className="ym-footer-visitor-label">people have visited this site</span>
             <span className="ym-footer-visitor-sep">·</span>
-            <span className="ym-footer-visitor-label" style={{ color: counterError ? "#f59e0b" : "#22c55e", fontSize: "10px" }}>
-              {counterError ? "⚠ counter offline" : "● live"}
-            </span>
+            <span className="ym-footer-visitor-label" style={{ color: counterError ? "#f59e0b" : "#22c55e", fontSize: "10px" }}>{counterError ? "⚠ counter offline" : "● live"}</span>
           </div>
-
           <hr className="ym-footer-divider" />
-
           <div className="ym-footer-policy-links">
-            {[
-              { label: "Terms & Conditions", href: POLICY.terms },
-              { label: "Privacy Policy", href: POLICY.privacy },
-              { label: "Refund & Cancellation Policy", href: POLICY.refund },
-            ].map((l) => (
+            {[{ label: "Terms & Conditions", href: POLICY.terms }, { label: "Privacy Policy", href: POLICY.privacy }, { label: "Refund & Cancellation Policy", href: POLICY.refund }].map((l) => (
               <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="ym-footer-policy-link">{l.label}</a>
             ))}
           </div>
@@ -1034,190 +768,74 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
       </footer>
 
-      {/* ══════════════════ MODAL ══════════════════ */}
+      {/* MODAL — only 2 steps now: form → payment redirect */}
       {showModal && (
         <div className="ym-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }} role="dialog" aria-modal="true" aria-label="Registration modal">
           <div className="ym-modal">
             <div className="ym-modal-head">
               <button onClick={closeModal} className="ym-modal-close" aria-label="Close modal">×</button>
               <div className="ym-modal-steps">
-                {["form", "payment", "done"].map((s, i) => {
-                  const stepIdx = ["form", "payment", "done"].indexOf(step);
+                {["form", "payment"].map((s, i) => {
+                  const stepIdx = ["form", "payment"].indexOf(step);
                   return (
                     <div key={s} style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-                      <div className={`ym-modal-step ${i === stepIdx ? "current" : i < stepIdx ? "done" : "future"}`}>
-                        {i < stepIdx ? "✓" : i + 1}
-                      </div>
-                      {i < 2 && <div className={`ym-modal-step-line ${i < stepIdx ? "done" : "future"}`} />}
+                      <div className={`ym-modal-step ${i === stepIdx ? "current" : i < stepIdx ? "done" : "future"}`}>{i < stepIdx ? "✓" : i + 1}</div>
+                      {i < 1 && <div className={`ym-modal-step-line ${i < stepIdx ? "done" : "future"}`} />}
                     </div>
                   );
                 })}
               </div>
-              <div className="ym-modal-emoji">{step === "form" ? "📝" : step === "payment" ? "💜" : "✅"}</div>
-              <div className="ym-modal-title">
-                {step === "form" ? "Join Yarwng Mathematics" : step === "payment" ? "Pay via PhonePe" : "Registration Complete!"}
-              </div>
-              <div className="ym-modal-sub">
-                {step === "form" ? "Fill your details to proceed" : step === "payment" ? `${studentClass} · ₹${pay?.offer}/month` : "Welcome to Yarwng Mathematics"}
-              </div>
+              <div className="ym-modal-emoji">{step === "form" ? "📝" : "💜"}</div>
+              <div className="ym-modal-title">{step === "form" ? "Join Yarwng Mathematics" : "Pay via PhonePe"}</div>
+              <div className="ym-modal-sub">{step === "form" ? "Fill your details to proceed" : `${studentClass} · ₹${pay?.offer}/month`}</div>
             </div>
 
             <div className="ym-modal-body">
-
-              {/* ── STEP 1: FORM ── */}
+              {/* STEP 1: FORM */}
               {step === "form" && (
                 <form onSubmit={(e) => { e.preventDefault(); setStep("payment"); }}>
-                  <div className="ym-form-info">
-                    <span>ℹ️</span>
-                    <span>Your details will be saved after confirming payment.</span>
-                  </div>
+                  <div className="ym-form-info"><span>ℹ️</span><span>Your details will be saved after confirming payment.</span></div>
                   <div className="ym-form-stack">
-                    <div className="ym-form-group">
-                      <label className="ym-form-label">Student Name *</label>
-                      <input type="text" placeholder="Full name of the student" value={name} onChange={(e) => setName(e.target.value)} required className="ym-input" />
-                    </div>
-                    <div className="ym-form-group">
-                      <label className="ym-form-label">WhatsApp Number *</label>
-                      <input type="tel" placeholder="10-digit WhatsApp number" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} required className="ym-input" />
+                    <div className="ym-form-group"><label className="ym-form-label">Student Name *</label><input type="text" placeholder="Full name of the student" value={name} onChange={(e) => setName(e.target.value)} required className="ym-input" /></div>
+                    <div className="ym-form-group"><label className="ym-form-label">WhatsApp Number *</label><input type="tel" placeholder="10-digit WhatsApp number" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} required className="ym-input" /></div>
+                    <div className="ym-form-row">
+                      <div className="ym-form-group"><label className="ym-form-label">Class *</label><select value={studentClass} onChange={(e) => setStudentClass(e.target.value)} required className="ym-input"><option value="">Select Class</option><option>Class 10</option><option>Class 11</option><option>Class 12</option></select></div>
+                      <div className="ym-form-group"><label className="ym-form-label">Board *</label><select value={board} onChange={(e) => setBoard(e.target.value)} required className="ym-input"><option value="">Select Board</option><option value="CBSE">CBSE</option><option value="TBSE">TBSE</option><option value="ICSE">ICSE</option></select></div>
                     </div>
                     <div className="ym-form-row">
-                      <div className="ym-form-group">
-                        <label className="ym-form-label">Class *</label>
-                        <select value={studentClass} onChange={(e) => setStudentClass(e.target.value)} required className="ym-input">
-                          <option value="">Select Class</option>
-                          <option>Class 10</option>
-                          <option>Class 11</option>
-                          <option>Class 12</option>
-                        </select>
-                      </div>
-                      <div className="ym-form-group">
-                        <label className="ym-form-label">Board *</label>
-                        <select value={board} onChange={(e) => setBoard(e.target.value)} required className="ym-input">
-                          <option value="">Select Board</option>
-                          <option value="CBSE">CBSE</option>
-                          <option value="TBSE">TBSE</option>
-                          <option value="ICSE">ICSE</option>
-                        </select>
-                      </div>
+                      <div className="ym-form-group"><label className="ym-form-label">Medium *</label><select value={medium} onChange={(e) => setMedium(e.target.value)} required className="ym-input"><option value="English">English</option><option value="Bengali">Bengali</option><option value="Kokborok">Kokborok</option></select></div>
+                      <div className="ym-form-group"><label className="ym-form-label">Mode *</label><select value={mode} onChange={(e) => setMode(e.target.value)} required className="ym-input"><option value="">Select Mode</option><option value="Online">Online</option><option value="Offline">Offline</option></select></div>
                     </div>
-                    <div className="ym-form-row">
-                      <div className="ym-form-group">
-                        <label className="ym-form-label">Medium *</label>
-                        <select value={medium} onChange={(e) => setMedium(e.target.value)} required className="ym-input">
-                          <option value="English">English</option>
-                          <option value="Bengali">Bengali</option>
-                          <option value="Kokborok">Kokborok</option>
-                        </select>
-                      </div>
-                      <div className="ym-form-group">
-                        <label className="ym-form-label">Mode *</label>
-                        <select value={mode} onChange={(e) => setMode(e.target.value)} required className="ym-input">
-                          <option value="">Select Mode</option>
-                          <option value="Online">Online</option>
-                          <option value="Offline">Offline</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="ym-form-group">
-                      <label className="ym-form-label">School Name *</label>
-                      <input type="text" placeholder="Name of the school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} required className="ym-input" />
-                    </div>
-                    <div className="ym-form-group">
-                      <label className="ym-form-label">Address *</label>
-                      <input type="text" placeholder="Village / Town / Area" value={address} onChange={(e) => setAddress(e.target.value)} required className="ym-input" />
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "7px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "9px", padding: "9px 12px" }}>
-                      <span style={{ fontSize: "14px" }}>📢</span>
-                      <span style={{ fontSize: "12px", color: "#15803d", fontWeight: 500 }}>Classes are taught in <strong>English Medium</strong>.</span>
-                    </div>
-                    <p className="ym-policy-text">
-                      By registering you agree to our{" "}
-                      <a href={POLICY.terms} target="_blank" rel="noopener noreferrer">Terms & Conditions</a>,{" "}
-                      <a href={POLICY.privacy} target="_blank" rel="noopener noreferrer">Privacy Policy</a> and{" "}
-                      <a href={POLICY.refund} target="_blank" rel="noopener noreferrer">Refund Policy</a>.
-                    </p>
-                    <button type="submit" className="ym-submit-btn">
-                      Next: Pay & Join →
-                    </button>
+                    <div className="ym-form-group"><label className="ym-form-label">School Name *</label><input type="text" placeholder="Name of the school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} required className="ym-input" /></div>
+                    <div className="ym-form-group"><label className="ym-form-label">Address *</label><input type="text" placeholder="Village / Town / Area" value={address} onChange={(e) => setAddress(e.target.value)} required className="ym-input" /></div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "7px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "9px", padding: "9px 12px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ fontSize: "12px", color: "#15803d", fontWeight: 500 }}>Classes are taught in <strong>English Medium</strong>.</span></div>
+                    <p className="ym-policy-text">By registering you agree to our <a href={POLICY.terms} target="_blank" rel="noopener noreferrer">Terms & Conditions</a>, <a href={POLICY.privacy} target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href={POLICY.refund} target="_blank" rel="noopener noreferrer">Refund Policy</a>.</p>
+                    <button type="submit" className="ym-submit-btn">Next: Pay & Join →</button>
                   </div>
                 </form>
               )}
 
-              {/* ── STEP 2: PHONEPE REDIRECT ── */}
+              {/* STEP 2: PHONEPE REDIRECT */}
               {step === "payment" && pay && (
                 <div style={{ textAlign: "center", padding: "20px 0" }}>
                   <div style={{ fontSize: 52, marginBottom: 16 }}>💜</div>
                   <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Complete Your Payment</h3>
-                  <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>
-                    You'll be securely redirected to PhonePe to complete the payment.
-                  </p>
-
-                  {/* Order summary */}
+                  <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>You'll be securely redirected to PhonePe to complete the payment.</p>
                   <div className="ym-pay-summary">
                     <div>
                       <p className="ym-pay-class">{studentClass} · {board} · {mode}</p>
-                      <p>
-                        <span className="ym-pay-amount">₹{pay.offer}</span>
-                        <span className="ym-pay-unit"> /month</span>
-                      </p>
+                      <p><span className="ym-pay-amount">₹{pay.offer}</span><span className="ym-pay-unit"> /month</span></p>
                     </div>
-                    <div className="ym-pay-discount">
-                      {discount}% OFF<br />
-                      <span style={{ textDecoration: "line-through", color: "#9ca3af", fontSize: "11px" }}>₹{pay.original}</span>
-                    </div>
+                    <div className="ym-pay-discount">{discount}% OFF<br /><span style={{ textDecoration: "line-through", color: "#9ca3af", fontSize: "11px" }}>₹{pay.original}</span></div>
                   </div>
-
-                  {/* PhonePe pay button */}
-                  <button
-                    onClick={handleSubmit as any}
-                    disabled={submitting}
-                    className="ym-confirm-btn"
-                  >
-                    {submitting ? (
-                      <>
-                        <svg className="ym-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
-                          <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" />
-                        </svg>
-                        Redirecting to PhonePe…
-                      </>
-                    ) : (
-                      <>💜 Pay ₹{pay.offer} via PhonePe</>
-                    )}
+                  <button onClick={handleSubmit as any} disabled={submitting} className="ym-confirm-btn">
+                    {submitting ? (<><svg className="ym-spin" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" /><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" /></svg>Redirecting to PhonePe…</>) : (<>💜 Pay ₹{pay.offer} via PhonePe</>)}
                   </button>
-
                   {payError && <div className="ym-pay-err">⚠️ {payError}</div>}
-
                   <p className="ym-pay-secure">🔒 Powered by PhonePe Payment Gateway · SSL Secured</p>
-
-                  {/* Back button */}
-                  <button
-                    onClick={() => { setStep("form"); setPayError(""); setSubmitting(false); }}
-                    style={{ marginTop: 14, background: "none", border: "none", color: "#6b7280", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}
-                  >
-                    ← Edit details
-                  </button>
+                  <button onClick={() => { setStep("form"); setPayError(""); setSubmitting(false); }} style={{ marginTop: 14, background: "none", border: "none", color: "#6b7280", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>← Edit details</button>
                 </div>
               )}
-
-              {/* ── STEP 3: DONE ── */}
-              {step === "done" && pay && (
-                <div className="ym-done-wrap">
-                  <div className="ym-done-confetti">🎉</div>
-                  <h3 className="ym-done-name">Welcome, {name}!</h3>
-                  <p className="ym-done-sub">You're now part of Yarwng Mathematics!</p>
-                  <div className="ym-done-wa-box">
-                    <p className="ym-done-wa-title">✅ Opening {studentClass} WhatsApp Group…</p>
-                    <p className="ym-done-wa-sub">{countdown > 0 ? `Redirecting in ${countdown}s` : "WhatsApp should be open now!"}</p>
-                  </div>
-                  <a href={pay.whatsapp} target="_blank" rel="noopener noreferrer" className="ym-done-wa-btn">
-                    💬 Open {studentClass} WhatsApp Group
-                  </a>
-                  <p style={{ fontSize: "11px", color: "#9ca3af", marginBottom: "14px" }}>If WhatsApp didn't open, tap the button above.</p>
-                  <button onClick={closeModal} className="ym-done-close-btn">Close</button>
-                </div>
-              )}
-
             </div>
           </div>
         </div>

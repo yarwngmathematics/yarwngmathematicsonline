@@ -32,11 +32,10 @@ function PaymentStatus() {
   const [studentClass, setStudentClass] = useState("");
   const [studentName,  setStudentName]  = useState("");
   const [status, setStatus] = useState<"checking" | "success" | "failed" | "pending">("checking");
-  const [countdown, setCountdown] = useState(5);
   const sheetDone = useRef(false);
   const waOpened  = useRef(false);
 
-  // ── Single verify call — no polling ──────────────────────────────────────
+  // ── Single verify call ────────────────────────────────────────────────────
   useEffect(() => {
     if (!txnId) { setStatus("failed"); return; }
 
@@ -46,16 +45,17 @@ function PaymentStatus() {
         const data = await res.json();
 
         if (data.code === "PAYMENT_SUCCESS" || data.status === "COMPLETED") {
-          // Read reg data from sessionStorage
           const stored = sessionStorage.getItem(`ym_reg_${txnId}`);
           if (stored && !sheetDone.current) {
             sheetDone.current = true;
             const reg = JSON.parse(stored);
             setStudentClass(reg.studentClass || "");
             setStudentName(reg.name || "");
+
             await submitToSheet({
               ...reg,
-              transactionId: data.transactionId || txnId,
+              // ✅ Use utr first, then transactionId, then fall back to txnId
+              transactionId: data.utr || data.transactionId || txnId,
               status:        "paid_phonepe_pg",
               paidAmount:    String((data.amount || 0) / 100),
               timestamp:     new Date().toISOString(),
@@ -80,26 +80,17 @@ function PaymentStatus() {
     verify();
   }, [txnId]);
 
-  // ── Auto-open WhatsApp + countdown on success ─────────────────────────────
+  // ── Auto-open WhatsApp once — NO auto-redirect ────────────────────────────
   useEffect(() => {
     if (status !== "success") return;
-
     const openWA = setTimeout(() => {
       if (!waOpened.current && studentClass && WHATSAPP_LINKS[studentClass]) {
         waOpened.current = true;
         window.open(WHATSAPP_LINKS[studentClass], "_blank", "noopener,noreferrer");
       }
     }, 600);
-
-    let c = 5;
-    const t = setInterval(() => {
-      c -= 1;
-      setCountdown(c);
-      if (c <= 0) { clearInterval(t); router.push("/"); }
-    }, 1000);
-
-    return () => { clearTimeout(openWA); clearInterval(t); };
-  }, [status, studentClass, router]);
+    return () => clearTimeout(openWA);
+  }, [status, studentClass]);
 
   const waLink = WHATSAPP_LINKS[studentClass] || "/";
 
@@ -117,9 +108,7 @@ function PaymentStatus() {
           <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#111827" }}>
             Verifying Payment…
           </h2>
-          <p style={{ color: "#6b7280", fontSize: 14 }}>
-            Please wait a moment.
-          </p>
+          <p style={{ color: "#6b7280", fontSize: 14 }}>Please wait a moment.</p>
         </>
       )}
 
@@ -137,28 +126,33 @@ function PaymentStatus() {
 
           <div style={{
             background: "#f0fdf4", border: "1.5px solid #bbf7d0",
-            borderRadius: 14, padding: 16, marginBottom: 16,
+            borderRadius: 16, padding: "20px", marginBottom: 16,
           }}>
-            <p style={{ color: "#15803d", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
-              ✅ {studentClass || "Class"} WhatsApp Group
+            <div style={{ fontSize: 32, marginBottom: 8 }}>💬</div>
+            <p style={{ color: "#15803d", fontWeight: 800, fontSize: 15, marginBottom: 6 }}>
+              Join your {studentClass} WhatsApp Group
             </p>
-            <p style={{ color: "#16a34a", fontSize: 12 }}>
-              {countdown > 0 ? `Redirecting to home in ${countdown}s` : "Redirecting…"}
+            <p style={{ color: "#16a34a", fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>
+              Tap the button below to join. Stay in the group to receive class updates, schedules and doubt support.
             </p>
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "block", background: "#16a34a", color: "#fff",
+                padding: "14px", borderRadius: 12, fontWeight: 700,
+                fontSize: 15, textDecoration: "none",
+              }}
+            >
+              ✅ Join WhatsApp Group Now
+            </a>
           </div>
-
-          <a href={waLink} target="_blank" rel="noopener noreferrer" style={{
-            display: "block", background: "#16a34a", color: "#fff",
-            padding: "14px", borderRadius: 12, fontWeight: 700,
-            fontSize: 15, textDecoration: "none", marginBottom: 12,
-          }}>
-            💬 Open WhatsApp Group
-          </a>
 
           <div style={{
             background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10,
             padding: "10px 14px", fontSize: 11, color: "#9ca3af",
-            marginBottom: 12, wordBreak: "break-all", textAlign: "left",
+            marginBottom: 16, wordBreak: "break-all", textAlign: "left",
           }}>
             <span style={{ fontWeight: 600 }}>Txn ID: </span>{txnId}
           </div>
@@ -168,8 +162,11 @@ function PaymentStatus() {
             padding: "12px", borderRadius: 12, fontWeight: 600,
             fontSize: 14, border: "none", cursor: "pointer",
           }}>
-            Back to Home
+            ← Back to Home
           </button>
+          <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 10 }}>
+            Join the WhatsApp group before leaving this page.
+          </p>
         </>
       )}
 
