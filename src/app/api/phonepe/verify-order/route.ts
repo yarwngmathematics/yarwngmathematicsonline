@@ -17,11 +17,8 @@ async function getAccessToken(): Promise<string> {
 
   const rawText = await res.text();
   if (!res.ok) throw new Error(`Token fetch failed ${res.status}: ${rawText}`);
-
   let data: any;
-  try { data = JSON.parse(rawText); } catch {
-    throw new Error("Token response not JSON: " + rawText);
-  }
+  try { data = JSON.parse(rawText); } catch { throw new Error("Token not JSON: " + rawText); }
   if (!data.access_token) throw new Error("No access_token: " + JSON.stringify(data));
   return data.access_token as string;
 }
@@ -35,8 +32,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const accessToken = await getAccessToken();
-
     const url = `${STATUS_URL}/${orderId}/status`;
+
     const res = await fetch(url, {
       method: "GET",
       headers: {
@@ -48,49 +45,41 @@ export async function GET(req: NextRequest) {
 
     const rawText = await res.text();
 
-    // Log full response to see every field PhonePe returns
-    console.log("[PhonePe verify] Full response:", rawText);
+    // ── Log the FULL response so we can see every field PhonePe returns ──
+    console.log("[PhonePe verify] Full raw response:", rawText);
 
     if (!res.ok) {
       return NextResponse.json({
-        success: false,
-        code:    "VERIFICATION_ERROR",
-        status:  "ERROR",
+        success: false, code: "VERIFICATION_ERROR", status: "ERROR",
       }, { status: res.status });
     }
 
     let data: any;
-    try { data = JSON.parse(rawText); } catch {
-      throw new Error("Status response not JSON: " + rawText);
-    }
+    try { data = JSON.parse(rawText); } catch { throw new Error("Status not JSON: " + rawText); }
 
-    // Log all possible merchant order ID fields so we know exactly what PhonePe returns
-    console.log("[PhonePe verify] merchantOrder fields:", {
-      flat:            data.merchantOrderId,
-      nested:          data.merchantOrder,
-      nestedOrderId:   data.merchantOrder?.orderId,
-      topLevelOrderId: data.orderId,
-    });
+    const state = data.state ?? data.status ?? "";
 
-    // PhonePe v2 sometimes nests the merchant order ID — check all known locations
-    const merchantOrderId: string =
-      data.merchantOrderId          ||  // flat (some responses)
-      data.merchantOrder?.orderId   ||  // nested object (v2 common)
-      data.orderId                  ||  // alternate flat field
-      orderId;                          // absolute fallback — what we originally sent
+    // ── Try every known field name PhonePe uses for the UTR/transaction ID ──
+    const pd = data.paymentDetails?.[0]
+            || data.paymentDetail?.[0]
+            || data.payment?.[0]
+            || {};
 
-    // PhonePe PG v2 returns the UPI transaction ref in multiple possible fields.
-    // Try all known field names so the sheet always gets the UTR.
-    const utrOrTransactionId: string =
-      data.paymentDetails?.[0]?.transactionId  ||  // UPI UTR number
-      data.paymentDetails?.[0]?.utr            ||  // alternate UTR field
-      data.paymentDetails?.[0]?.rrn            ||  // RRN (some payment modes)
-      data.transactionId                       ||  // top-level transaction ID
-      merchantOrderId;                             // fallback to merchant order ID
+    console.log("[PhonePe verify] paymentDetails[0]:", JSON.stringify(pd));
+    console.log("[PhonePe verify] top-level keys:", Object.keys(data).join(", "));
 
-    const state: string = data.state ?? data.status ?? "";
+    const utrOrOrderId =
+      pd.transactionId      ||  // UPI UTR — PG v2 primary field
+      pd.utr                ||  // alternate
+      pd.bankTransactionId  ||  // bank ref
+      pd.pgTransactionId    ||  // PG internal ref
+      pd.rrn                ||  // RRN number (some banks)
+      data.transactionId    ||  // top-level fallback
+      data.data?.transactionId ||
+      data.merchantOrderId  ||  // our order ID
+      orderId;                   // absolute fallback
 
-    console.log("[PhonePe verify] state:", state, "| utr:", utrOrTransactionId, "| merchantOrderId:", merchantOrderId);
+    console.log("[PhonePe verify] resolved utrOrOrderId:", utrOrOrderId);
 
     const code =
       state === "COMPLETED" ? "PAYMENT_SUCCESS"  :
@@ -102,14 +91,9 @@ export async function GET(req: NextRequest) {
       code,
       status:                state,
       amount:                data.amount,
-
-      // UTR / bank reference — returned under both names so client always finds it
-      transactionId:         utrOrTransactionId,
-      utr:                   utrOrTransactionId,
-
-      // Merchant order ID — this is what should go into your Google Sheet
-      merchantTransactionId: merchantOrderId,
-      orderId:               merchantOrderId,      // alias so sheet code always finds it
+      transactionId:         utrOrOrderId,
+      utr:                   utrOrOrderId,
+      merchantTransactionId: data.merchantOrderId ?? orderId,
     });
 
   } catch (err: any) {
