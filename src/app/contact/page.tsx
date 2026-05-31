@@ -9,7 +9,6 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // You can wire this to your Google Sheet script
     setSent(true);
   };
 
@@ -95,7 +94,7 @@ export default function ContactPage() {
         <h1 className="fu2">Contact <span>Yarwng Mathematics</span></h1>
         <p className="fu3">Have a question about classes, fees, or schedules? We're here to help. Reach out and we'll respond promptly.</p>
       </section>
-
+<div className="con-body"></div>
         {/* INFO */}
         <div className="fu2">
           <h2 className="con-info-title">Yarwng Mathematics</h2>
