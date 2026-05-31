@@ -5,27 +5,30 @@ import { useState } from "react";
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ name:"", phone:"", email:"", cls:"", msg:"" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", cls: "", msg: "" });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     setSent(true);
   };
 
   return (
-    <main style={{ fontFamily:"'Outfit',sans-serif", background:"#fff", minHeight:"100vh" }}>
+    <main style={{ fontFamily: "'Outfit',sans-serif", background: "#fff", minHeight: "100vh" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-        .fu1{animation:fadeUp 0.6s ease both 0.1s}.fu2{animation:fadeUp 0.6s ease both 0.2s}.fu3{animation:fadeUp 0.6s ease both 0.35s}
+        .fu1{animation:fadeUp 0.6s ease both 0.1s}
+        .fu2{animation:fadeUp 0.6s ease both 0.2s}
+        .fu3{animation:fadeUp 0.6s ease both 0.35s}
 
+        /* HERO */
         .con-hero{background:linear-gradient(135deg,#060f2e 0%,#0d1b4b 50%,#0f2d6b 100%);padding:80px 20px 100px;clip-path:polygon(0 0,100% 0,100% 92%,0 100%);text-align:center}
         .con-hero-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);border-radius:100px;padding:6px 16px;margin-bottom:20px;color:#fcd34d;font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase}
         .con-hero h1{font-size:clamp(2rem,4.5vw,3.2rem);font-weight:800;color:#fff;line-height:1.1;margin-bottom:14px}
         .con-hero h1 span{color:#f59e0b}
         .con-hero p{color:#bfdbfe;font-size:16px;max-width:540px;margin:0 auto;line-height:1.75}
 
+        /* BODY GRID */
         .con-body{max-width:1100px;margin:0 auto;padding:80px 20px;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
         @media(max-width:760px){.con-body{grid-template-columns:1fr;gap:48px}}
 
@@ -63,9 +66,10 @@ export default function ContactPage() {
         .con-success h3{font-size:22px;font-weight:800;color:#111827;margin-bottom:8px}
         .con-success p{color:#6b7280;font-size:14px;line-height:1.7}
 
-        /* MAP / LOCATION CARD */
+        /* LOCATION SECTION */
         .location-section{background:linear-gradient(180deg,#f9fafb 0%,#fff 100%);padding:60px 20px}
         .location-inner{max-width:1100px;margin:0 auto}
+        .sec-tag{display:inline-flex;align-items:center;background:#ffedd5;color:#c2410c;padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;margin-bottom:12px}
         .loc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
         .loc-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:20px;padding:28px;display:flex;gap:16px;align-items:flex-start;transition:all 0.25s}
         .loc-card:hover{border-color:#93c5fd;box-shadow:0 4px 20px rgba(59,130,246,0.08)}
@@ -74,6 +78,7 @@ export default function ContactPage() {
         .loc-desc{font-size:13px;color:#6b7280;line-height:1.65}
         @media(max-width:640px){.loc-grid{grid-template-columns:1fr}}
 
+        /* CTA */
         .con-cta{background:linear-gradient(135deg,#060f2e 0%,#0d1b4b 60%,#0f2d6b 100%);padding:72px 20px;text-align:center}
         .con-cta h2{font-size:clamp(1.6rem,3vw,2.3rem);font-weight:800;color:#fff;margin-bottom:12px}
         .con-cta p{color:#bfdbfe;font-size:15px;margin-bottom:28px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.7}
@@ -82,6 +87,8 @@ export default function ContactPage() {
         .btn-gold:hover{background:#fcd34d;transform:translateY(-1px)}
         .btn-ghost{background:rgba(255,255,255,0.07);color:#fff;padding:14px 28px;border-radius:12px;font-weight:600;font-size:14px;border:1px solid rgba(255,255,255,0.15);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;transition:all 0.2s}
         .btn-ghost:hover{background:rgba(255,255,255,0.12)}
+
+        /* FOOTER */
         .ym-footer{background:#030a1f;color:rgba(255,255,255,0.5);padding:32px 20px;text-align:center;font-size:12px}
         .ym-footer a{color:#93c5fd;text-decoration:none}
       `}</style>
@@ -94,18 +101,22 @@ export default function ContactPage() {
         <h1 className="fu2">Contact <span>Yarwng Mathematics</span></h1>
         <p className="fu3">Have a question about classes, fees, or schedules? We're here to help. Reach out and we'll respond promptly.</p>
       </section>
-<div className="con-body"></div>
-        {/* INFO */}
+
+      {/* BODY GRID — info + form */}
+      <div className="con-body">
+
+        {/* INFO SIDE */}
         <div className="fu2">
           <h2 className="con-info-title">Yarwng Mathematics</h2>
+          <p className="con-info-tagline">Your math tutor, just a message away</p>
 
           {[
-            { icon:"👨‍🏫", val:"Rakesh Debbarma", sub:"M.Sc Mathematics, IIT Delhi" },
-            { icon:"📱", val:<a href="tel:9366030347">9366030347</a>, sub:"Call or WhatsApp — available daily" },
-            { icon:"✉️", val:<a href="mailto:yarwngmathematics@gmail.com">yarwngmathematics@gmail.com</a>, sub:"We reply within 24 hours" },
-            { icon:"📍", val:"Khumulwng, West Tripura", sub:"Offline classes launching soon" },
-            { icon:"🕐", val:"Mon–Sat, 11 AM – 6 PM", sub:"Response time: within a few hours" },
-          ].map((r,i)=>(
+            { icon: "👨‍🏫", val: "Rakesh Debbarma", sub: "M.Sc Mathematics, IIT Delhi" },
+            { icon: "📱", val: <a href="tel:9366030347">9366030347</a>, sub: "Call or WhatsApp — available daily" },
+            { icon: "✉️", val: <a href="mailto:yarwngmathematics@gmail.com">yarwngmathematics@gmail.com</a>, sub: "We reply within 24 hours" },
+            { icon: "📍", val: "Khumulwng, West Tripura", sub: "Offline classes launching soon" },
+            { icon: "🕐", val: "Mon–Sat, 11 AM – 6 PM", sub: "Response time: within a few hours" },
+          ].map((r, i) => (
             <div key={i} className="con-row">
               <div className="con-icon">{r.icon}</div>
               <div>
@@ -115,7 +126,12 @@ export default function ContactPage() {
             </div>
           ))}
 
-          <a href="https://wa.me/919366030347?text=Hello%2C%20I%20want%20to%20know%20more%20about%20Yarwng%20Mathematics%20classes" target="_blank" rel="noopener noreferrer" className="con-wa-btn">
+          <a
+            href="https://wa.me/919366030347?text=Hello%2C%20I%20want%20to%20know%20more%20about%20Yarwng%20Mathematics%20classes"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="con-wa-btn"
+          >
             💬 Chat on WhatsApp
           </a>
 
@@ -126,20 +142,97 @@ export default function ContactPage() {
             <span className="con-chip">🗓️ Starts 15th June 2026</span>
           </div>
         </div>
+
+        {/* FORM SIDE */}
+        <div className="fu3">
+          {!sent ? (
+            <div className="con-form-card">
+              <p className="con-form-title">Send us a message</p>
+              <p className="con-form-sub">Fill in your details and we'll get back to you shortly.</p>
+              <div className="form-stack">
+                <div className="form-row">
+                  <div>
+                    <label className="form-label">Your Name</label>
+                    <input
+                      className="form-input"
+                      placeholder="e.g. Priya Sharma"
+                      value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Phone</label>
+                    <input
+                      className="form-input"
+                      placeholder="10-digit number"
+                      value={form.phone}
+                      onChange={e => setForm({ ...form, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="form-label">Email</label>
+                  <input
+                    className="form-input"
+                    placeholder="you@example.com"
+                    value={form.email}
+                    onChange={e => setForm({ ...form, email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Class Interested In</label>
+                  <select
+                    className="form-input"
+                    value={form.cls}
+                    onChange={e => setForm({ ...form, cls: e.target.value })}
+                  >
+                    <option value="">Select a class</option>
+                    <option>Class 10 — ₹600/mo</option>
+                    <option>Class 11 — ₹800/mo</option>
+                    <option>Class 12 — ₹900/mo</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Message</label>
+                  <textarea
+                    className="form-input"
+                    rows={4}
+                    placeholder="Ask about schedule, fees, trial class…"
+                    value={form.msg}
+                    onChange={e => setForm({ ...form, msg: e.target.value })}
+                    style={{ resize: "vertical" }}
+                  />
+                </div>
+                <button className="form-submit" onClick={handleSubmit}>
+                  Send Message →
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="con-form-card con-success">
+              <div className="con-success-icon">🎉</div>
+              <h3>Message Sent!</h3>
+              <p>Thanks for reaching out. We'll get back to you within 24 hours. Meanwhile, you can also WhatsApp us for a faster response.</p>
+            </div>
+          )}
+        </div>
+
+      </div>{/* end con-body */}
+
       {/* LOCATION CARDS */}
       <section className="location-section">
         <div className="location-inner">
-          <div style={{ textAlign:"center", marginBottom:40 }}>
-            <div className="sec-tag" style={{ background:"#ffedd5", color:"#c2410c", display:"inline-flex", padding:"5px 14px", borderRadius:"100px", fontSize:12, fontWeight:600, marginBottom:12 }}>📍 Find Us</div>
-            <h2 style={{ fontSize:"clamp(1.6rem,3vw,2.3rem)", fontWeight:800, color:"#111827" }}>Where We Teach</h2>
+          <div style={{ textAlign: "center", marginBottom: 40 }}>
+            <div className="sec-tag">📍 Find Us</div>
+            <h2 style={{ fontSize: "clamp(1.6rem,3vw,2.3rem)", fontWeight: 800, color: "#111827" }}>Where We Teach</h2>
           </div>
           <div className="loc-grid">
             {[
-              { icon:"🖥️", title:"Online — Google Meet", desc:"Live sessions accessible from anywhere in India. Join from home with any device. Sessions are interactive, recorded on request, and fully structured." },
-              { icon:"🏫", title:"Offline — Khumulwng, Tripura", desc:"Physical classroom sessions launching soon at Khumulwng. Face-to-face teaching with personalised attention. Register your interest now." },
-              { icon:"💬", title:"WhatsApp Groups", desc:"Every batch has a dedicated WhatsApp group. Doubts, notes, test schedules, and announcements — all in one place." },
-              { icon:"📧", title:"Email & Direct Contact", desc:"Prefer email? Write to yarwngmathematics@gmail.com. For quick queries, WhatsApp at 9366030347 gets the fastest response." },
-            ].map(l=>(
+              { icon: "🖥️", title: "Online — Google Meet", desc: "Live sessions accessible from anywhere in India. Join from home with any device. Sessions are interactive, recorded on request, and fully structured." },
+              { icon: "🏫", title: "Offline — Khumulwng, Tripura", desc: "Physical classroom sessions launching soon at Khumulwng. Face-to-face teaching with personalised attention. Register your interest now." },
+              { icon: "💬", title: "WhatsApp Groups", desc: "Every batch has a dedicated WhatsApp group. Doubts, notes, test schedules, and announcements — all in one place." },
+              { icon: "📧", title: "Email & Direct Contact", desc: "Prefer email? Write to yarwngmathematics@gmail.com. For quick queries, WhatsApp at 9366030347 gets the fastest response." },
+            ].map(l => (
               <div key={l.title} className="loc-card">
                 <span className="loc-icon">{l.icon}</span>
                 <div>
