@@ -1,15 +1,9 @@
 "use client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-import { useState } from "react";
 
 export default function ContactPage() {
-  const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", cls: "", msg: "" });
 
-  const handleSubmit = () => {
-    setSent(true);
-  };
 
   return (
     <main style={{ fontFamily: "'Outfit',sans-serif", background: "#fff", minHeight: "100vh" }}>
@@ -45,20 +39,6 @@ export default function ContactPage() {
         .con-wa-btn:hover{background:#15803d;transform:translateY(-1px)}
         .con-quick-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
         .con-chip{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:7px 13px;font-size:12px;color:#374151;font-weight:500}
-
-        /* FORM SIDE */
-        .con-form-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:24px;padding:36px;box-shadow:0 4px 24px rgba(0,0,0,0.06)}
-        .con-form-title{font-size:20px;font-weight:800;color:#111827;margin-bottom:4px}
-        .con-form-sub{color:#6b7280;font-size:13px;margin-bottom:24px}
-        .form-stack{display:flex;flex-direction:column;gap:14px}
-        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-        .form-label{font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;display:block}
-        .form-input{width:100%;border:1.5px solid #e5e7eb;padding:11px 14px;border-radius:11px;font-size:14px;font-family:'Outfit',sans-serif;color:#111827;outline:none;transition:border-color 0.2s;background:#fff}
-        .form-input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
-        .form-input::placeholder{color:#9ca3af}
-        .form-submit{width:100%;background:#2563eb;color:#fff;padding:14px;border-radius:12px;font-size:15px;font-weight:700;border:none;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif}
-        .form-submit:hover{background:#1d4ed8;transform:translateY(-1px)}
-        @media(max-width:460px){.form-row{grid-template-columns:1fr}}
 
         /* SUCCESS */
         .con-success{text-align:center;padding:40px 20px}
@@ -102,8 +82,8 @@ export default function ContactPage() {
         <p className="fu3">Have a question about classes, fees, or schedules? We're here to help. Reach out and we'll respond promptly.</p>
       </section>
 
-      {/* BODY GRID — info + form */}
-      <div className="con-body">
+      {/* BODY GRID — info only */}
+      <div className="con-body" style={{ gridTemplateColumns: "1fr" }}>
 
         {/* INFO SIDE */}
         <div className="fu2">
@@ -143,79 +123,6 @@ export default function ContactPage() {
           </div>
         </div>
 
-        {/* FORM SIDE */}
-        <div className="fu3">
-          {!sent ? (
-            <div className="con-form-card">
-              <p className="con-form-title">Send us a message</p>
-              <p className="con-form-sub">Fill in your details and we'll get back to you shortly.</p>
-              <div className="form-stack">
-                <div className="form-row">
-                  <div>
-                    <label className="form-label">Your Name</label>
-                    <input
-                      className="form-input"
-                      placeholder="e.g. Priya Sharma"
-                      value={form.name}
-                      onChange={e => setForm({ ...form, name: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">Phone</label>
-                    <input
-                      className="form-input"
-                      placeholder="10-digit number"
-                      value={form.phone}
-                      onChange={e => setForm({ ...form, phone: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="form-label">Email</label>
-                  <input
-                    className="form-input"
-                    placeholder="you@example.com"
-                    value={form.email}
-                    onChange={e => setForm({ ...form, email: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Class Interested In</label>
-                  <select
-                    className="form-input"
-                    value={form.cls}
-                    onChange={e => setForm({ ...form, cls: e.target.value })}
-                  >
-                    <option value="">Select a class</option>
-                    <option>Class 10 — ₹600/mo</option>
-                    <option>Class 11 — ₹800/mo</option>
-                    <option>Class 12 — ₹900/mo</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label">Message</label>
-                  <textarea
-                    className="form-input"
-                    rows={4}
-                    placeholder="Ask about schedule, fees, trial class…"
-                    value={form.msg}
-                    onChange={e => setForm({ ...form, msg: e.target.value })}
-                    style={{ resize: "vertical" }}
-                  />
-                </div>
-                <button className="form-submit" onClick={handleSubmit}>
-                  Send Message →
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="con-form-card con-success">
-              <div className="con-success-icon">🎉</div>
-              <h3>Message Sent!</h3>
-              <p>Thanks for reaching out. We'll get back to you within 24 hours. Meanwhile, you can also WhatsApp us for a faster response.</p>
-            </div>
-          )}
-        </div>
 
       </div>{/* end con-body */}
 
