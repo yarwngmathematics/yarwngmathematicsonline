@@ -96,19 +96,16 @@ export default function ContactPage() {
         <p className="fu3">Have a question about classes, fees, or schedules? We're here to help. Reach out and we'll respond promptly.</p>
       </section>
 
-      {/* BODY */}
-      <div className="con-body">
         {/* INFO */}
         <div className="fu2">
           <h2 className="con-info-title">Yarwng Mathematics</h2>
-          <p className="con-info-tagline">"Amani Kok Kokborok bai Swrwngwi Mannai"</p>
 
           {[
             { icon:"👨‍🏫", val:"Rakesh Debbarma", sub:"M.Sc Mathematics, IIT Delhi" },
             { icon:"📱", val:<a href="tel:9366030347">9366030347</a>, sub:"Call or WhatsApp — available daily" },
             { icon:"✉️", val:<a href="mailto:yarwngmathematics@gmail.com">yarwngmathematics@gmail.com</a>, sub:"We reply within 24 hours" },
             { icon:"📍", val:"Khumulwng, West Tripura", sub:"Offline classes launching soon" },
-            { icon:"🕐", val:"Mon–Sat, 9 AM – 8 PM", sub:"Response time: within a few hours" },
+            { icon:"🕐", val:"Mon–Sat, 11 AM – 6 PM", sub:"Response time: within a few hours" },
           ].map((r,i)=>(
             <div key={i} className="con-row">
               <div className="con-icon">{r.icon}</div>
@@ -127,62 +124,9 @@ export default function ContactPage() {
             <span className="con-chip">📘 Class 10 · ₹600/mo</span>
             <span className="con-chip">📙 Class 11 · ₹800/mo</span>
             <span className="con-chip">📗 Class 12 · ₹900/mo</span>
-            <span className="con-chip">🗓️ Starts 3rd June 2026</span>
+            <span className="con-chip">🗓️ Starts 15th June 2026</span>
           </div>
         </div>
-
-        {/* FORM */}
-        <div className="fu3">
-          {sent ? (
-            <div className="con-form-card">
-              <div className="con-success">
-                <div className="con-success-icon">✅</div>
-                <h3>Message Sent!</h3>
-                <p>Thank you for reaching out. Rakesh sir will get back to you on WhatsApp or email within a few hours.</p>
-              </div>
-            </div>
-          ) : (
-            <div className="con-form-card">
-              <h3 className="con-form-title">Send Us a Message</h3>
-              <p className="con-form-sub">Fill this form and we'll reach out to you directly.</p>
-              <form onSubmit={handleSubmit}>
-                <div className="form-stack">
-                  <div className="form-row">
-                    <div>
-                      <label className="form-label">Your Name *</label>
-                      <input className="form-input" type="text" placeholder="Full name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required />
-                    </div>
-                    <div>
-                      <label className="form-label">WhatsApp No. *</label>
-                      <input className="form-input" type="tel" placeholder="10-digit number" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} required />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="form-label">Email (optional)</label>
-                    <input className="form-input" type="email" placeholder="your@email.com" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="form-label">Interested Class *</label>
-                    <select className="form-input" value={form.cls} onChange={e=>setForm({...form,cls:e.target.value})} required>
-                      <option value="">Select a class</option>
-                      <option>Class 10</option>
-                      <option>Class 11</option>
-                      <option>Class 12</option>
-                      <option>Not sure yet</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">Your Message *</label>
-                    <textarea className="form-input" rows={4} placeholder="Tell us about your query — fees, schedule, syllabus, etc." value={form.msg} onChange={e=>setForm({...form,msg:e.target.value})} required style={{ resize:"vertical" }} />
-                  </div>
-                  <button type="submit" className="form-submit">Send Message →</button>
-                </div>
-              </form>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* LOCATION CARDS */}
       <section className="location-section">
         <div className="location-inner">
@@ -212,7 +156,7 @@ export default function ContactPage() {
       {/* CTA */}
       <section className="con-cta">
         <h2>Ready to Enroll?</h2>
-        <p>Skip the inquiry and go straight to registration. Classes start 3rd June 2026.</p>
+        <p>Skip the inquiry and go straight to registration. Classes start 15th June 2026.</p>
         <div className="cta-btns">
           <Link href="/" className="btn-gold">🚀 Enroll Now →</Link>
           <Link href="/classes" className="btn-ghost">View Classes</Link>

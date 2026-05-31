@@ -186,7 +186,7 @@ export default function WhyUsPage() {
       {/* CTA */}
       <section className="why-cta">
         <h2>Still Have Questions?</h2>
-        <p>Reach out to us directly or enroll now — classes start 3rd June 2026 and seats are limited.</p>
+        <p>Reach out to us directly or enroll now — classes start 15th June 2026 and seats are limited.</p>
         <div className="cta-btns">
           <Link href="/" className="btn-gold">🚀 Enroll Now →</Link>
           <Link href="/contact" className="btn-ghost">Contact Us</Link>

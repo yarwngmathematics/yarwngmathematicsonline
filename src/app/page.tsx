@@ -3,7 +3,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { useState, useEffect, useRef } from "react";
 
-const TEST_MODE = true;
+const TEST_MODE = false;
 
 const PAYMENT = {
   classes: {
@@ -85,13 +85,6 @@ export default function Home() {
           const getUrl = `https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/get`;
           const res = await fetch(getUrl, { headers: { "Accept": "application/json" } });
           const data = await res.json();
-          useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('enroll') === '1') {
-    const mode = params.get('mode') ?? '';
-    setTimeout(() => openModal(mode), 300);
-  }
-}, []);
           if (data && typeof data.count === "number") { setVisitorCount(data.count); setCounterError(false); }
         } catch { }
       } finally {
@@ -100,13 +93,15 @@ export default function Home() {
     };
     hitCounter();
   }, []);
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('enroll') === '1') {
-    const mode = params.get('mode') ?? '';
-    openModal(mode);
-  }
-}, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('enroll') === '1') {
+      const mode = params.get('mode') ?? '';
+      openModal(mode);
+    }
+  }, []);
+
   useEffect(() => { const t = setInterval(() => setLiveDot((v) => !v), 900); return () => clearInterval(t); }, []);
   useEffect(() => { const t = setInterval(() => setAdVariant((v) => (v + 1) % 3), 5000); return () => clearInterval(t); }, []);
 
@@ -152,13 +147,11 @@ useEffect(() => {
         return;
       }
 
-      // Save registration data so payment/status page can submit to Google Sheet
       sessionStorage.setItem(
         `ym_reg_${data.merchantTransactionId}`,
         JSON.stringify({ name, whatsapp, studentClass, board, medium, schoolName, address, mode })
       );
 
-      // Redirect to PhonePe hosted checkout
       window.location.href = data.redirectUrl;
 
     } catch {
@@ -177,7 +170,7 @@ useEffect(() => {
     <div key="v1" className="ym-ad-card ym-ad-dark">
       <div className="ym-ad-content">
         <p className="ym-ad-eyebrow">📢 Enrollment Open Now</p>
-        <h3 className="ym-ad-headline">Online Classes Starting<br /><span className="ym-ad-accent">3rd June 2026</span></h3>
+        <h3 className="ym-ad-headline">Online Classes Starting<br /><span className="ym-ad-accent">15th June 2026</span></h3>
         <p className="ym-ad-sub">Class 10 · 11 · 12 &nbsp;|&nbsp; Via Google Meet</p>
       </div>
       <div className="ym-ad-cta">
@@ -188,7 +181,7 @@ useEffect(() => {
     <div key="v2" className="ym-ad-card ym-ad-indigo">
       <div className="ym-ad-content">
         <span className="ym-ad-pill">🚀 Accepting Registrations</span>
-        <h3 className="ym-ad-headline" style={{ marginTop: "12px" }}>Mathematics Coaching<br /><span className="ym-ad-accent">Start 3rd June 2026</span></h3>
+        <h3 className="ym-ad-headline" style={{ marginTop: "12px" }}>Mathematics Coaching<br /><span className="ym-ad-accent">Start 15th June 2026</span></h3>
         <p className="ym-ad-sub">Google Meet · Class 10 / 11 / 12</p>
       </div>
       <div className="ym-ad-cta">
@@ -200,7 +193,7 @@ useEffect(() => {
       <div className="ym-ad-stripe" />
       <div className="ym-ad-content" style={{ flex: 1 }}>
         <p className="ym-ad-eyebrow" style={{ color: "#2563eb" }}>📣 Announcement</p>
-        <h3 className="ym-ad-headline" style={{ color: "#111827" }}>Online Classes Start<br /><span style={{ color: "#1d4ed8" }}>3rd June 2026</span></h3>
+        <h3 className="ym-ad-headline" style={{ color: "#111827" }}>Online Classes Start<br /><span style={{ color: "#1d4ed8" }}>15th June 2026</span></h3>
         <p className="ym-ad-sub" style={{ color: "#6b7280" }}>Class 10, 11 & 12 · Google Meet · Live</p>
       </div>
       <div className="ym-ad-cta">
@@ -213,7 +206,7 @@ useEffect(() => {
   return (
     <main id="home" className="ym-page">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=DM+Serif+Display&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
           --navy: #060f2e; --navy-mid: #0d1b4b; --blue-bright: #1d4ed8; --blue-light: #3b82f6;
@@ -265,10 +258,13 @@ useEffect(() => {
         .ym-btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
         .ym-btn-ghost { background: rgba(255,255,255,0.07); color: #fff; padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; }
         .ym-btn-ghost:hover { background: rgba(255,255,255,0.12); }
+
+        /* ── HERO STATS: Space Grotesk + DM Serif Display ── */
         .hero-stats { display: flex; gap: 10px; flex-wrap: wrap; }
         .hero-stat { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 16px; text-align: center; flex: 1; min-width: 80px; }
-        .hero-stat-num { font-family: 'Cormorant Garamond', serif; color: var(--gold-light); font-weight: 700; font-size: 20px; line-height: 1; margin-bottom: 3px; }
-        .hero-stat-label { color: #93c5fd; font-size: 10px; font-weight: 500; }
+        .hero-stat-num { font-family: 'DM Serif Display', 'Cormorant Garamond', serif; color: var(--gold-light); font-weight: 400; font-size: 24px; line-height: 1; margin-bottom: 3px; letter-spacing: -0.01em; }
+        .hero-stat-label { color: #93c5fd; font-size: 10px; font-weight: 500; font-family: 'Space Grotesk', 'Outfit', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; }
+
         .hero-card { background: rgba(255,255,255,0.07); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.13); border-radius: 20px; padding: 22px; position: relative; overflow: hidden; }
         .hero-card-glow { position: absolute; top: -30px; right: -30px; width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 70%); pointer-events: none; }
         .hero-card-avatar { width: 52px; height: 52px; border-radius: 12px; background: var(--gold); color: #1a0a00; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -334,6 +330,8 @@ useEffect(() => {
         .ym-btn-blue-solid { background: #2563eb; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 700; font-size: 13px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .ym-btn-blue-solid:hover { background: #1d4ed8; }
         @media (max-width: 640px) { .ym-ad-card { flex-direction: column; } .ym-ad-cta { padding: 16px; min-width: unset; background: rgba(255,255,255,0.05); } .ym-ad-stripe { width: 100%; height: 4px; } .ym-ad-content { padding: 20px; } }
+
+        /* ── CLASS CARDS ── */
         .ym-classes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
         .ym-class-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 18px; padding: 24px 20px; text-align: center; transition: all 0.25s; box-shadow: var(--shadow-sm); }
         .ym-class-card:hover { border-color: #93c5fd; box-shadow: var(--shadow-md); transform: translateY(-3px); }
@@ -342,15 +340,21 @@ useEffect(() => {
         .ym-class-name { font-size: 20px; font-weight: 800; color: var(--gray-900); margin-bottom: 3px; }
         .ym-class-days { color: var(--gray-500); font-size: 13px; margin-bottom: 2px; }
         .ym-class-time { color: var(--gray-400); font-size: 12px; margin-bottom: 18px; }
-        .ym-class-price-row { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin-bottom: 18px; }
-        .ym-class-price { font-size: 26px; font-weight: 800; color: #2563eb; }
+
+        /* Price row: offer price + strikethrough original */
+        .ym-class-price-row { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+        .ym-class-price { font-size: 28px; font-weight: 800; color: #2563eb; font-family: 'Space Grotesk', 'Outfit', sans-serif; }
         .ym-class-price-unit { font-size: 13px; color: var(--gray-400); }
+        .ym-class-price-original { font-size: 16px; font-weight: 600; color: var(--gray-400); text-decoration: line-through; font-family: 'Space Grotesk', 'Outfit', sans-serif; }
+        .ym-class-price-save { display: inline-block; background: #dcfce7; color: #15803d; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; margin-left: 2px; vertical-align: middle; }
+
         .ym-class-btn { width: 100%; padding: 11px; border-radius: 11px; font-weight: 700; font-size: 13px; border: none; cursor: pointer; transition: all 0.2s; }
         .ym-class-btn-primary { background: #2563eb; color: #fff; }
         .ym-class-btn-primary:hover { background: #1d4ed8; }
         .ym-class-badge { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; margin-bottom: 10px; }
         @media (max-width: 760px) { .ym-classes-grid { grid-template-columns: 1fr; max-width: 380px; margin-left: auto; margin-right: auto; } }
         @media (min-width: 560px) and (max-width: 760px) { .ym-classes-grid { grid-template-columns: repeat(2, 1fr); max-width: 100%; } }
+
         .ym-slots-wrap { max-width: 640px; margin: 0 auto; }
         .ym-slots-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; background: #2563eb; color: #fff; padding: 14px 22px; border-radius: 14px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; transition: background 0.2s; margin-bottom: 10px; }
         .ym-slots-toggle:hover { background: #1d4ed8; }
@@ -384,26 +388,6 @@ useEffect(() => {
         .ym-about-card-label { font-weight: 700; color: #1e3a8a; font-size: 13px; }
         .ym-about-card-sub { color: #3b82f6; font-size: 11px; margin-top: 3px; }
         @media (max-width: 760px) { .ym-about-grid { grid-template-columns: 1fr; gap: 36px; } }
-        .ym-visitor-section { background: linear-gradient(135deg, #060f2e 0%, #0d1b4b 50%, #0a1f5e 100%); padding: 56px 20px; position: relative; overflow: hidden; }
-        .ym-visitor-section::before { content: ''; position: absolute; top: -60px; right: -60px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle, rgba(29,78,216,0.18) 0%, transparent 70%); pointer-events: none; }
-        .ym-visitor-inner { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 28px; position: relative; z-index: 1; }
-        .ym-visitor-eyebrow { display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 100px; padding: 5px 14px; color: #93c5fd; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
-        .ym-visitor-title { color: #fff; font-size: clamp(1.2rem, 2.5vw, 1.7rem); font-weight: 700; margin-bottom: 5px; text-align: center; }
-        .ym-visitor-subtitle { color: rgba(255,255,255,0.4); font-size: 13px; text-align: center; }
-        .ym-visitor-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 24px; padding: 36px 52px; display: flex; align-items: center; gap: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.25); min-width: 280px; }
-        .ym-visitor-card-dot { width: 12px; height: 12px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
-        @keyframes visitorPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
-        .ym-visitor-card-dot.error { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.2); animation: none; }
-        .ym-visitor-card-divider { width: 1px; height: 52px; background: rgba(255,255,255,0.12); }
-        .ym-visitor-card-count { font-size: clamp(2.6rem, 7vw, 4.2rem); font-weight: 800; color: #fff; line-height: 1; font-family: 'Cormorant Garamond', serif; animation: countUp 0.6s ease both; }
-        .ym-visitor-card-label { color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 5px; }
-        .ym-visitor-stats { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .ym-visitor-stat-pill { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 11px; padding: 9px 14px; }
-        .ym-visitor-stat-pill-icon { font-size: 14px; }
-        .ym-visitor-stat-pill-text { color: rgba(255,255,255,0.5); font-size: 12px; }
-        .ym-visitor-stat-pill-val { color: #fff; font-weight: 700; font-size: 12px; }
-        .ym-visitor-poweredby { color: rgba(255,255,255,0.18); font-size: 10px; text-align: center; }
-        @media (max-width: 460px) { .ym-visitor-card { padding: 24px 28px; min-width: unset; flex-direction: column; text-align: center; gap: 14px; } .ym-visitor-card-divider { display: none; } }
         .ym-contact-section { background: var(--navy); }
         .ym-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
         .ym-contact-info h3 { color: #fff; font-size: 24px; font-weight: 700; margin-bottom: 7px; }
@@ -434,11 +418,12 @@ useEffect(() => {
         .ym-footer-visitor-bar { display: flex; align-items: center; justify-content: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 24px; margin-bottom: 24px; flex-wrap: wrap; }
         .ym-footer-visitor-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
         .ym-footer-visitor-dot.error { background: #f59e0b; animation: none; }
-        .ym-footer-visitor-count { color: #fff; font-weight: 700; font-size: 18px; font-family: 'Cormorant Garamond', serif; }
+        .ym-footer-visitor-count { color: #fff; font-weight: 700; font-size: 18px; font-family: 'DM Serif Display', 'Cormorant Garamond', serif; }
         .ym-footer-visitor-label { color: rgba(255,255,255,0.35); font-size: 12px; }
         .ym-footer-visitor-sep { color: rgba(255,255,255,0.13); font-size: 16px; }
         .ym-skeleton { display: inline-block; background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% auto; animation: skeletonShimmer 1.5s linear infinite; border-radius: 4px; height: 1em; width: 40px; vertical-align: middle; }
         @keyframes skeletonShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes visitorPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
         .ym-footer-policy-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 0; margin-bottom: 14px; }
         .ym-footer-policy-link { font-size: 11px; color: rgba(255,255,255,0.35); text-decoration: none; transition: color 0.2s; padding: 4px 12px; border-right: 1px solid rgba(255,255,255,0.1); }
         .ym-footer-policy-link:last-child { border-right: none; }
@@ -518,9 +503,13 @@ useEffect(() => {
               <button onClick={() => openModal()} className="ym-btn-gold">Enroll Khwlaidi →</button>
               <Link href="/classes" className="ym-btn-ghost">View Schedule</Link>
             </div>
+            {/* Hero stats with new font */}
             <div className="hero-stats fade-up-5">
               {[{ num: "3", label: "Classes" }, { num: "IIT", label: "Delhi Alumni" }, { num: "2hrs", label: "Per Session" }, { num: "∞", label: "Doubt Support" }].map((s) => (
-                <div key={s.label} className="hero-stat"><p className="hero-stat-num">{s.num}</p><p className="hero-stat-label">{s.label}</p></div>
+                <div key={s.label} className="hero-stat">
+                  <p className="hero-stat-num">{s.num}</p>
+                  <p className="hero-stat-label">{s.label}</p>
+                </div>
               ))}
             </div>
           </div>
@@ -536,7 +525,7 @@ useEffect(() => {
                   <div key={r.label} className="hero-card-row"><span style={{ fontSize: "14px" }}>{r.icon}</span><div><p className="hero-card-row-label">{r.label}</p><p className="hero-card-row-val">{r.val}</p></div></div>
                 ))}
               </div>
-              <button onClick={() => openModal()} className="hero-card-btn">🚀 Classes Start 3rd June 2026</button>
+              <button onClick={() => openModal()} className="hero-card-btn">🚀 Classes Start 15th June 2026</button>
             </div>
           </div>
         </div>
@@ -561,17 +550,28 @@ useEffect(() => {
             <p className="ym-section-desc">Live interactive sessions via Google Meet. Join from anywhere across India.</p>
           </div>
           <div className="ym-classes-grid">
-            {Object.entries(PAYMENT.classes).map(([cls], idx) => (
-              <div key={cls} className={`ym-class-card${idx === 1 ? " featured" : ""}`}>
-                {idx === 1 && <div className="ym-class-badge">Most Popular</div>}
-                <div className="ym-class-icon">{cls === "Class 10" ? "📘" : cls === "Class 11" ? "📙" : "📗"}</div>
-                <h3 className="ym-class-name">{cls}</h3>
-                <p className="ym-class-days">{SLOTS[cls as keyof typeof SLOTS].days}</p>
-                <p className="ym-class-time">{SLOTS[cls as keyof typeof SLOTS].time}</p>
-                <div className="ym-class-price-row"><span className="ym-class-price">₹{realOffer(cls)}</span><span className="ym-class-price-unit">/month</span></div>
-                <button onClick={() => openModal()} className="ym-class-btn ym-class-btn-primary">Join {cls}</button>
-              </div>
-            ))}
+            {Object.entries(PAYMENT.classes).map(([cls], idx) => {
+              const p = PAYMENT.classes[cls as keyof typeof PAYMENT.classes];
+              const offerPrice = p.offer === 1 ? p.original : p.offer;
+              const savePct = Math.round(((p.original - offerPrice) / p.original) * 100);
+              return (
+                <div key={cls} className={`ym-class-card${idx === 1 ? " featured" : ""}`}>
+                  {idx === 1 && <div className="ym-class-badge">Most Popular</div>}
+                  <div className="ym-class-icon">{cls === "Class 10" ? "📘" : cls === "Class 11" ? "📙" : "📗"}</div>
+                  <h3 className="ym-class-name">{cls}</h3>
+                  <p className="ym-class-days">{SLOTS[cls as keyof typeof SLOTS].days}</p>
+                  <p className="ym-class-time">{SLOTS[cls as keyof typeof SLOTS].time}</p>
+                  {/* Price: offer + strikethrough original + save badge */}
+                  <div className="ym-class-price-row">
+                    <span className="ym-class-price">₹{offerPrice}</span>
+                    <span className="ym-class-price-original">₹{p.original}</span>
+                    <span className="ym-class-price-unit">/mo</span>
+                    <span className="ym-class-price-save">{savePct}% off</span>
+                  </div>
+                  <button onClick={() => openModal()} className="ym-class-btn ym-class-btn-primary">Join {cls}</button>
+                </div>
+              );
+            })}
           </div>
           <div className="ym-slots-wrap">
             <button onClick={() => { setSlotsOpen(!slotsOpen); setSelectedSlot(null); }} className="ym-slots-toggle">
@@ -654,7 +654,6 @@ useEffect(() => {
             <div className="ym-section-tag blue">🎓 Our Story</div>
             <h2 className="ym-section-h2">Know About Yarwng Mathematics</h2>
             <div className="ym-section-line" style={{ background: "#2563eb" }} />
-            <p className="ym-section-desc" style={{ fontStyle: "italic", color: "#2563eb" }}>"Amani Kok Kokborok bai Swrwngwi Mannai"</p>
           </div>
           <div className="ym-about-grid">
             <div className="ym-about-text">
@@ -672,30 +671,7 @@ useEffect(() => {
         </div>
       </section>
 
-      {/* VISITOR COUNTER */}
-      <section className="ym-visitor-section" aria-label="Visitor statistics">
-        <div className="ym-visitor-inner">
-          <div style={{ textAlign: "center" }}>
-            <div className="ym-visitor-eyebrow"><span>🌐</span> Live Site Statistics</div>
-            <h2 className="ym-visitor-title">People Who've Discovered Yarwng Mathematics</h2>
-            <p className="ym-visitor-subtitle">Counter updates with every new visit</p>
-          </div>
-          <div className="ym-visitor-card">
-            <span className={`ym-visitor-card-dot${counterError ? " error" : ""}`} />
-            <div className="ym-visitor-card-divider" />
-            <div>
-              {counterLoading ? (<div className="ym-skeleton" style={{ width: 110, height: "3rem", borderRadius: 7 }} />) : (<div className="ym-visitor-card-count">{displayCount(visitorCount)}</div>)}
-              <div className="ym-visitor-card-label">{counterError ? "⚠️ Counter unavailable" : "total visitors since launch"}</div>
-            </div>
-          </div>
-          <div className="ym-visitor-stats">
-            {[{ icon: "📅", text: "Classes start", val: "3rd June 2026" }, { icon: "🎓", text: "Taught by", val: "IIT Delhi M.Sc" }, { icon: "📍", text: "Based in", val: "Khumulwng, Tripura" }].map((s) => (
-              <div key={s.val} className="ym-visitor-stat-pill"><span className="ym-visitor-stat-pill-icon">{s.icon}</span><span className="ym-visitor-stat-pill-text">{s.text}</span><span className="ym-visitor-stat-pill-val">{s.val}</span></div>
-            ))}
-          </div>
-          <p className="ym-visitor-poweredby">Powered by counterapi.dev · increments on each visit</p>
-        </div>
-      </section>
+      {/* ── VISITOR SECTION REMOVED — counter lives only in footer ── */}
 
       {/* CONTACT */}
       <section id="contact" className="ym-section ym-contact-section">
@@ -708,7 +684,6 @@ useEffect(() => {
           <div className="ym-contact-grid">
             <div className="ym-contact-info">
               <h3>Yarwng Mathematics</h3>
-              <p className="ym-contact-tagline">"Amani Kok Kokborok bai Swrwngwi Mannai"</p>
               {[
                 { icon: "👨‍🏫", val: "Rakesh Debbarma", sub: "M.Sc Mathematics, IIT Delhi" },
                 { icon: "📱", val: <a href="tel:9366030347">9366030347</a>, sub: "WhatsApp available" },
@@ -719,7 +694,7 @@ useEffect(() => {
               ))}
             </div>
             <div className="ym-contact-cta">
-              <div><p className="ym-contact-cta-title">Ready to Excel in Mathematics?</p><p className="ym-contact-cta-sub">Classes start 3rd June 2026. Limited seats per batch. Enroll now to secure your spot.</p></div>
+              <div><p className="ym-contact-cta-title">Ready to Excel in Mathematics?</p><p className="ym-contact-cta-sub">Classes start 15th June 2026. Limited seats per batch. Enroll now to secure your spot.</p></div>
               <button onClick={() => openModal()} className="ym-contact-enroll-btn">🚀 Enroll Now →</button>
               <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
                 {["Class 10 · ₹600/mo", "Class 11 · ₹800/mo", "Class 12 · ₹900/mo"].map((t) => (
@@ -754,12 +729,13 @@ useEffect(() => {
             </div>
             <div>
               <p className="ym-footer-h4">Classes Offered</p>
-              <p className="ym-footer-item">📘 Class 10 · Mon & Wed · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹600</span></p>
-              <p className="ym-footer-item">📙 Class 11 · Tue & Fri · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹800</span></p>
-              <p className="ym-footer-item">📗 Class 12 · Thu & Sat · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹900</span></p>
+              <p className="ym-footer-item">📘 Class 10 · Mon & Wed · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹600</span> <span style={{ textDecoration: "line-through", color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>₹700</span></p>
+              <p className="ym-footer-item">📙 Class 11 · Tue & Fri · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹800</span> <span style={{ textDecoration: "line-through", color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>₹900</span></p>
+              <p className="ym-footer-item">📗 Class 12 · Thu & Sat · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹900</span> <span style={{ textDecoration: "line-through", color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>₹1000</span></p>
               <p className="ym-footer-item" style={{ color: "#fb923c", marginTop: "10px" }}>🏫 Offline: Khumulwng (Launching Soon)</p>
             </div>
           </div>
+          {/* Visitor counter bar — kept only here in footer */}
           <div className="ym-footer-visitor-bar">
             <span className={`ym-footer-visitor-dot${counterError ? " error" : ""}`} />
             {counterLoading ? (<span className="ym-skeleton" style={{ width: 44, height: "1.2em" }} />) : (<span className="ym-footer-visitor-count">{displayCount(visitorCount)}</span>)}
@@ -781,7 +757,7 @@ useEffect(() => {
         </div>
       </footer>
 
-      {/* MODAL — only 2 steps now: form → payment redirect */}
+      {/* MODAL */}
       {showModal && (
         <div className="ym-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }} role="dialog" aria-modal="true" aria-label="Registration modal">
           <div className="ym-modal">
@@ -804,7 +780,6 @@ useEffect(() => {
             </div>
 
             <div className="ym-modal-body">
-              {/* STEP 1: FORM */}
               {step === "form" && (
                 <form onSubmit={(e) => { e.preventDefault(); setStep("payment"); }}>
                   <div className="ym-form-info"><span>ℹ️</span><span>Your details will be saved after confirming payment.</span></div>
@@ -828,7 +803,6 @@ useEffect(() => {
                 </form>
               )}
 
-              {/* STEP 2: PHONEPE REDIRECT */}
               {step === "payment" && pay && (
                 <div style={{ textAlign: "center", padding: "20px 0" }}>
                   <div style={{ fontSize: 52, marginBottom: 16 }}>💜</div>
