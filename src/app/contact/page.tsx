@@ -91,7 +91,7 @@ export default function ContactPage() {
           <p className="con-info-tagline">Your math tutor, just a message away</p>
 
           {[
-            { icon: "👨‍🏫", val: "Rakesh Debbarma", sub: "M.Sc Mathematics, IIT Delhi" },
+            { icon: <img src="/profile.jpg" alt="Rakesh Debbarma" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "10px" }} />, val: "Rakesh Debbarma", sub: "M.Sc Mathematics, IIT Delhi" },
             { icon: "📱", val: <a href="tel:9366030347">9366030347</a>, sub: "Call or WhatsApp — available daily" },
             { icon: "✉️", val: <a href="mailto:yarwngmathematics@gmail.com">yarwngmathematics@gmail.com</a>, sub: "We reply within 24 hours" },
             { icon: "📍", val: "Khumulwng, West Tripura", sub: "Offline classes launching soon" },

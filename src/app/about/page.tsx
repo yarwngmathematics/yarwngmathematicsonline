@@ -101,7 +101,13 @@ export default function AboutPage() {
         <div className="about-story">
           <div className="story-photo fu2">
             <div className="story-photo-card">
-              <div className="story-avatar">RD</div>
+              <div className="story-avatar" style={{ padding: 0, overflow: "hidden" }}>
+  <img
+    src="/profile.jpg"
+    alt="Rakesh Debbarma"
+    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "20px" }}
+  />
+</div>
               <p className="story-name">Rakesh Debbarma</p>
               <p className="story-degree">M.Sc Mathematics</p>
               <p className="story-iit">IIT Delhi</p>
