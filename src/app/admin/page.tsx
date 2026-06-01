@@ -7,7 +7,7 @@ export default function AdminPage() {
     <main className="min-h-screen bg-gray-100">
 
       {/* Header */}
-     <section className="bg-gradient-to-r from-blue-900 to-black text-white p-6 md:p-8 shadow-xl">
+     <section className="bg-linear-to-r from-blue-900 to-black text-white p-6 md:p-8 shadow-xl">
 
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
 

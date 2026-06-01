@@ -517,7 +517,13 @@ export default function Home() {
             <div className="hero-card">
               <div className="hero-card-glow" />
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", position: "relative" }}>
-                <div className="hero-card-avatar">RD</div>
+                <div className="hero-card-avatar" style={{ padding: 0, overflow: "hidden" }}>
+  <img 
+    src="/profile.jpg" 
+    alt="Rakesh Debbarma" 
+    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "12px" }} 
+  />
+</div>
                 <div><p className="hero-card-name">Rakesh Debbarma</p><p className="hero-card-degree">M.Sc Mathematics</p><p className="hero-card-iit">IIT Delhi</p></div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "7px", position: "relative" }}>

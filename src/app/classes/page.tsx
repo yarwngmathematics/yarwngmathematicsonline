@@ -100,7 +100,7 @@ export default function ClassesPage() {
         <h1 className="fu2">Our <span>Mathematics Classes</span></h1>
         <p className="fu3">Structured, live online sessions via Google Meet for Classes 10, 11 & 12. Each batch has a fixed timetable and dedicated WhatsApp support.</p>
         <div className="cls-hero-pills fu3">
-          {["🟢 Online via Google Meet","📅 Starts 3rd June 2026","⏰ 2 Hours per Session","💬 WhatsApp Support Included","🔒 Limited Seats"].map(p=>(
+          {["🟢 Online via Google Meet","📅 Starts 15th June 2026","⏰ 2 Hours per Session","💬 WhatsApp Support Included","🔒 Limited Seats"].map(p=>(
             <span key={p} className="cls-pill">{p}</span>
           ))}
         </div>
@@ -209,7 +209,7 @@ export default function ClassesPage() {
       {/* CTA */}
       <section className="cls-cta">
         <h2>Ready to Enroll?</h2>
-        <p>Classes start 3rd June 2026. Seats are limited per batch. Register now to secure your spot.</p>
+        <p>Classes start 15th June 2026. Seats are limited per batch. Register now to secure your spot.</p>
         <div className="cta-btns">
           <Link href="/" className="btn-gold">🚀 Enroll Now →</Link>
           <Link href="/contact" className="btn-ghost">Contact Us</Link>

@@ -90,7 +90,6 @@ export default function AboutPage() {
           <h1 className="about-h1 fu2">
             About <span>Yarwng Mathematics</span>
           </h1>
-          <p className="about-tagline fu3">"Amani Kok Kokborok bai Swrwngwi Mannai"</p>
           <p className="about-desc fu4">
             Founded with a mission to make world-class mathematics education accessible to every student in Tripura and beyond — taught by an IIT Delhi alumnus.
           </p>
@@ -191,7 +190,7 @@ export default function AboutPage() {
       <section className="about-cta">
         <div className="about-cta-inner">
           <h2>Ready to Start Learning?</h2>
-          <p>Classes start 3rd June 2026. Limited seats per batch. Join Yarwng Mathematics and experience the difference that real conceptual teaching makes.</p>
+          <p>Classes start 15th June 2026. Limited seats per batch. Join Yarwng Mathematics and experience the difference that real conceptual teaching makes.</p>
           <div className="cta-btns">
             <Link href="/" className="btn-gold">🚀 Enroll Now →</Link>
             <Link href="/classes" className="btn-ghost">View Classes</Link>

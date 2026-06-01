@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     url: "https://yarwngmathematics.com",
     title: "Yarwng Mathematics – IIT Delhi Math Coaching | Class 10, 11, 12",
     description:
-      "Expert mathematics coaching by an IIT Delhi M.Sc graduate. Online via Google Meet. Classes 10–12. Starting 3rd June 2026.",
+      "Expert mathematics coaching by an IIT Delhi M.Sc graduate. Online via Google Meet. Classes 10–12. Starting 15rd June 2026.",
     siteName: "Yarwng Mathematics",
     locale: "en_IN",
     images: [
