@@ -50,6 +50,10 @@ export default function Navbar({ onEnroll, enrollHref = "/#enroll" }: NavbarProp
         .ym-util-item a:hover { color: #fcd34d; }
         .ym-util-icon { color: #f59e0b; font-size: 12px; }
         .ym-util-right { color: rgba(255,255,255,0.45); font-size: 11px; font-weight: 500; letter-spacing: 0.03em; }
+        .ym-util-right-group { display: flex; align-items: center; gap: 16px; }
+        .ym-util-social { display: flex; align-items: center; gap: 10px; }
+        .ym-util-social-link { color: rgba(255,255,255,0.65); display: flex; align-items: center; transition: color 0.2s; }
+        .ym-util-social-link:hover { color: #fcd34d; }
         @media (max-width: 760px) { .ym-util-item.hide-sm { display: none; } .ym-util-right { display: none; } }
         @media (max-width: 500px) { .ym-util-bar { display: none; } }
 
@@ -96,7 +100,36 @@ export default function Navbar({ onEnroll, enrollHref = "/#enroll" }: NavbarProp
               Khumulwng, Tripura
             </span>
           </div>
-          <div className="ym-util-right">Mon–Sat · 11 AM – 6 PM</div>
+          <div className="ym-util-right-group">
+            <div className="ym-util-social">
+              <a
+                href="https://www.instagram.com/_rakesh__debbarma/?hl=en"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="ym-util-social-link"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" />
+                </svg>
+              </a>
+              <a
+                href="https://www.youtube.com/@RakeshDebbarmaofficial"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="YouTube"
+                className="ym-util-social-link"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22 12s0-3.2-.4-4.7c-.24-.87-.94-1.55-1.8-1.79C18.3 5 12 5 12 5s-6.3 0-7.8.51c-.87.24-1.56.92-1.8 1.79C2 8.8 2 12 2 12s0 3.2.4 4.7c.24.87.93 1.55 1.8 1.79C5.7 19 12 19 12 19s6.3 0 7.8-.51c.87-.24 1.56-.92 1.8-1.79.4-1.5.4-4.7.4-4.7Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                  <path d="M10 9.5v5l4.5-2.5-4.5-2.5Z" fill="currentColor" />
+                </svg>
+              </a>
+            </div>
+            <div className="ym-util-right">Mon–Sat · 11 AM – 6 PM</div>
+          </div>
         </div>
       </div>
 

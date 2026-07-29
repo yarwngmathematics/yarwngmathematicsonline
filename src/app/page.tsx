@@ -259,11 +259,15 @@ export default function Home() {
         .ym-btn-ghost { background: rgba(255,255,255,0.07); color: #fff; padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; }
         .ym-btn-ghost:hover { background: rgba(255,255,255,0.12); }
 
-        /* ── HERO STATS: Space Grotesk + DM Serif Display ── */
+        /* ── HERO STATS: Space Grotesk + DM Serif Display, colour-filled ── */
         .hero-stats { display: flex; gap: 10px; flex-wrap: wrap; }
-        .hero-stat { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 16px; text-align: center; flex: 1; min-width: 80px; }
-        .hero-stat-num { font-family: 'DM Serif Display', 'Cormorant Garamond', serif; color: var(--gold-light); font-weight: 400; font-size: 24px; line-height: 1; margin-bottom: 3px; letter-spacing: -0.01em; }
-        .hero-stat-label { color: #93c5fd; font-size: 10px; font-weight: 500; font-family: 'Space Grotesk', 'Outfit', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; }
+        .hero-stat { border: 1px solid rgba(255,255,255,0.18); border-radius: 12px; padding: 12px 16px; text-align: center; flex: 1; min-width: 80px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+        .hero-stats .hero-stat:nth-child(1) { background: linear-gradient(150deg, #3163dd 0%, #1e40af 100%); }
+        .hero-stats .hero-stat:nth-child(2) { background: linear-gradient(150deg, #ea9a3d 0%, #c2740b 100%); }
+        .hero-stats .hero-stat:nth-child(3) { background: linear-gradient(150deg, #17a97a 0%, #0d7a56 100%); }
+        .hero-stats .hero-stat:nth-child(4) { background: linear-gradient(150deg, #7c5cdb 0%, #5b21b6 100%); }
+        .hero-stat-num { font-family: 'DM Serif Display', 'Cormorant Garamond', serif; color: #fff; font-weight: 400; font-size: 24px; line-height: 1; margin-bottom: 3px; letter-spacing: -0.01em; }
+        .hero-stat-label { color: rgba(255,255,255,0.85); font-size: 10px; font-weight: 500; font-family: 'Space Grotesk', 'Outfit', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; }
 
         .hero-card { background: rgba(255,255,255,0.07); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.13); border-radius: 20px; padding: 22px; position: relative; overflow: hidden; }
         .hero-card-glow { position: absolute; top: -30px; right: -30px; width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 70%); pointer-events: none; }
@@ -332,14 +336,25 @@ export default function Home() {
         .ym-btn-blue-solid:hover { background: #1d4ed8; }
         @media (max-width: 640px) { .ym-ad-card { flex-direction: column; } .ym-ad-cta { padding: 16px; min-width: unset; background: rgba(255,255,255,0.05); } .ym-ad-stripe { width: 100%; height: 4px; } .ym-ad-content { padding: 20px; } }
 
-        /* ── CLASS CARDS ── */
+        /* ── CLASS CARDS: colour-filled ── */
         .ym-classes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
         .ym-class-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 18px; padding: 24px 20px; text-align: center; transition: all 0.25s; box-shadow: var(--shadow-sm); }
-        .ym-class-card:hover { border-color: #93c5fd; box-shadow: var(--shadow-md); transform: translateY(-3px); }
-        .ym-class-card.featured { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1), var(--shadow-md); }
-        .ym-class-icon { width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 14px; background: linear-gradient(135deg, #1d4ed8, #1e3a8a); box-shadow: 0 6px 16px rgba(29,78,216,0.25); }
-        .ym-classes-grid .ym-class-card:nth-child(2) .ym-class-icon { background: linear-gradient(135deg, #f59e0b, #b45309); box-shadow: 0 6px 16px rgba(245,158,11,0.25); }
-        .ym-classes-grid .ym-class-card:nth-child(3) .ym-class-icon { background: linear-gradient(135deg, #059669, #065f46); box-shadow: 0 6px 16px rgba(5,150,105,0.25); }
+        .ym-class-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
+        .ym-class-card.featured { box-shadow: 0 0 0 3px rgba(255,255,255,0.35), var(--shadow-lg); }
+        .ym-class-icon { width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 14px; background: rgba(255,255,255,0.22); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .ym-classes-grid .ym-class-card:nth-child(1) { background: linear-gradient(150deg, #3163dd 0%, #1e40af 100%); border-color: transparent; }
+        .ym-classes-grid .ym-class-card:nth-child(2) { background: linear-gradient(150deg, #ea9a3d 0%, #c2740b 100%); border-color: transparent; }
+        .ym-classes-grid .ym-class-card:nth-child(3) { background: linear-gradient(150deg, #17a97a 0%, #0d7a56 100%); border-color: transparent; }
+        .ym-classes-grid .ym-class-name { color: #fff; }
+        .ym-classes-grid .ym-class-days { color: rgba(255,255,255,0.88); }
+        .ym-classes-grid .ym-class-time { color: rgba(255,255,255,0.65); }
+        .ym-classes-grid .ym-class-price { color: #fff; }
+        .ym-classes-grid .ym-class-price-unit { color: rgba(255,255,255,0.7); }
+        .ym-classes-grid .ym-class-price-original { color: rgba(255,255,255,0.55); }
+        .ym-classes-grid .ym-class-price-save { background: rgba(255,255,255,0.25); color: #fff; }
+        .ym-classes-grid .ym-class-badge { background: rgba(255,255,255,0.25); color: #fff; }
+        .ym-classes-grid .ym-class-btn-primary { background: #fff; color: #1d4ed8; }
+        .ym-classes-grid .ym-class-btn-primary:hover { background: #f3f4f6; }
         .ym-class-name { font-size: 20px; font-weight: 800; color: var(--gray-900); margin-bottom: 3px; }
         .ym-class-days { color: var(--gray-500); font-size: 13px; margin-bottom: 2px; }
         .ym-class-time { color: var(--gray-400); font-size: 12px; margin-bottom: 18px; }
@@ -371,30 +386,35 @@ export default function Home() {
         .ym-slot-row-label { font-weight: 600; color: #1e40af; font-size: 13px; }
         .ym-slot-row-sub { color: #3b82f6; font-size: 11px; margin-top: 2px; }
         .ym-offline-section { background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%); border-top: 1px solid #fed7aa; border-bottom: 1px solid #fed7aa; }
-        .ym-offline-card { background: #fff; border: 1.5px solid #fed7aa; border-radius: 24px; padding: 48px 40px; text-align: center; box-shadow: var(--shadow-sm); max-width: 580px; margin: 0 auto; }
-        .ym-offline-loc { display: inline-flex; align-items: center; gap: 6px; color: #c2410c; font-weight: 700; font-size: 16px; margin-bottom: 10px; }
-        .ym-btn-orange { background: #ea580c; color: #fff; padding: 13px 28px; border-radius: 12px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; transition: all 0.2s; }
-        .ym-btn-orange:hover { background: #c2410c; }
+        .ym-offline-card { background: linear-gradient(150deg, #ea9a3d 0%, #c2740b 100%); border: none; border-radius: 24px; padding: 48px 40px; text-align: center; box-shadow: var(--shadow-md); max-width: 580px; margin: 0 auto; }
+        .ym-offline-loc { display: inline-flex; align-items: center; gap: 6px; color: #fff; font-weight: 700; font-size: 16px; margin-bottom: 10px; }
+        .ym-btn-orange { background: #fff; color: #c2410c; padding: 13px 28px; border-radius: 12px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; transition: all 0.2s; }
+        .ym-btn-orange:hover { background: #fff7ed; }
         .ym-why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .ym-why-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 18px; padding: 24px; transition: all 0.25s; box-shadow: var(--shadow-sm); }
-        .ym-why-card:hover { border-color: #93c5fd; box-shadow: var(--shadow-md); transform: translateY(-3px); }
-        .ym-why-icon { width: 54px; height: 54px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 14px; background: linear-gradient(135deg, #1d4ed8, #1e3a8a); box-shadow: 0 6px 16px rgba(29,78,216,0.22); }
-        .ym-why-grid .ym-why-card:nth-child(3n+2) .ym-why-icon { background: linear-gradient(135deg, #f59e0b, #b45309); box-shadow: 0 6px 16px rgba(245,158,11,0.22); }
-        .ym-why-grid .ym-why-card:nth-child(3n) .ym-why-icon { background: linear-gradient(135deg, #059669, #065f46); box-shadow: 0 6px 16px rgba(5,150,105,0.22); }
-        .ym-why-title { font-size: 16px; font-weight: 700; color: var(--gray-900); margin-bottom: 7px; }
-        .ym-why-desc { color: var(--gray-500); font-size: 13px; line-height: 1.65; }
+        .ym-why-card { border-radius: 18px; padding: 24px; transition: all 0.25s; border: none; }
+        .ym-why-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
+        .ym-why-icon { width: 54px; height: 54px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 14px; background: rgba(255,255,255,0.22); box-shadow: none; }
+        .ym-why-grid .ym-why-card:nth-child(1) { background: linear-gradient(150deg, #3163dd 0%, #1e40af 100%); box-shadow: var(--shadow-md); }
+        .ym-why-grid .ym-why-card:nth-child(2) { background: linear-gradient(150deg, #ea9a3d 0%, #c2740b 100%); box-shadow: var(--shadow-md); }
+        .ym-why-grid .ym-why-card:nth-child(3) { background: linear-gradient(150deg, #17a97a 0%, #0d7a56 100%); box-shadow: var(--shadow-md); }
+        .ym-why-grid .ym-why-card:nth-child(4) { background: linear-gradient(150deg, #7c5cdb 0%, #5b21b6 100%); box-shadow: var(--shadow-md); }
+        .ym-why-grid .ym-why-card:nth-child(5) { background: linear-gradient(150deg, #0ea5b7 0%, #0a7285 100%); box-shadow: var(--shadow-md); }
+        .ym-why-grid .ym-why-card:nth-child(6) { background: linear-gradient(150deg, #e2574c 0%, #b91c1c 100%); box-shadow: var(--shadow-md); }
+        .ym-why-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 7px; }
+        .ym-why-desc { color: rgba(255,255,255,0.88); font-size: 13px; line-height: 1.65; }
         @media (max-width: 760px) { .ym-why-grid { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 480px) { .ym-why-grid { grid-template-columns: 1fr; } }
         .ym-about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
         .ym-about-text p { color: var(--gray-600); font-size: 16px; line-height: 1.8; margin-bottom: 18px; }
         .ym-about-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        .ym-about-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 18px; text-align: center; }
-        .ym-about-cards .ym-about-card:nth-child(2) { background: #fef3c7; border-color: #fde68a; }
-        .ym-about-cards .ym-about-card:nth-child(3) { background: #ecfdf5; border-color: #a7f3d0; }
-        .ym-about-cards .ym-about-card:nth-child(4) { background: #eff6ff; border-color: #bfdbfe; }
+        .ym-about-card { border-radius: 14px; padding: 18px; text-align: center; border: none; box-shadow: var(--shadow-sm); }
+        .ym-about-cards .ym-about-card:nth-child(1) { background: linear-gradient(150deg, #3163dd 0%, #1e40af 100%); }
+        .ym-about-cards .ym-about-card:nth-child(2) { background: linear-gradient(150deg, #ea9a3d 0%, #c2740b 100%); }
+        .ym-about-cards .ym-about-card:nth-child(3) { background: linear-gradient(150deg, #17a97a 0%, #0d7a56 100%); }
+        .ym-about-cards .ym-about-card:nth-child(4) { background: linear-gradient(150deg, #7c5cdb 0%, #5b21b6 100%); }
         .ym-about-card-icon { font-size: 26px; margin-bottom: 7px; }
-        .ym-about-card-label { font-weight: 700; color: #1e3a8a; font-size: 13px; }
-        .ym-about-card-sub { color: #3b82f6; font-size: 11px; margin-top: 3px; }
+        .ym-about-card-label { font-weight: 700; color: #fff; font-size: 13px; }
+        .ym-about-card-sub { color: rgba(255,255,255,0.82); font-size: 11px; margin-top: 3px; }
         @media (max-width: 760px) { .ym-about-grid { grid-template-columns: 1fr; gap: 36px; } }
         .ym-contact-section { background: var(--navy); }
         .ym-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
@@ -406,9 +426,9 @@ export default function Home() {
         .ym-contact-val a { color: #93c5fd; text-decoration: none; }
         .ym-contact-val a:hover { color: #fff; }
         .ym-contact-sub { color: rgba(255,255,255,0.4); font-size: 11px; }
-        .ym-contact-cta { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 14px; }
+        .ym-contact-cta { background: linear-gradient(150deg, #7c5cdb 0%, #5b21b6 100%); border: none; border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-lg); }
         .ym-contact-cta-title { color: #fff; font-size: 18px; font-weight: 700; margin-bottom: 3px; }
-        .ym-contact-cta-sub { color: rgba(255,255,255,0.5); font-size: 13px; margin-bottom: 6px; }
+        .ym-contact-cta-sub { color: rgba(255,255,255,0.85); font-size: 13px; margin-bottom: 6px; }
         .ym-contact-enroll-btn { width: 100%; background: var(--gold); color: #1a0a00; padding: 15px; border-radius: 13px; font-weight: 800; font-size: 15px; border: none; cursor: pointer; transition: all 0.2s; }
         .ym-contact-enroll-btn:hover { background: var(--gold-light); }
         @media (max-width: 760px) { .ym-contact-grid { grid-template-columns: 1fr; gap: 32px; } }
@@ -630,10 +650,10 @@ export default function Home() {
           </div>
           <div className="ym-offline-card">
             <div style={{ fontSize: "44px", marginBottom: "14px" }}>🏫</div>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "24px", fontWeight: 700, color: "#111827", marginBottom: "7px" }}>Physical Classroom</h3>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "24px", fontWeight: 700, color: "#fff", marginBottom: "7px" }}>Physical Classroom</h3>
             <div className="ym-offline-loc">📍 Khumulwng, Tripura</div>
-            <p style={{ color: "#6b7280", marginBottom: "20px", maxWidth: "400px", margin: "0 auto 20px", lineHeight: 1.7, fontSize: "14px" }}>Face-to-face classes in a structured environment. Personalised attention. Details will be announced soon.</p>
-            <div style={{ display: "inline-block", background: "#ffedd5", color: "#c2410c", padding: "7px 18px", borderRadius: "10px", fontWeight: 700, fontSize: "13px", marginBottom: "20px" }}>⏳ Launching Soon — Limited Seats</div>
+            <p style={{ color: "rgba(255,255,255,0.9)", marginBottom: "20px", maxWidth: "400px", margin: "0 auto 20px", lineHeight: 1.7, fontSize: "14px" }}>Face-to-face classes in a structured environment. Personalised attention. Details will be announced soon.</p>
+            <div style={{ display: "inline-block", background: "rgba(255,255,255,0.22)", color: "#fff", padding: "7px 18px", borderRadius: "10px", fontWeight: 700, fontSize: "13px", marginBottom: "20px" }}>⏳ Launching Soon — Limited Seats</div>
             <br />
             <button onClick={() => openModal("Offline")} className="ym-btn-orange">Register Interest</button>
           </div>
@@ -714,7 +734,7 @@ export default function Home() {
               <button onClick={() => openModal()} className="ym-contact-enroll-btn">🚀 Enroll Now →</button>
               <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
                 {["Class 10 · ₹600/mo", "Class 11 · ₹800/mo", "Class 12 · ₹900/mo"].map((t) => (
-                  <span key={t} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "7px", padding: "5px 10px", fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>{t}</span>
+                  <span key={t} style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "7px", padding: "5px 10px", fontSize: "11px", color: "rgba(255,255,255,0.9)" }}>{t}</span>
                 ))}
               </div>
             </div>
