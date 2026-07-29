@@ -247,7 +247,7 @@ export default function Home() {
         .hero-badge { display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); border-radius: 100px; padding: 6px 14px; margin-bottom: 18px; }
         .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
         .hero-badge-text { color: #fcd34d; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
-        .hero-h1 { font-size: clamp(2rem, 4.5vw, 3.4rem); font-weight: 800; color: #fff; line-height: 1.08; margin-bottom: 14px; }
+        .hero-h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.3rem, 5.2vw, 3.8rem); font-weight: 700; color: #fff; line-height: 1.1; margin-bottom: 14px; letter-spacing: 0.005em; }
         .hero-h1-accent { color: var(--gold); }
         .hero-tagline-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
         .hero-tagline-line { height: 1px; width: 28px; background: rgba(245,158,11,0.5); flex-shrink: 0; }
@@ -297,8 +297,9 @@ export default function Home() {
         .ym-section-tag.blue { background: #dbeafe; color: #1d4ed8; }
         .ym-section-tag.orange { background: #ffedd5; color: #c2410c; }
         .ym-section-tag.gold { background: #fef3c7; color: #92400e; }
-        .ym-section-h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 800; color: var(--gray-900); margin-bottom: 10px; }
-        .ym-section-line { width: 48px; height: 4px; border-radius: 2px; margin: 0 auto 14px; }
+        .ym-section-h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3.6vw, 2.7rem); font-weight: 700; color: var(--gray-900); margin-bottom: 10px; }
+        .ym-section-line { width: 48px; height: 3px; border-radius: 2px; margin: 0 auto 14px; position: relative; }
+        .ym-section-line::after { content: ''; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; border-radius: 50%; background: inherit; transform: translate(14px,-50%); }
         .ym-section-desc { color: var(--gray-500); font-size: 15px; max-width: 500px; margin: 0 auto; line-height: 1.7; }
         .ym-section-head { text-align: center; margin-bottom: 48px; }
         .ym-ad-section { background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); padding: 28px 20px; position: relative; }
@@ -336,7 +337,9 @@ export default function Home() {
         .ym-class-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 18px; padding: 24px 20px; text-align: center; transition: all 0.25s; box-shadow: var(--shadow-sm); }
         .ym-class-card:hover { border-color: #93c5fd; box-shadow: var(--shadow-md); transform: translateY(-3px); }
         .ym-class-card.featured { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1), var(--shadow-md); }
-        .ym-class-icon { font-size: 36px; margin-bottom: 12px; }
+        .ym-class-icon { width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 14px; background: linear-gradient(135deg, #1d4ed8, #1e3a8a); box-shadow: 0 6px 16px rgba(29,78,216,0.25); }
+        .ym-classes-grid .ym-class-card:nth-child(2) .ym-class-icon { background: linear-gradient(135deg, #f59e0b, #b45309); box-shadow: 0 6px 16px rgba(245,158,11,0.25); }
+        .ym-classes-grid .ym-class-card:nth-child(3) .ym-class-icon { background: linear-gradient(135deg, #059669, #065f46); box-shadow: 0 6px 16px rgba(5,150,105,0.25); }
         .ym-class-name { font-size: 20px; font-weight: 800; color: var(--gray-900); margin-bottom: 3px; }
         .ym-class-days { color: var(--gray-500); font-size: 13px; margin-bottom: 2px; }
         .ym-class-time { color: var(--gray-400); font-size: 12px; margin-bottom: 18px; }
@@ -375,7 +378,9 @@ export default function Home() {
         .ym-why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .ym-why-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 18px; padding: 24px; transition: all 0.25s; box-shadow: var(--shadow-sm); }
         .ym-why-card:hover { border-color: #93c5fd; box-shadow: var(--shadow-md); transform: translateY(-3px); }
-        .ym-why-icon { font-size: 32px; margin-bottom: 12px; }
+        .ym-why-icon { width: 54px; height: 54px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 14px; background: linear-gradient(135deg, #1d4ed8, #1e3a8a); box-shadow: 0 6px 16px rgba(29,78,216,0.22); }
+        .ym-why-grid .ym-why-card:nth-child(3n+2) .ym-why-icon { background: linear-gradient(135deg, #f59e0b, #b45309); box-shadow: 0 6px 16px rgba(245,158,11,0.22); }
+        .ym-why-grid .ym-why-card:nth-child(3n) .ym-why-icon { background: linear-gradient(135deg, #059669, #065f46); box-shadow: 0 6px 16px rgba(5,150,105,0.22); }
         .ym-why-title { font-size: 16px; font-weight: 700; color: var(--gray-900); margin-bottom: 7px; }
         .ym-why-desc { color: var(--gray-500); font-size: 13px; line-height: 1.65; }
         @media (max-width: 760px) { .ym-why-grid { grid-template-columns: 1fr 1fr; } }
@@ -384,13 +389,16 @@ export default function Home() {
         .ym-about-text p { color: var(--gray-600); font-size: 16px; line-height: 1.8; margin-bottom: 18px; }
         .ym-about-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         .ym-about-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 18px; text-align: center; }
+        .ym-about-cards .ym-about-card:nth-child(2) { background: #fef3c7; border-color: #fde68a; }
+        .ym-about-cards .ym-about-card:nth-child(3) { background: #ecfdf5; border-color: #a7f3d0; }
+        .ym-about-cards .ym-about-card:nth-child(4) { background: #eff6ff; border-color: #bfdbfe; }
         .ym-about-card-icon { font-size: 26px; margin-bottom: 7px; }
         .ym-about-card-label { font-weight: 700; color: #1e3a8a; font-size: 13px; }
         .ym-about-card-sub { color: #3b82f6; font-size: 11px; margin-top: 3px; }
         @media (max-width: 760px) { .ym-about-grid { grid-template-columns: 1fr; gap: 36px; } }
         .ym-contact-section { background: var(--navy); }
         .ym-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
-        .ym-contact-info h3 { color: #fff; font-size: 24px; font-weight: 700; margin-bottom: 7px; }
+        .ym-contact-info h3 { font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 26px; font-weight: 700; margin-bottom: 7px; }
         .ym-contact-tagline { color: #fcd34d; font-style: italic; font-size: 14px; margin-bottom: 28px; }
         .ym-contact-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
         .ym-contact-icon { width: 40px; height: 40px; border-radius: 11px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
@@ -404,15 +412,17 @@ export default function Home() {
         .ym-contact-enroll-btn { width: 100%; background: var(--gold); color: #1a0a00; padding: 15px; border-radius: 13px; font-weight: 800; font-size: 15px; border: none; cursor: pointer; transition: all 0.2s; }
         .ym-contact-enroll-btn:hover { background: var(--gold-light); }
         @media (max-width: 760px) { .ym-contact-grid { grid-template-columns: 1fr; gap: 32px; } }
-        .ym-footer { background: #030a1f; color: rgba(255,255,255,0.5); padding: 44px 20px 22px; }
+        .ym-footer { background: #030a1f; color: rgba(255,255,255,0.5); padding: 44px 20px 22px; border-top: 3px solid #f59e0b; }
         .ym-footer-inner { max-width: 1100px; margin: 0 auto; }
         .ym-footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 36px; margin-bottom: 36px; }
-        .ym-footer-brand-name { color: #fff; font-weight: 700; font-size: 18px; margin-bottom: 5px; }
+        .ym-footer-brand-name { color: #fff; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 22px; margin-bottom: 5px; }
         .ym-footer-brand-tagline { color: #fcd34d; font-style: italic; font-size: 12px; margin-bottom: 10px; }
         .ym-footer-brand-desc { font-size: 12px; line-height: 1.7; }
         .ym-footer-badges { display: flex; gap: 7px; margin-top: 14px; flex-wrap: wrap; }
         .ym-footer-badge { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); border-radius: 7px; padding: 5px 10px; font-size: 11px; }
-        .ym-footer-h4 { color: rgba(255,255,255,0.75); font-weight: 600; font-size: 13px; margin-bottom: 12px; }
+        .ym-footer-h4 { color: #fff; font-weight: 700; font-size: 13px; margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
+        .ym-footer-h4::before { content: ''; display: inline-block; width: 20px; height: 3px; background: #f59e0b; border-radius: 2px; }
+        .ym-footer-h4::after { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #f59e0b; margin-left: -3px; }
         .ym-footer-item { font-size: 12px; margin-bottom: 7px; line-height: 1.5; }
         .ym-footer-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin-bottom: 18px; }
         .ym-footer-visitor-bar { display: flex; align-items: center; justify-content: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 24px; margin-bottom: 24px; flex-wrap: wrap; }
@@ -620,7 +630,7 @@ export default function Home() {
           </div>
           <div className="ym-offline-card">
             <div style={{ fontSize: "44px", marginBottom: "14px" }}>🏫</div>
-            <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#111827", marginBottom: "7px" }}>Physical Classroom</h3>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "24px", fontWeight: 700, color: "#111827", marginBottom: "7px" }}>Physical Classroom</h3>
             <div className="ym-offline-loc">📍 Khumulwng, Tripura</div>
             <p style={{ color: "#6b7280", marginBottom: "20px", maxWidth: "400px", margin: "0 auto 20px", lineHeight: 1.7, fontSize: "14px" }}>Face-to-face classes in a structured environment. Personalised attention. Details will be announced soon.</p>
             <div style={{ display: "inline-block", background: "#ffedd5", color: "#c2410c", padding: "7px 18px", borderRadius: "10px", fontWeight: 700, fontSize: "13px", marginBottom: "20px" }}>⏳ Launching Soon — Limited Seats</div>

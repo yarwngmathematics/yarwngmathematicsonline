@@ -39,31 +39,66 @@ export default function Navbar({ onEnroll, enrollHref = "/#enroll" }: NavbarProp
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
-        .ym-nav { position: sticky; top: 0; z-index: 100; background: rgba(6,15,46,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.07); transition: box-shadow 0.3s; font-family: 'Outfit', sans-serif; }
-        .ym-nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
-        .ym-nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-        .ym-nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
-        .ym-nav-logo { width: 38px; height: 38px; object-fit: contain; border-radius: 9px; border: 1px solid rgba(255,255,255,0.15); background: #ffffff; }
-        .ym-nav-name { font-weight: 700; font-size: 15px; color: #fff; line-height: 1.2; }
-        .ym-nav-sub { font-size: 10px; color: #93c5fd; font-weight: 400; }
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+        /* ===== TOP UTILITY BAR ===== */
+        .ym-util-bar { background: #060f2e; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Outfit', sans-serif; }
+        .ym-util-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .ym-util-left { display: flex; align-items: center; gap: 18px; }
+        .ym-util-item { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,0.65); font-size: 12px; font-weight: 500; white-space: nowrap; }
+        .ym-util-item a { color: rgba(255,255,255,0.65); text-decoration: none; transition: color 0.2s; }
+        .ym-util-item a:hover { color: #fcd34d; }
+        .ym-util-icon { color: #f59e0b; font-size: 12px; }
+        .ym-util-right { color: rgba(255,255,255,0.45); font-size: 11px; font-weight: 500; letter-spacing: 0.03em; }
+        @media (max-width: 760px) { .ym-util-item.hide-sm { display: none; } .ym-util-right { display: none; } }
+        @media (max-width: 500px) { .ym-util-bar { display: none; } }
+
+        /* ===== MAIN NAV ===== */
+        .ym-nav { position: sticky; top: 0; z-index: 100; background: #ffffff; border-bottom: 1px solid #e5e7eb; transition: box-shadow 0.3s; font-family: 'Outfit', sans-serif; }
+        .ym-nav.scrolled { box-shadow: 0 4px 20px rgba(6,15,46,0.08); }
+        .ym-nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .ym-nav-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; flex-shrink: 0; }
+        .ym-nav-logo { width: 40px; height: 40px; object-fit: contain; border-radius: 9px; border: 1px solid #e5e7eb; background: #ffffff; }
+        .ym-nav-name { font-weight: 800; font-size: 15px; color: #060f2e; line-height: 1.2; font-family: 'Cormorant Garamond', serif; letter-spacing: 0.01em; }
+        .ym-nav-sub { font-size: 10px; color: #9ca3af; font-weight: 500; }
         .ym-nav-links { display: flex; align-items: center; gap: 2px; }
-        .ym-nav-link { padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.2s; background: transparent; border: none; text-decoration: none; display: inline-flex; align-items: center; position: relative; }
-        .ym-nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
-        .ym-nav-link.active { color: #fff; background: rgba(59,130,246,0.2); }
-        .ym-nav-link.active::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #f59e0b; }
-        .ym-nav-enroll { background: linear-gradient(135deg, #1d4ed8, #1e40af); color: #fff; padding: 8px 18px; border-radius: 9px; font-weight: 700; font-size: 13px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; font-family: 'Outfit', sans-serif; }
-        .ym-nav-enroll:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); transform: translateY(-1px); }
+        .ym-nav-link { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #374151; cursor: pointer; transition: all 0.2s; background: transparent; border: none; text-decoration: none; display: inline-flex; align-items: center; position: relative; }
+        .ym-nav-link:hover { color: #060f2e; background: #f3f4f6; }
+        .ym-nav-link.active { color: #060f2e; background: #fef3c7; }
+        .ym-nav-link.active::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #f59e0b; }
+        .ym-nav-enroll { background: #f59e0b; color: #1a0a00; padding: 10px 20px; border-radius: 9px; font-weight: 800; font-size: 13px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; font-family: 'Outfit', sans-serif; }
+        .ym-nav-enroll:hover { background: #fcd34d; transform: translateY(-1px); }
         .ym-hamburger { display: none; background: transparent; border: none; cursor: pointer; padding: 6px; flex-direction: column; gap: 5px; }
-        .ym-hamburger span { display: block; width: 20px; height: 2px; background: #fff; border-radius: 2px; transition: all 0.3s; }
-        .ym-mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; bottom: 0; background: rgba(6,15,46,0.98); backdrop-filter: blur(20px); z-index: 99; flex-direction: column; padding: 20px; gap: 6px; overflow-y: auto; font-family: 'Outfit', sans-serif; }
+        .ym-hamburger span { display: block; width: 20px; height: 2px; background: #060f2e; border-radius: 2px; transition: all 0.3s; }
+        .ym-mobile-menu { display: none; position: fixed; top: 68px; left: 0; right: 0; bottom: 0; background: rgba(6,15,46,0.98); backdrop-filter: blur(20px); z-index: 99; flex-direction: column; padding: 20px; gap: 6px; overflow-y: auto; font-family: 'Outfit', sans-serif; }
         .ym-mobile-menu.open { display: flex; }
         .ym-mobile-link { padding: 13px 16px; border-radius: 11px; font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.8); cursor: pointer; background: transparent; border: none; text-align: left; transition: all 0.2s; text-decoration: none; display: block; }
-        .ym-mobile-link:hover, .ym-mobile-link.active { background: rgba(59,130,246,0.15); color: #fff; }
+        .ym-mobile-link:hover, .ym-mobile-link.active { background: rgba(245,158,11,0.15); color: #fcd34d; }
         .ym-mobile-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 0; }
         @media (max-width: 900px) { .ym-nav-links { display: none; } .ym-hamburger { display: flex; } }
-        @media (max-width: 500px) { .ym-nav-enroll { font-size: 11px; padding: 7px 12px; } .ym-nav-name { font-size: 13px; } .ym-nav-sub { display: none; } }
+        @media (max-width: 500px) { .ym-nav-enroll { font-size: 11px; padding: 8px 14px; } .ym-nav-name { font-size: 13px; } .ym-nav-sub { display: none; } }
       `}</style>
+
+      {/* TOP UTILITY BAR */}
+      <div className="ym-util-bar">
+        <div className="ym-util-inner">
+          <div className="ym-util-left">
+            <span className="ym-util-item">
+              <span className="ym-util-icon">✉</span>
+              <a href="mailto:yarwngmathematics@gmail.com">yarwngmathematics@gmail.com</a>
+            </span>
+            <span className="ym-util-item hide-sm">
+              <span className="ym-util-icon">☎</span>
+              <a href="tel:9366030347">9366030347</a>
+            </span>
+            <span className="ym-util-item hide-sm">
+              <span className="ym-util-icon">📍</span>
+              Khumulwng, Tripura
+            </span>
+          </div>
+          <div className="ym-util-right">Mon–Sat · 11 AM – 6 PM</div>
+        </div>
+      </div>
 
       <nav className={`ym-nav${scrolled ? " scrolled" : ""}`} role="navigation" aria-label="Main navigation">
         <div className="ym-nav-inner">

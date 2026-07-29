@@ -8,7 +8,7 @@ export default function ContactPage() {
   return (
     <main style={{ fontFamily: "'Outfit',sans-serif", background: "#fff", minHeight: "100vh" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
         .fu1{animation:fadeUp 0.6s ease both 0.1s}
@@ -18,7 +18,7 @@ export default function ContactPage() {
         /* HERO */
         .con-hero{background:linear-gradient(135deg,#060f2e 0%,#0d1b4b 50%,#0f2d6b 100%);padding:80px 20px 100px;clip-path:polygon(0 0,100% 0,100% 92%,0 100%);text-align:center}
         .con-hero-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);border-radius:100px;padding:6px 16px;margin-bottom:20px;color:#fcd34d;font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase}
-        .con-hero h1{font-size:clamp(2rem,4.5vw,3.2rem);font-weight:800;color:#fff;line-height:1.1;margin-bottom:14px}
+        .con-hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;color:#fff;line-height:1.12;margin-bottom:14px}
         .con-hero h1 span{color:#f59e0b}
         .con-hero p{color:#bfdbfe;font-size:16px;max-width:540px;margin:0 auto;line-height:1.75}
 
@@ -27,10 +27,12 @@ export default function ContactPage() {
         @media(max-width:760px){.con-body{grid-template-columns:1fr;gap:48px}}
 
         /* INFO SIDE */
-        .con-info-title{font-size:24px;font-weight:800;color:#111827;margin-bottom:6px}
+        .con-info-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:#111827;margin-bottom:6px}
         .con-info-tagline{color:#f59e0b;font-style:italic;font-size:14px;margin-bottom:28px}
         .con-row{display:flex;align-items:center;gap:14px;margin-bottom:20px}
-        .con-icon{width:44px;height:44px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+        .con-icon{width:44px;height:44px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+        .con-row:nth-child(3n+2) .con-icon{background:#fef3c7;border-color:#fde68a}
+        .con-row:nth-child(3n) .con-icon{background:#ecfdf5;border-color:#a7f3d0}
         .con-val{color:#111827;font-size:15px;font-weight:600}
         .con-val a{color:#2563eb;text-decoration:none}
         .con-val a:hover{text-decoration:underline}
@@ -60,7 +62,7 @@ export default function ContactPage() {
 
         /* CTA */
         .con-cta{background:linear-gradient(135deg,#060f2e 0%,#0d1b4b 60%,#0f2d6b 100%);padding:72px 20px;text-align:center}
-        .con-cta h2{font-size:clamp(1.6rem,3vw,2.3rem);font-weight:800;color:#fff;margin-bottom:12px}
+        .con-cta h2{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3.4vw,2.6rem);font-weight:700;color:#fff;margin-bottom:12px}
         .con-cta p{color:#bfdbfe;font-size:15px;margin-bottom:28px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.7}
         .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
         .btn-gold{background:#f59e0b;color:#1a0a00;padding:14px 32px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;transition:all 0.2s;font-family:'Outfit',sans-serif}
@@ -69,8 +71,9 @@ export default function ContactPage() {
         .btn-ghost:hover{background:rgba(255,255,255,0.12)}
 
         /* FOOTER */
-        .ym-footer{background:#030a1f;color:rgba(255,255,255,0.5);padding:32px 20px;text-align:center;font-size:12px}
+        .ym-footer{background:#030a1f;color:rgba(255,255,255,0.5);padding:30px 20px;text-align:center;font-size:12px;border-top:3px solid #f59e0b}
         .ym-footer a{color:#93c5fd;text-decoration:none}
+        .ym-footer a:hover{color:#fcd34d}
       `}</style>
 
       <Navbar enrollHref="/" />
@@ -131,7 +134,7 @@ export default function ContactPage() {
         <div className="location-inner">
           <div style={{ textAlign: "center", marginBottom: 40 }}>
             <div className="sec-tag">📍 Find Us</div>
-            <h2 style={{ fontSize: "clamp(1.6rem,3vw,2.3rem)", fontWeight: 800, color: "#111827" }}>Where We Teach</h2>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(1.8rem,3.4vw,2.6rem)", fontWeight: 700, color: "#111827" }}>Where We Teach</h2>
           </div>
           <div className="loc-grid">
             {[

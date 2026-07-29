@@ -13,15 +13,16 @@ export default function WhyUsPage() {
 
         .why-hero{background:linear-gradient(135deg,#060f2e 0%,#0d1b4b 50%,#0f2d6b 100%);padding:80px 20px 100px;clip-path:polygon(0 0,100% 0,100% 92%,0 100%);text-align:center}
         .why-hero-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);border-radius:100px;padding:6px 16px;margin-bottom:20px;color:#fcd34d;font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase}
-        .why-hero h1{font-size:clamp(2rem,4.5vw,3.2rem);font-weight:800;color:#fff;line-height:1.1;margin-bottom:14px}
+        .why-hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;color:#fff;line-height:1.12;margin-bottom:14px}
         .why-hero h1 span{color:#f59e0b}
         .why-hero p{color:#bfdbfe;font-size:16px;max-width:580px;margin:0 auto;line-height:1.75}
 
         .why-features{max-width:1100px;margin:0 auto;padding:80px 20px}
         .sec-head{text-align:center;margin-bottom:52px}
         .sec-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;margin-bottom:12px}
-        .sec-h2{font-size:clamp(1.6rem,3vw,2.3rem);font-weight:800;color:#111827;margin-bottom:10px}
-        .sec-line{width:48px;height:4px;border-radius:2px;margin:0 auto}
+        .sec-h2{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3.4vw,2.6rem);font-weight:700;color:#111827;margin-bottom:10px}
+        .sec-line{width:48px;height:3px;border-radius:2px;margin:0 auto;position:relative}
+        .sec-line::after{content:'';position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:50%;background:inherit;transform:translate(14px,-50%)}
 
         .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:72px}
         .feat-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:20px;padding:28px;transition:all 0.25s}
