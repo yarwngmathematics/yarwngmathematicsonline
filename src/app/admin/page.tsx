@@ -4,17 +4,12 @@ import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import RequireAuth from "@/components/RequireAuth";
 import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
 import { UserProfile } from "@/lib/authContext";
 
 export default function AdminPortal() {
-  return (
-    <RequireAuth role="admin">
-      <AdminDashboard />
-    </RequireAuth>
-  );
+  return <AdminDashboard />;
 }
 
 function AdminDashboard() {

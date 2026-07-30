@@ -19,34 +19,38 @@ export interface UserProfile {
   schoolName?: string;
   address?: string;
   mode?: "Online" | "Offline";
-  // payment fields — filled in during the payments phase
   paymentPlan?: "monthly" | "annual";
   paymentStatus?: "active" | "due" | "expired";
-  paymentDueDate?: string; // ISO date
+  paymentDueDate?: string;
 }
 
 interface AuthContextValue {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  profileError: string | null;
 }
 
-const AuthContext = createContext<AuthContextValue>({ user: null, profile: null, loading: true });
+const AuthContext = createContext<AuthContextValue>({ user: null, profile: null, loading: true, profileError: null });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      setProfileError(null);
       if (firebaseUser) {
-        const snap = await getDoc(doc(db, "users", firebaseUser.uid));
-        if (snap.exists()) {
-          setProfile(snap.data() as UserProfile);
-        } else {
+        try {
+          const snap = await getDoc(doc(db, "users", firebaseUser.uid));
+          setProfile(snap.exists() ? (snap.data() as UserProfile) : null);
+        } catch (err: any) {
+          console.error("[Auth] Failed to load profile:", err?.message ?? err);
           setProfile(null);
+          setProfileError(err?.message ?? "Failed to load your profile.");
         }
       } else {
         setProfile(null);
@@ -57,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading }}>
+    <AuthContext.Provider value={{ user, profile, loading, profileError }}>
       {children}
     </AuthContext.Provider>
   );
