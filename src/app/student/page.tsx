@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
@@ -114,26 +114,64 @@ function StudentDashboard() {
   const router = useRouter();
   const [tab, setTab] = useState<"overview" | "payment" | "profile" | "doubts" | "notes">("overview");
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({
-    studentClass: profile?.studentClass ?? "",
-    board: profile?.board ?? "",
-    medium: profile?.medium ?? "English",
-    schoolName: profile?.schoolName ?? "",
-    address: profile?.address ?? "",
-    whatsapp: profile?.whatsapp ?? "",
+
+  // The `profile` object from useAuth() is only as fresh as its last fetch/
+  // listener tick. To avoid the "saved but UI still shows old data until
+  // refresh" issue, we mirror it locally and merge in writes immediately
+  // after they succeed. useEffect keeps this in sync if the context profile
+  // does eventually update (e.g. via a live Firestore listener elsewhere).
+  const [localProfile, setLocalProfile] = useState(profile);
+  useEffect(() => {
+    setLocalProfile(profile);
+  }, [profile]);
+
+  const buildForm = (p: typeof profile) => ({
+    studentClass: p?.studentClass ?? "",
+    board: p?.board ?? "",
+    medium: p?.medium ?? "English",
+    schoolName: p?.schoolName ?? "",
+    address: p?.address ?? "",
+    whatsapp: p?.whatsapp ?? "",
+    phoneNumber: p?.phoneNumber ?? "",
+    parentName: p?.parentName ?? "",
+    parentOccupation: p?.parentOccupation ?? "",
   });
+
+  const [form, setForm] = useState(buildForm(profile));
 
   const [payLoading, setPayLoading] = useState<"monthly" | "annual" | null>(null);
   const [payError, setPayError] = useState("");
 
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [savedNotice, setSavedNotice] = useState(false);
+
+  const startEditing = () => {
+    setForm(buildForm(localProfile));
+    setSaveError("");
+    setEditing(true);
+  };
+
   const saveProfile = async () => {
     if (!user) return;
-    await updateDoc(doc(db, "users", user.uid), form);
-    setEditing(false);
+    setSaving(true);
+    setSaveError("");
+    try {
+      await updateDoc(doc(db, "users", user.uid), form);
+      // Optimistic local update — this is what fixes the "need to refresh" issue.
+      setLocalProfile((prev: any) => ({ ...(prev ?? {}), ...form }));
+      setEditing(false);
+      setSavedNotice(true);
+      setTimeout(() => setSavedNotice(false), 3000);
+    } catch (err) {
+      setSaveError("Could not save your changes. Please check your connection and try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handlePay = async (plan: "monthly" | "annual") => {
-    if (!user || !profile?.studentClass) {
+    if (!user || !localProfile?.studentClass) {
       setPayError("Set your class in My Profile before paying.");
       setTab("profile");
       return;
@@ -145,7 +183,7 @@ function StudentDashboard() {
       const res = await fetch("/api/portal/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ plan, studentClass: profile.studentClass }),
+        body: JSON.stringify({ plan, studentClass: localProfile.studentClass }),
       });
       const data = await res.json();
       if (!data.success || !data.redirectUrl) {
@@ -160,12 +198,12 @@ function StudentDashboard() {
     }
   };
 
-  const status = effectiveStatus(profile);
+  const status = effectiveStatus(localProfile);
   const statusColor = status === "active" ? "#16a34a" : status === "due" ? "#f59e0b" : "#dc2626";
   const statusLabel = status === "active" ? "Active" : status === "due" ? "Payment Due" : "Expired — renew to continue";
 
-  const studentClass = (profile?.studentClass as ClassName | undefined) && CLASS_DATA[profile!.studentClass as ClassName]
-    ? (profile!.studentClass as ClassName)
+  const studentClass = (localProfile?.studentClass as ClassName | undefined) && CLASS_DATA[localProfile!.studentClass as ClassName]
+    ? (localProfile!.studentClass as ClassName)
     : undefined;
   const cls = studentClass ? CLASS_DATA[studentClass] : undefined;
 
@@ -196,7 +234,7 @@ function StudentDashboard() {
           <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
             <div>
               <p style={{ color: "#fcd34d", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Student Portal</p>
-              <h1 className="sp-serif" style={{ color: "#fff", fontSize: 28, fontWeight: 700, marginTop: 4 }}>Welcome, {profile?.name || "Student"}</h1>
+              <h1 className="sp-serif" style={{ color: "#fff", fontSize: 28, fontWeight: 700, marginTop: 4 }}>Welcome, {localProfile?.name || "Student"}</h1>
             </div>
             <button onClick={() => signOut(auth).then(() => router.push("/"))} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "9px 18px", borderRadius: 10, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
               Log Out
@@ -325,9 +363,9 @@ function StudentDashboard() {
                   <span style={{ fontWeight: 700, color: statusColor, fontSize: 15 }}>{statusLabel}</span>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 10, marginBottom: 20 }}>
-                  <PaymentMeta label="Class" value={profile?.studentClass || "Not set"} />
-                  <PaymentMeta label="Plan" value={profile?.paymentPlan === "annual" ? "Annual" : "Monthly"} />
-                  <PaymentMeta label="Next Due" value={profile?.paymentDueDate || "—"} />
+                  <PaymentMeta label="Class" value={localProfile?.studentClass || "Not set"} />
+                  <PaymentMeta label="Plan" value={localProfile?.paymentPlan === "annual" ? "Annual" : "Monthly"} />
+                  <PaymentMeta label="Next Due" value={localProfile?.paymentDueDate || "—"} />
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <button onClick={() => handlePay("monthly")} disabled={!!payLoading} style={{ ...payBtn("#2563eb"), opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "not-allowed" : "pointer" }}>
@@ -357,17 +395,25 @@ function StudentDashboard() {
 
           {tab === "profile" && (
             <Card title="My Profile" full>
+              {savedNotice && (
+                <div style={{ background: "#dcfce7", border: "1px solid #bbf7d0", borderRadius: 10, padding: "9px 14px", color: "#15803d", fontSize: 12.5, fontWeight: 600, marginBottom: 14 }}>
+                  ✅ Profile saved.
+                </div>
+              )}
               {!editing ? (
                 <>
-                  <ProfileRow label="Name" value={profile?.name} />
-                  <ProfileRow label="Email" value={profile?.email} />
-                  <ProfileRow label="WhatsApp" value={profile?.whatsapp} />
-                  <ProfileRow label="Class" value={profile?.studentClass} />
-                  <ProfileRow label="Board" value={profile?.board} />
-                  <ProfileRow label="Medium" value={profile?.medium} />
-                  <ProfileRow label="School" value={profile?.schoolName} />
-                  <ProfileRow label="Address" value={profile?.address} />
-                  <button onClick={() => setEditing(true)} style={{ ...payBtn("#2563eb"), marginTop: 6 }}>Edit Profile</button>
+                  <ProfileRow label="Name" value={localProfile?.name} />
+                  <ProfileRow label="Email" value={localProfile?.email} />
+                  <ProfileRow label="Phone Number" value={localProfile?.phoneNumber} />
+                  <ProfileRow label="WhatsApp" value={localProfile?.whatsapp} />
+                  <ProfileRow label="Class" value={localProfile?.studentClass} />
+                  <ProfileRow label="Board" value={localProfile?.board} />
+                  <ProfileRow label="Medium" value={localProfile?.medium} />
+                  <ProfileRow label="School" value={localProfile?.schoolName} />
+                  <ProfileRow label="Address" value={localProfile?.address} />
+                  <ProfileRow label="Father/Mother Name" value={localProfile?.parentName} />
+                  <ProfileRow label="Father/Mother Occupation" value={localProfile?.parentOccupation} />
+                  <button onClick={startEditing} style={{ ...payBtn("#2563eb"), marginTop: 6 }}>Edit Profile</button>
                   <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 12 }}>
                     ℹ️ This is filled automatically from the enrollment form you submitted on the homepage. Edit anytime if something changes.
                   </p>
@@ -379,10 +425,20 @@ function StudentDashboard() {
                   <SelectField label="Medium" value={form.medium} onChange={(v) => setForm({ ...form, medium: v })} options={["English", "Bengali", "Kokborok"]} />
                   <TextField label="School" value={form.schoolName} onChange={(v) => setForm({ ...form, schoolName: v })} />
                   <TextField label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
+                  <TextField label="Phone Number" value={form.phoneNumber} onChange={(v) => setForm({ ...form, phoneNumber: v })} />
                   <TextField label="WhatsApp" value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: v })} />
+                  <TextField label="Father/Mother Name" value={form.parentName} onChange={(v) => setForm({ ...form, parentName: v })} />
+                  <TextField label="Father/Mother Occupation" value={form.parentOccupation} onChange={(v) => setForm({ ...form, parentOccupation: v })} />
+                  {saveError && (
+                    <div style={{ background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 9, padding: "8px 12px", color: "#dc2626", fontSize: 12 }}>
+                      ⚠️ {saveError}
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                    <button onClick={saveProfile} style={payBtn("#2563eb")}>Save Changes</button>
-                    <button onClick={() => setEditing(false)} style={payBtn("#6b7280")}>Cancel</button>
+                    <button onClick={saveProfile} disabled={saving} style={{ ...payBtn("#2563eb"), opacity: saving ? 0.6 : 1, cursor: saving ? "not-allowed" : "pointer" }}>
+                      {saving ? "Saving…" : "Save Changes"}
+                    </button>
+                    <button onClick={() => { setEditing(false); setSaveError(""); }} disabled={saving} style={payBtn("#6b7280")}>Cancel</button>
                   </div>
                 </div>
               )}
@@ -410,7 +466,7 @@ function StudentDashboard() {
               {status === "active" ? (
                 <p style={{ fontSize: 13, color: "#6b7280" }}>
                   {/* TODO: list files from `notes` collection filtered by studentClass, with download links from Firebase Storage */}
-                  Notes uploaded by your faculty for {profile?.studentClass} will appear here.
+                  Notes uploaded by your faculty for {localProfile?.studentClass} will appear here.
                 </p>
               ) : (
                 <div style={{ background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 11, padding: "14px 16px", color: "#dc2626", fontSize: 13 }}>

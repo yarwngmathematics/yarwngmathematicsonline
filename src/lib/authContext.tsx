@@ -22,6 +22,9 @@ export interface UserProfile {
   paymentPlan?: "monthly" | "annual";
   paymentStatus?: "active" | "due" | "expired";
   paymentDueDate?: string;
+  phoneNumber?: string;
+  parentName?: string;
+  parentOccupation?: string;
 }
 
 interface AuthContextValue {
