@@ -25,11 +25,20 @@ export default function WhyUsPage() {
         .sec-line::after{content:'';position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:50%;background:inherit;transform:translate(14px,-50%)}
 
         .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:72px}
-        .feat-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:20px;padding:28px;transition:all 0.25s}
-        .feat-card:hover{border-color:#93c5fd;box-shadow:0 8px 32px rgba(59,130,246,0.1);transform:translateY(-4px)}
-        .feat-icon-wrap{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:16px}
-        .feat-title{font-size:17px;font-weight:700;color:#111827;margin-bottom:8px}
-        .feat-desc{color:#6b7280;font-size:14px;line-height:1.7}
+        .feat-card{border-radius:20px;padding:28px;transition:all 0.25s;border:none;box-shadow:0 6px 24px rgba(0,0,0,0.12)}
+        .feat-card:hover{box-shadow:0 14px 40px rgba(0,0,0,0.2);transform:translateY(-4px)}
+        .feat-icon-wrap{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:16px;background:rgba(255,255,255,0.22) !important}
+        .feat-title{font-size:17px;font-weight:700;color:#fff;margin-bottom:8px}
+        .feat-desc{color:rgba(255,255,255,0.88);font-size:14px;line-height:1.7}
+        .feat-grid .feat-card:nth-child(9n+1){background:linear-gradient(150deg,#3163dd 0%,#1e40af 100%)}
+        .feat-grid .feat-card:nth-child(9n+2){background:linear-gradient(150deg,#ea9a3d 0%,#c2740b 100%)}
+        .feat-grid .feat-card:nth-child(9n+3){background:linear-gradient(150deg,#17a97a 0%,#0d7a56 100%)}
+        .feat-grid .feat-card:nth-child(9n+4){background:linear-gradient(150deg,#7c5cdb 0%,#5b21b6 100%)}
+        .feat-grid .feat-card:nth-child(9n+5){background:linear-gradient(150deg,#0ea5b7 0%,#0a7285 100%)}
+        .feat-grid .feat-card:nth-child(9n+6){background:linear-gradient(150deg,#e2574c 0%,#b91c1c 100%)}
+        .feat-grid .feat-card:nth-child(9n+7){background:linear-gradient(150deg,#3163dd 0%,#1e40af 100%)}
+        .feat-grid .feat-card:nth-child(9n+8){background:linear-gradient(150deg,#ea9a3d 0%,#c2740b 100%)}
+        .feat-grid .feat-card:nth-child(9n+9){background:linear-gradient(150deg,#17a97a 0%,#0d7a56 100%)}
         @media(max-width:760px){.feat-grid{grid-template-columns:1fr 1fr}}
         @media(max-width:480px){.feat-grid{grid-template-columns:1fr}}
 
@@ -53,9 +62,13 @@ export default function WhyUsPage() {
         .stats-section{background:linear-gradient(135deg,#060f2e 0%,#0d1b4b 60%,#0f2d6b 100%);padding:72px 20px}
         .stats-inner{max-width:1100px;margin:0 auto}
         .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
-        .stat-card{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:28px;text-align:center}
-        .stat-num{font-size:clamp(2rem,4vw,3rem);font-weight:800;color:#f59e0b;font-family:'Cormorant Garamond',serif;line-height:1;margin-bottom:8px}
-        .stat-label{color:rgba(255,255,255,0.6);font-size:13px}
+        .stat-card{border-radius:20px;padding:28px;text-align:center;border:1px solid rgba(255,255,255,0.15);box-shadow:0 6px 20px rgba(0,0,0,0.2)}
+        .stats-grid .stat-card:nth-child(1){background:linear-gradient(150deg,rgba(49,99,221,0.55) 0%,rgba(30,64,175,0.55) 100%)}
+        .stats-grid .stat-card:nth-child(2){background:linear-gradient(150deg,rgba(234,154,61,0.55) 0%,rgba(194,116,11,0.55) 100%)}
+        .stats-grid .stat-card:nth-child(3){background:linear-gradient(150deg,rgba(23,169,122,0.55) 0%,rgba(13,122,86,0.55) 100%)}
+        .stats-grid .stat-card:nth-child(4){background:linear-gradient(150deg,rgba(124,92,219,0.55) 0%,rgba(91,33,182,0.55) 100%)}
+        .stat-num{font-size:clamp(2rem,4vw,3rem);font-weight:800;color:#fff;font-family:'Cormorant Garamond',serif;line-height:1;margin-bottom:8px}
+        .stat-label{color:rgba(255,255,255,0.85);font-size:13px}
         @media(max-width:760px){.stats-grid{grid-template-columns:1fr 1fr}}
         @media(max-width:400px){.stats-grid{grid-template-columns:1fr}}
 
@@ -102,18 +115,18 @@ export default function WhyUsPage() {
 
         <div className="feat-grid">
           {[
-            { icon:"🧠", bg:"#eff6ff", title:"Conceptual Depth", desc:"We go beyond formulas. Every concept is explained with its origin, intuition, and real-world relevance. Students don't just pass — they understand." },
-            { icon:"👨‍🏫", bg:"#fef3c7", title:"IIT Delhi alumni", desc:"Direct access to an M.Sc graduate from IIT Delhi. The same rigour that cracked one of India's toughest entrances now teaches your child." },
-            { icon:"📅", bg:"#f0fdf4", title:"Structured Timetable", desc:"Fixed weekly sessions per class. No cancellations, no confusion. Consistency builds habits, and habits build toppers." },
-            { icon:"💬", bg:"#fdf2f8", title:"24/7 WhatsApp Support", desc:"Got a doubt at 11 PM before an exam? Message us. Every batch has a dedicated WhatsApp group for ongoing support." },
-            { icon:"🖥️", bg:"#f0f9ff", title:"Live Google Meet Sessions", desc:"High-quality interactive video sessions. See the board, ask questions in real time, and learn from wherever you are in India." },
-            { icon:"📝", bg:"#fff1f2", title:"Regular Assessments", desc:"Weekly mini-tests and monthly full tests. Detailed performance feedback helps you know exactly what to improve." },
-            { icon:"📚", bg:"#f9fafb", title:"Syllabus-Aligned Teaching", desc:"Class 10, 11 & 12 curriculum for CBSE, TBSE and ICSE — board exam patterns studied and taught strategically." },
-            { icon:"🎯", bg:"#fef3c7", title:"Exam-Focused Practice", desc:"Previous year papers, sample papers, and mock tests. We don't just teach — we prepare you to perform under pressure." },
-            { icon:"🌱", bg:"#f0fdf4", title:"Small Batch Sizes", desc:"Limited seats per batch means every student gets personal attention. No one gets lost in a crowd of 50 students." },
+            { icon:"🧠", title:"Conceptual Depth", desc:"We go beyond formulas. Every concept is explained with its origin, intuition, and real-world relevance. Students don't just pass — they understand." },
+            { icon:"👨‍🏫", title:"IIT Delhi alumni", desc:"Direct access to an M.Sc graduate from IIT Delhi. The same rigour that cracked one of India's toughest entrances now teaches your child." },
+            { icon:"📅", title:"Structured Timetable", desc:"Fixed weekly sessions per class. No cancellations, no confusion. Consistency builds habits, and habits build toppers." },
+            { icon:"💬", title:"24/7 WhatsApp Support", desc:"Got a doubt at 11 PM before an exam? Message us. Every batch has a dedicated WhatsApp group for ongoing support." },
+            { icon:"🖥️", title:"Live Google Meet Sessions", desc:"High-quality interactive video sessions. See the board, ask questions in real time, and learn from wherever you are in India." },
+            { icon:"📝", title:"Regular Assessments", desc:"Weekly mini-tests and monthly full tests. Detailed performance feedback helps you know exactly what to improve." },
+            { icon:"📚", title:"Syllabus-Aligned Teaching", desc:"Class 10, 11 & 12 curriculum for CBSE, TBSE and ICSE — board exam patterns studied and taught strategically." },
+            { icon:"🎯", title:"Exam-Focused Practice", desc:"Previous year papers, sample papers, and mock tests. We don't just teach — we prepare you to perform under pressure." },
+            { icon:"🌱", title:"Small Batch Sizes", desc:"Limited seats per batch means every student gets personal attention. No one gets lost in a crowd of 50 students." },
           ].map(f=>(
             <div key={f.title} className="feat-card">
-              <div className="feat-icon-wrap" style={{ background:f.bg }}>{f.icon}</div>
+              <div className="feat-icon-wrap">{f.icon}</div>
               <h3 className="feat-title">{f.title}</h3>
               <p className="feat-desc">{f.desc}</p>
             </div>

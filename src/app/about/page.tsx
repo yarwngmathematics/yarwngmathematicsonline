@@ -47,13 +47,17 @@ export default function AboutPage() {
         .sec-line { width: 48px; height: 3px; border-radius: 2px; margin: 0 auto; position: relative; }
         .sec-line::after { content: ''; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; border-radius: 50%; background: inherit; transform: translate(14px,-50%); }
         .values-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
-        .value-card { background: #fff; border: 1.5px solid #e5e7eb; border-radius: 16px; padding: 28px 24px; transition: all 0.25s; border-top: 3px solid #e5e7eb; }
-        .value-card:hover { border-color: #93c5fd; border-top-color: #f59e0b; box-shadow: 0 8px 32px rgba(6,15,46,0.08); transform: translateY(-4px); }
-        .value-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 14px; background: linear-gradient(135deg, #1d4ed8, #1e3a8a) !important; color: #fff; box-shadow: 0 6px 16px rgba(29,78,216,0.25); }
-        .values-grid .value-card:nth-child(3n+2) .value-icon { background: linear-gradient(135deg, #f59e0b, #b45309) !important; box-shadow: 0 6px 16px rgba(245,158,11,0.25); }
-        .values-grid .value-card:nth-child(3n) .value-icon { background: linear-gradient(135deg, #059669, #065f46) !important; box-shadow: 0 6px 16px rgba(5,150,105,0.25); }
-        .value-title { font-size: 17px; font-weight: 700; color: #111827; margin-bottom: 8px; }
-        .value-desc { color: #6b7280; font-size: 14px; line-height: 1.7; }
+        .value-card { border-radius: 16px; padding: 28px 24px; transition: all 0.25s; border: none; box-shadow: 0 6px 24px rgba(0,0,0,0.12); }
+        .value-card:hover { box-shadow: 0 14px 40px rgba(0,0,0,0.2); transform: translateY(-4px); }
+        .value-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 14px; background: rgba(255,255,255,0.22) !important; color: #fff; box-shadow: none; }
+        .value-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+        .value-desc { color: rgba(255,255,255,0.88); font-size: 14px; line-height: 1.7; }
+        .values-grid .value-card:nth-child(6n+1){background:linear-gradient(150deg,#3163dd 0%,#1e40af 100%)}
+        .values-grid .value-card:nth-child(6n+2){background:linear-gradient(150deg,#17a97a 0%,#0d7a56 100%)}
+        .values-grid .value-card:nth-child(6n+3){background:linear-gradient(150deg,#ea9a3d 0%,#c2740b 100%)}
+        .values-grid .value-card:nth-child(6n+4){background:linear-gradient(150deg,#e2574c 0%,#b91c1c 100%)}
+        .values-grid .value-card:nth-child(6n+5){background:linear-gradient(150deg,#7c5cdb 0%,#5b21b6 100%)}
+        .values-grid .value-card:nth-child(6n+6){background:linear-gradient(150deg,#17a97a 0%,#0d7a56 100%)}
         @media(max-width:760px){.values-grid{grid-template-columns:1fr 1fr}}
         @media(max-width:480px){.values-grid{grid-template-columns:1fr}}
 
@@ -121,7 +125,6 @@ export default function AboutPage() {
                 ))}
               </div>
             </div>
-            <div className="story-badge">🎓 IIT Delhi Graduate</div>
           </div>
 
           <div className="story-text fu3">
@@ -152,15 +155,15 @@ export default function AboutPage() {
           </div>
           <div className="values-grid">
             {[
-              { icon:"🧠", bg:"#eff6ff", title:"Conceptual First", desc:"We teach the 'why' before the 'how'. Deep understanding beats rote memorisation every time." },
-              { icon:"🎯", bg:"#f0fdf4", title:"Result Oriented", desc:"Every session is designed with one goal: your board exam and competitive exam success." },
-              { icon:"💬", bg:"#fef3c7", title:"Always Accessible", desc:"Doubt-clearing never stops. WhatsApp support ensures no question goes unanswered." },
-              { icon:"🏆", bg:"#fdf2f8", title:"Excellence Standard", desc:"IIT-level rigour applied to school curriculum — we don't settle for 'good enough'." },
-              { icon:"❤️", bg:"#fff1f2", title:"Student-Centred", desc:"Every student learns differently. We adapt our approach to ensure each one progresses." },
-              { icon:"🌱", bg:"#f0fdf4", title:"Long-term Growth", desc:"We build foundations that last — skills that help in college, career, and life beyond exams." },
+              { icon:"🧠", title:"Conceptual First", desc:"We teach the 'why' before the 'how'. Deep understanding beats rote memorisation every time." },
+              { icon:"🎯", title:"Result Oriented", desc:"Every session is designed with one goal: your board exam and competitive exam success." },
+              { icon:"💬", title:"Always Accessible", desc:"Doubt-clearing never stops. WhatsApp support ensures no question goes unanswered." },
+              { icon:"🏆", title:"Excellence Standard", desc:"IIT-level rigour applied to school curriculum — we don't settle for 'good enough'." },
+              { icon:"❤️", title:"Student-Centred", desc:"Every student learns differently. We adapt our approach to ensure each one progresses." },
+              { icon:"🌱", title:"Long-term Growth", desc:"We build foundations that last — skills that help in college, career, and life beyond exams." },
             ].map(v=>(
               <div key={v.title} className="value-card">
-                <div className="value-icon" style={{ background: v.bg }}>{v.icon}</div>
+                <div className="value-icon">{v.icon}</div>
                 <h3 className="value-title">{v.title}</h3>
                 <p className="value-desc">{v.desc}</p>
               </div>

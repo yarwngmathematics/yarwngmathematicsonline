@@ -30,9 +30,9 @@ export default function ContactPage() {
         .con-info-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:#111827;margin-bottom:6px}
         .con-info-tagline{color:#f59e0b;font-style:italic;font-size:14px;margin-bottom:28px}
         .con-row{display:flex;align-items:center;gap:14px;margin-bottom:20px}
-        .con-icon{width:44px;height:44px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-        .con-row:nth-child(3n+2) .con-icon{background:#fef3c7;border-color:#fde68a}
-        .con-row:nth-child(3n) .con-icon{background:#ecfdf5;border-color:#a7f3d0}
+        .con-icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(150deg,#3163dd 0%,#1e40af 100%);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden;box-shadow:0 4px 12px rgba(30,64,175,0.25)}
+        .con-row:nth-child(3n+2) .con-icon{background:linear-gradient(150deg,#ea9a3d 0%,#c2740b 100%);box-shadow:0 4px 12px rgba(194,116,11,0.25)}
+        .con-row:nth-child(3n) .con-icon{background:linear-gradient(150deg,#17a97a 0%,#0d7a56 100%);box-shadow:0 4px 12px rgba(13,122,86,0.25)}
         .con-val{color:#111827;font-size:15px;font-weight:600}
         .con-val a{color:#2563eb;text-decoration:none}
         .con-val a:hover{text-decoration:underline}
@@ -53,11 +53,15 @@ export default function ContactPage() {
         .location-inner{max-width:1100px;margin:0 auto}
         .sec-tag{display:inline-flex;align-items:center;background:#ffedd5;color:#c2410c;padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;margin-bottom:12px}
         .loc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-        .loc-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:20px;padding:28px;display:flex;gap:16px;align-items:flex-start;transition:all 0.25s}
-        .loc-card:hover{border-color:#93c5fd;box-shadow:0 4px 20px rgba(59,130,246,0.08)}
+        .loc-card{border-radius:20px;padding:28px;display:flex;gap:16px;align-items:flex-start;transition:all 0.25s;border:none;box-shadow:0 6px 24px rgba(0,0,0,0.12)}
+        .loc-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.18)}
+        .loc-grid .loc-card:nth-child(1){background:linear-gradient(150deg,#3163dd 0%,#1e40af 100%)}
+        .loc-grid .loc-card:nth-child(2){background:linear-gradient(150deg,#ea9a3d 0%,#c2740b 100%)}
+        .loc-grid .loc-card:nth-child(3){background:linear-gradient(150deg,#17a97a 0%,#0d7a56 100%)}
+        .loc-grid .loc-card:nth-child(4){background:linear-gradient(150deg,#7c5cdb 0%,#5b21b6 100%)}
         .loc-icon{font-size:32px;flex-shrink:0}
-        .loc-title{font-size:16px;font-weight:700;color:#111827;margin-bottom:5px}
-        .loc-desc{font-size:13px;color:#6b7280;line-height:1.65}
+        .loc-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:5px}
+        .loc-desc{font-size:13px;color:rgba(255,255,255,0.88);line-height:1.65}
         @media(max-width:640px){.loc-grid{grid-template-columns:1fr}}
 
         /* CTA */

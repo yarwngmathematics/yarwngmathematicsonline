@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 
 const SLOTS = {
-  "Class 10": { days:"Monday & Wednesday", time:"5:00 PM – 7:00 PM", icon:"📘", color:"#1d4ed8", bg:"#eff6ff", original:700, offer:600,
+  "Class 10": { days:"Monday & Wednesday", time:"5:00 PM – 7:00 PM", icon:"📘", color:"#1e40af", colorTo:"#3163dd", original:700, offer:600,
     topics:["Real Numbers & Polynomials","Quadratic Equations","Arithmetic Progressions","Triangles & Coordinate Geometry","Trigonometry","Circles & Constructions","Areas & Surface Volumes","Statistics & Probability","Regular tests and doubt sessions included."] },
-  "Class 11": { days:"Tuesday & Friday", time:"5:00 PM – 7:00 PM", icon:"📙", color:"#d97706", bg:"#fef3c7", original:900, offer:800,
+  "Class 11": { days:"Tuesday & Friday", time:"5:00 PM – 7:00 PM", icon:"📙", color:"#c2740b", colorTo:"#ea9a3d", original:900, offer:800,
     topics:["Sets, Relations & Functions","Trigonometric Functions","Principle of Mathematical Induction","Complex Numbers","Linear Inequalities & Permutations","Binomial Theorem & Sequences","Straight Lines & Conic Sections","3D Geometry Intro","Calculus Basics — Limits & Derivatives","Statistics & Probability","Strong foundation for Class 12 and competitive exams."] },
-  "Class 12": { days:"Thursday & Saturday", time:"5:00 PM – 7:00 PM", icon:"📗", color:"#16a34a", bg:"#f0fdf4", original:1000, offer:900,
+  "Class 12": { days:"Thursday & Saturday", time:"5:00 PM – 7:00 PM", icon:"📗", color:"#0d7a56", colorTo:"#17a97a", original:1000, offer:900,
     topics:["Relations & Functions","Inverse Trigonometric Functions","Matrices & Determinants","Continuity & Differentiability","Applications of Derivatives","Integrals & Applications","Differential Equations","Vectors & 3D Geometry","Linear Programming","Probability","Board exam focused — previous year paper practice included."] },
 };
 
@@ -39,21 +39,22 @@ export default function ClassesPage() {
         .sec-line::after{content:'';position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:50%;background:inherit;transform:translate(14px,-50%)}
 
         .cls-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:60px}
-        .cls-card{border-radius:14px;overflow:hidden;border:2px solid #e5e7eb;transition:all 0.25s;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
-        .cls-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.1)}
+        .cls-card{border-radius:14px;overflow:hidden;border:1.5px solid transparent;transition:all 0.25s;box-shadow:0 4px 16px rgba(0,0,0,0.1)}
+        .cls-card:hover{transform:translateY(-4px);box-shadow:0 14px 40px rgba(0,0,0,0.16)}
+        .cls-card.featured{box-shadow:0 0 0 3px rgba(255,255,255,0.5),0 14px 40px rgba(0,0,0,0.16)}
         .cls-card-head{padding:28px 24px 20px;text-align:center}
         .cls-card-icon{font-size:44px;margin-bottom:10px}
         .cls-card-name{font-size:24px;font-weight:800;margin-bottom:4px}
-        .cls-card-days{font-size:13px;opacity:0.7;margin-bottom:2px}
-        .cls-card-time{font-size:12px;opacity:0.6;margin-bottom:0}
-        .cls-card-body{background:#fff;padding:20px 24px 24px}
+        .cls-card-days{font-size:13px;opacity:0.9;margin-bottom:2px}
+        .cls-card-time{font-size:12px;opacity:0.75;margin-bottom:0}
+        .cls-card-body{padding:20px 24px 24px}
         .cls-card-price-row{display:flex;align-items:baseline;gap:6px;margin-bottom:6px}
-        .cls-card-price{font-size:32px;font-weight:800;color:#1d4ed8}
-        .cls-card-price-unit{font-size:13px;color:#9ca3af}
-        .cls-card-original{font-size:13px;color:#9ca3af;text-decoration:line-through;margin-bottom:16px}
-        .cls-card-btn{width:100%;padding:13px;border-radius:12px;font-weight:700;font-size:14px;border:none;cursor:pointer;transition:all 0.2s;color:#fff}
-        .cls-card-btn:hover{opacity:0.9;transform:translateY(-1px)}
-        .cls-card-featured-badge{display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:100px;margin-bottom:10px}
+        .cls-card-price{font-size:32px;font-weight:800;color:#fff}
+        .cls-card-price-unit{font-size:13px;color:rgba(255,255,255,0.75)}
+        .cls-card-original{font-size:13px;color:rgba(255,255,255,0.65);text-decoration:line-through;margin-bottom:16px}
+        .cls-card-btn{width:100%;padding:13px;border-radius:12px;font-weight:700;font-size:14px;border:none;cursor:pointer;transition:all 0.2s;display:block;text-align:center;text-decoration:none}
+        .cls-card-btn:hover{opacity:0.92;transform:translateY(-1px)}
+        .cls-card-featured-badge{display:inline-block;background:rgba(255,255,255,0.22);color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:100px;margin-bottom:10px}
         @media(max-width:760px){.cls-cards{grid-template-columns:1fr;max-width:400px;margin-left:auto;margin-right:auto}}
         @media(min-width:560px) and (max-width:760px){.cls-cards{grid-template-columns:repeat(2,1fr);max-width:100%}}
 
@@ -66,20 +67,20 @@ export default function ClassesPage() {
         .acc-chevron{font-size:18px;transition:transform 0.3s;color:#6b7280}
         .acc-body{padding:20px 24px 24px;background:#f9fafb;border-top:1px solid #e5e7eb}
         .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-        .acc-info-item{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px}
-        .acc-info-label{font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em}
-        .acc-info-val{font-size:13px;font-weight:700;color:#111827;margin-top:1px}
+        .acc-info-item{display:flex;align-items:center;gap:8px;border-radius:10px;padding:10px 14px;color:#fff}
+        .acc-info-label{font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:0.05em}
+        .acc-info-val{font-size:13px;font-weight:700;color:#fff;margin-top:1px}
         .acc-topics{display:flex;flex-direction:column;gap:6px}
         .acc-topic{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;line-height:1.5}
         .acc-topic-dot{color:#2563eb;font-size:15px;line-height:1.4;flex-shrink:0}
         @media(max-width:560px){.acc-grid{grid-template-columns:1fr}}
 
-        .cls-info{background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%);border:1px solid #bae6fd;border-radius:24px;padding:40px;margin-bottom:60px;display:flex;gap:40px;align-items:center;flex-wrap:wrap}
+        .cls-info{background:linear-gradient(150deg,#0ea5b7 0%,#0a7285 100%);border:none;border-radius:24px;padding:40px;margin-bottom:60px;display:flex;gap:40px;align-items:center;flex-wrap:wrap;box-shadow:0 8px 32px rgba(10,114,133,0.25)}
         .cls-info-icon{font-size:52px;flex-shrink:0}
-        .cls-info-text h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#0c4a6e;margin-bottom:8px}
-        .cls-info-text p{color:#0369a1;font-size:14px;line-height:1.7}
+        .cls-info-text h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:8px}
+        .cls-info-text p{color:rgba(255,255,255,0.85);font-size:14px;line-height:1.7}
         .cls-info-items{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px}
-        .cls-info-badge{background:#fff;border:1px solid #bae6fd;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;color:#0369a1}
+        .cls-info-badge{background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;color:#fff}
 
         .cls-cta{background:linear-gradient(135deg,#060f2e 0%,#0d1b4b 60%,#0f2d6b 100%);padding:80px 20px;text-align:center}
         .cls-cta h2{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3.4vw,2.6rem);font-weight:700;color:#fff;margin-bottom:12px}
@@ -119,13 +120,13 @@ export default function ClassesPage() {
         {/* Class Cards */}
         <div className="cls-cards">
           {Object.entries(SLOTS).map(([cls, s], idx)=>(
-            <div key={cls} className="cls-card" style={{ borderColor: idx===1 ? s.color : "#e5e7eb" }}>
-              <div className="cls-card-head" style={{ background:`linear-gradient(135deg, ${s.color} 0%, ${s.color}cc 100%)` }}>
+            <div key={cls} className={`cls-card${idx===1?" featured":""}`} style={{ background:`linear-gradient(165deg, ${s.colorTo} 0%, ${s.color} 100%)` }}>
+              <div className="cls-card-head">
                 {idx===1 && <div className="cls-card-featured-badge">⭐ Most Popular</div>}
                 <div className="cls-card-icon">{s.icon}</div>
                 <h3 className="cls-card-name" style={{ color:"#fff" }}>{cls}</h3>
-                <p className="cls-card-days" style={{ color:"rgba(255,255,255,0.85)" }}>{s.days}</p>
-                <p className="cls-card-time" style={{ color:"rgba(255,255,255,0.7)" }}>{s.time}</p>
+                <p className="cls-card-days" style={{ color:"rgba(255,255,255,0.9)" }}>{s.days}</p>
+                <p className="cls-card-time" style={{ color:"rgba(255,255,255,0.75)" }}>{s.time}</p>
               </div>
               <div className="cls-card-body">
                 <div className="cls-card-price-row">
@@ -133,7 +134,7 @@ export default function ClassesPage() {
                   <span className="cls-card-price-unit">/month</span>
                 </div>
                 <p className="cls-card-original">Regular: ₹{s.original}/month</p>
-                <Link href="/" className="cls-card-btn" style={{ background:s.color, display:"block", textAlign:"center", textDecoration:"none" }}>
+                <Link href="/" className="cls-card-btn" style={{ background:"#fff", color:s.color }}>
                   Join {cls} →
                 </Link>
               </div>
@@ -172,19 +173,19 @@ export default function ClassesPage() {
               {open===cls&&(
                 <div className="acc-body">
                   <div className="acc-grid">
-                    <div className="acc-info-item">
+                    <div className="acc-info-item" style={{ background:s.color }}>
                       <span style={{ fontSize:20 }}>📅</span>
                       <div><p className="acc-info-label">Days</p><p className="acc-info-val">{s.days}</p></div>
                     </div>
-                    <div className="acc-info-item">
+                    <div className="acc-info-item" style={{ background:s.color }}>
                       <span style={{ fontSize:20 }}>🕐</span>
                       <div><p className="acc-info-label">Time</p><p className="acc-info-val">{s.time}</p></div>
                     </div>
-                    <div className="acc-info-item">
+                    <div className="acc-info-item" style={{ background:s.color }}>
                       <span style={{ fontSize:20 }}>💰</span>
                       <div><p className="acc-info-label">Fee</p><p className="acc-info-val">₹{s.offer}/month</p></div>
                     </div>
-                    <div className="acc-info-item">
+                    <div className="acc-info-item" style={{ background:s.color }}>
                       <span style={{ fontSize:20 }}>🖥️</span>
                       <div><p className="acc-info-label">Mode</p><p className="acc-info-val">Google Meet</p></div>
                     </div>
