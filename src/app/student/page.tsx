@@ -1,646 +1,276 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { signOut } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
+import { useAuth } from "@/lib/authContext";
+import RequireAuth from "@/components/RequireAuth";
+import Navbar from "@/components/Navbar";
+import { useRouter } from "next/navigation";
 
-export default function StudentPage() {
-  const [scrolled, setScrolled] = useState(false);
+// A stored "active" status can go stale if no one's checked in since the due
+// date passed. This computes the real-time status for display/gating so
+// notes/live-class access lock immediately, even before a daily cron job
+// (see README, "Next phases") catches up and flips the stored field too.
+function effectiveStatus(profile: { paymentStatus?: string; paymentDueDate?: string } | null): "active" | "due" | "expired" {
+  if (!profile?.paymentStatus) return "due";
+  if (profile.paymentStatus === "active" && profile.paymentDueDate) {
+    const due = new Date(profile.paymentDueDate);
+    const graceEnd = new Date(due);
+    graceEnd.setDate(graceEnd.getDate() + 3); // 3-day grace period after due date
+    if (new Date() > graceEnd) return "expired";
+  }
+  return (profile.paymentStatus as "active" | "due" | "expired") || "due";
+}
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+export default function StudentPortal() {
+  return (
+    <RequireAuth role="student">
+      <StudentDashboard />
+    </RequireAuth>
+  );
+}
+
+function StudentDashboard() {
+  const { profile, user } = useAuth();
+  const router = useRouter();
+  const [tab, setTab] = useState<"overview" | "profile" | "doubts" | "notes">("overview");
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    studentClass: profile?.studentClass ?? "",
+    board: profile?.board ?? "",
+    medium: profile?.medium ?? "English",
+    schoolName: profile?.schoolName ?? "",
+    address: profile?.address ?? "",
+    whatsapp: profile?.whatsapp ?? "",
+  });
+
+  const [payLoading, setPayLoading] = useState<"monthly" | "annual" | null>(null);
+  const [payError, setPayError] = useState("");
+
+  const saveProfile = async () => {
+    if (!user) return;
+    await updateDoc(doc(db, "users", user.uid), form);
+    setEditing(false);
+  };
+
+  const handlePay = async (plan: "monthly" | "annual") => {
+    if (!user || !profile?.studentClass) {
+      setPayError("Set your class in My Profile before paying.");
+      return;
+    }
+    setPayError("");
+    setPayLoading(plan);
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch("/api/portal/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ plan, studentClass: profile.studentClass }),
+      });
+      const data = await res.json();
+      if (!data.success || !data.redirectUrl) {
+        setPayError(data.error?.message || "Could not start payment. Please try again.");
+        setPayLoading(null);
+        return;
+      }
+      window.location.href = data.redirectUrl;
+    } catch {
+      setPayError("Network error. Please try again.");
+      setPayLoading(null);
+    }
+  };
+
+  const status = effectiveStatus(profile);
+  const statusColor = status === "active" ? "#16a34a" : status === "due" ? "#f59e0b" : "#dc2626";
+  const statusLabel = status === "active" ? "Active" : status === "due" ? "Payment Due" : "Expired — renew to continue";
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#0a0c10",
-        fontFamily: "'Georgia', 'Times New Roman', serif",
-        color: "#e8e4d9",
-        overflowX: "hidden",
-      }}
-    >
-      {/* ─── NAV ─── */}
-      <nav
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 2.5rem",
-          height: "64px",
-          background: scrolled ? "rgba(10,12,16,0.92)" : "transparent",
-          backdropFilter: scrolled ? "blur(12px)" : "none",
-          borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "none",
-          transition: "all 0.3s ease",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-          <img
-            src="/Logo.png"
-            alt="Yarwng Mathematics Logo"
-            style={{
-              width: "36px",
-              height: "36px",
-              objectFit: "contain",
-              borderRadius: "6px",
-            }}
-          />
-          <span
-            style={{
-              fontFamily: "'Georgia', serif",
-              fontStyle: "italic",
-              fontSize: "1.25rem",
-              letterSpacing: "0.02em",
-              color: "#e8c97a",
-            }}
-          >
-            Yarwng Mathematics
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: "2rem" }}>
-          {["Courses", "Live", "Notes"].map((item) => (
-            <button
-              key={item}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#a09a8e",
-                fontSize: "0.875rem",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                fontFamily: "'Georgia', serif",
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) =>
-                ((e.target as HTMLButtonElement).style.color = "#e8e4d9")
-              }
-              onMouseLeave={(e) =>
-                ((e.target as HTMLButtonElement).style.color = "#a09a8e")
-              }
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      {/* ─── HERO ─── */}
-      <section
-        style={{
-          position: "relative",
-          minHeight: "92vh",
-          display: "flex",
-          alignItems: "center",
-          padding: "0 2.5rem",
-          overflow: "hidden",
-        }}
-      >
-        {/* Background grid */}
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage:
-              "linear-gradient(rgba(232,201,122,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(232,201,122,0.04) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-          }}
-        />
-        {/* Radial glow */}
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            top: "-20%",
-            right: "-10%",
-            width: "700px",
-            height: "700px",
-            borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(232,201,122,0.08) 0%, transparent 70%)",
-            pointerEvents: "none",
-          }}
-        />
-
-        <div
-          style={{
-            position: "relative",
-            maxWidth: "900px",
-            zIndex: 1,
-          }}
-        >
-          {/* eyebrow */}
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.6rem",
-              border: "1px solid rgba(232,201,122,0.3)",
-              borderRadius: "999px",
-              padding: "0.35rem 1rem",
-              marginBottom: "2rem",
-              fontSize: "0.78rem",
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              color: "#e8c97a",
-            }}
-          >
-            <span
-              style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: "#e8c97a",
-                animation: "pulse 2s infinite",
-              }}
-            />
-            Class 10 · 11 · 12 Now Enrolling
-          </div>
-
-          <h1
-            style={{
-              fontSize: "clamp(3rem, 7vw, 6.5rem)",
-              fontWeight: 400,
-              lineHeight: 1.05,
-              letterSpacing: "-0.02em",
-              margin: "0 0 1.5rem",
-              fontFamily: "'Georgia', serif",
-            }}
-          >
-            Learn Maths
-            <br />
-            <em style={{ color: "#e8c97a", fontStyle: "italic" }}>
-              with Clarity.
-            </em>
-          </h1>
-
-          <p
-            style={{
-              fontSize: "1.15rem",
-              color: "#7a7568",
-              maxWidth: "520px",
-              lineHeight: 1.7,
-              marginBottom: "2.5rem",
-              fontFamily: "'Georgia', serif",
-            }}
-          >
-            Conceptual depth over rote memorisation — live sessions, handcrafted
-            notes, and recorded lectures, built for CBSE boards.
-          </p>
-
-          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-            <button
-              style={{
-                background: "#e8c97a",
-                color: "#0a0c10",
-                border: "none",
-                borderRadius: "6px",
-                padding: "0.85rem 2.2rem",
-                fontSize: "0.9rem",
-                fontWeight: 700,
-                letterSpacing: "0.05em",
-                cursor: "pointer",
-                fontFamily: "'Georgia', serif",
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) =>
-                ((e.target as HTMLButtonElement).style.opacity = "0.85")
-              }
-              onMouseLeave={(e) =>
-                ((e.target as HTMLButtonElement).style.opacity = "1")
-              }
-            >
-              Join Classes
-            </button>
-            <button
-              style={{
-                background: "transparent",
-                color: "#e8e4d9",
-                border: "1px solid rgba(232,228,217,0.25)",
-                borderRadius: "6px",
-                padding: "0.85rem 2.2rem",
-                fontSize: "0.9rem",
-                letterSpacing: "0.05em",
-                cursor: "pointer",
-                fontFamily: "'Georgia', serif",
-                transition: "border-color 0.2s",
-              }}
-              onMouseEnter={(e) =>
-                ((e.target as HTMLButtonElement).style.borderColor =
-                  "rgba(232,228,217,0.6)")
-              }
-              onMouseLeave={(e) =>
-                ((e.target as HTMLButtonElement).style.borderColor =
-                  "rgba(232,228,217,0.25)")
-              }
-            >
-              Explore Courses
+    <>
+      <Navbar />
+      <main style={{ background: "#f9fafb", minHeight: "calc(100vh - 68px)", fontFamily: "'Outfit', sans-serif" }}>
+        {/* Header */}
+        <div style={{ background: "linear-gradient(135deg,#060f2e 0%,#0d1b4b 60%,#0f2d6b 100%)", padding: "36px 20px" }}>
+          <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+            <div>
+              <p style={{ color: "#fcd34d", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Student Portal</p>
+              <h1 style={{ fontFamily: "'Cormorant Garamond', serif", color: "#fff", fontSize: 28, fontWeight: 700, marginTop: 4 }}>Welcome, {profile?.name || "Student"}</h1>
+            </div>
+            <button onClick={() => signOut(auth).then(() => router.push("/"))} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "9px 18px", borderRadius: 10, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+              Log Out
             </button>
           </div>
         </div>
 
-        {/* Decorative formula strip */}
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            right: "3rem",
-            top: "50%",
-            transform: "translateY(-50%)",
-            fontSize: "clamp(0.7rem, 1vw, 0.9rem)",
-            color: "rgba(232,201,122,0.12)",
-            fontFamily: "'Georgia', serif",
-            fontStyle: "italic",
-            lineHeight: 2.4,
-            textAlign: "right",
-            userSelect: "none",
-            letterSpacing: "0.04em",
-          }}
-        >
-          {[
-            "lim(x→∞) (1 + 1/x)ˣ = e",
-            "∫₀^π sin(x) dx = 2",
-            "∇²φ = ρ/ε₀",
-            "eⁱᵖⁱ + 1 = 0",
-            "det(AB) = det(A)·det(B)",
-            "P(A|B) = P(B|A)·P(A)/P(B)",
-          ].map((f) => (
-            <div key={f}>{f}</div>
-          ))}
-        </div>
-      </section>
+        <div style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 20px 60px" }}>
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+            {[
+              ["overview", "Overview"],
+              ["profile", "My Profile"],
+              ["doubts", "Doubts"],
+              ["notes", "Notes"],
+            ].map(([key, label]) => (
+              <button key={key} onClick={() => setTab(key as any)} style={{ padding: "9px 18px", borderRadius: 10, fontWeight: 600, fontSize: 13, border: "1px solid #e5e7eb", cursor: "pointer", background: tab === key ? "#2563eb" : "#fff", color: tab === key ? "#fff" : "#374151" }}>
+                {label}
+              </button>
+            ))}
+          </div>
 
-      {/* ─── ANNOUNCEMENTS ─── */}
-      <section
-        style={{
-          padding: "5rem 2.5rem",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <p
-          style={{
-            fontSize: "0.7rem",
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "#4a4640",
-            marginBottom: "3rem",
-          }}
-        >
-          Announcements
-        </p>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-            gap: "1.5px",
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: "8px",
-            overflow: "hidden",
-          }}
-        >
-          {[
-            {
-              tag: "New Batch",
-              desc: "Class 12 enrollment now open for the upcoming academic session.",
-              cta: "Enroll Now",
-              accent: "#e8c97a",
-            },
-            {
-              tag: "Live Classes",
-              desc: "Interactive problem-solving sessions streaming every weekday.",
-              cta: "Join Live",
-              accent: "#7ab8e8",
-            },
-            {
-              tag: "Free Notes",
-              desc: "Handwritten PDF notes available for all chapters — no login needed.",
-              cta: "Download",
-              accent: "#8de87a",
-            },
-          ].map(({ tag, desc, cta, accent }) => (
-            <AnnouncementCard
-              key={tag}
-              tag={tag}
-              desc={desc}
-              cta={cta}
-              accent={accent}
-            />
-          ))}
-        </div>
-      </section>
+          {tab === "overview" && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              {/* Payment status card */}
+              <Card title="Payment Status">
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: statusColor }} />
+                  <span style={{ fontWeight: 700, color: statusColor }}>{statusLabel}</span>
+                </div>
+                <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Class: <strong>{profile?.studentClass || "Not set"}</strong></p>
+                <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>Plan: <strong>{profile?.paymentPlan === "annual" ? "Annual" : "Monthly"}</strong>{profile?.paymentDueDate ? ` · Next due ${profile.paymentDueDate}` : ""}</p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => handlePay("monthly")} disabled={!!payLoading} style={{ ...payBtn("#2563eb"), opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "not-allowed" : "pointer" }}>
+                    {payLoading === "monthly" ? "Redirecting…" : "Pay Monthly →"}
+                  </button>
+                  <button onClick={() => handlePay("annual")} disabled={!!payLoading} style={{ ...payBtn("#5b21b6"), opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "not-allowed" : "pointer" }}>
+                    {payLoading === "annual" ? "Redirecting…" : "Pay Annually →"}
+                  </button>
+                </div>
+                {payError && (
+                  <div style={{ background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 9, padding: "8px 12px", color: "#dc2626", fontSize: 12, marginTop: 10 }}>
+                    ⚠️ {payError}
+                  </div>
+                )}
+                <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 10 }}>🔒 Powered by PhonePe.</p>
+              </Card>
 
-      {/* ─── LEARNING AREA ─── */}
-      <section
-        style={{
-          padding: "5rem 2.5rem 7rem",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-            marginBottom: "3rem",
-            flexWrap: "wrap",
-            gap: "1rem",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "clamp(2rem, 4vw, 3rem)",
-              fontWeight: 400,
-              fontFamily: "'Georgia', serif",
-              margin: 0,
-            }}
-          >
-            Student Learning Area
-          </h2>
-          <span
-            style={{
-              fontSize: "0.75rem",
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              color: "#4a4640",
-            }}
-          >
-            All resources in one place
-          </span>
-        </div>
+              {/* Faculty card */}
+              <Card title="Your Faculty">
+                <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                  <img src="/profile.jpg" alt="Rakesh Debbarma" style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover" }} />
+                  <div>
+                    <p style={{ fontWeight: 700, color: "#111827" }}>Rakesh Debbarma</p>
+                    <p style={{ fontSize: 12, color: "#6b7280" }}>B.Sc, M.Sc Mathematics</p>
+                    <p style={{ fontSize: 12, color: "#2563eb", fontWeight: 600 }}>IIT Delhi</p>
+                  </div>
+                </div>
+              </Card>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "1rem",
-          }}
-        >
-          {[
-            {
-              icon: "▶",
-              title: "Recorded Lectures",
-              desc: "Full-length chapter videos, revisit any concept at your own pace.",
-              cta: "Watch Now",
-              accent: "#7ab8e8",
-              index: "01",
-            },
-            {
-              icon: "✦",
-              title: "Notes",
-              desc: "Premium handwritten notes with solved examples and formula sheets.",
-              cta: "Open Notes",
-              accent: "#e8c97a",
-              index: "02",
-            },
-            {
-              icon: "◉",
-              title: "Live Classes",
-              desc: "Join real-time doubt sessions and guided problem solving with peers.",
-              cta: "Enter Class",
-              accent: "#8de87a",
-              index: "03",
-            },
-          ].map((card) => (
-            <LearningCard key={card.title} {...card} />
-          ))}
-        </div>
-      </section>
+              {/* Class syllabus / advertisement */}
+              <Card title={`${profile?.studentClass || "Your Class"} — What's Being Taught`} full>
+                <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 10 }}>
+                  {/* TODO: pull this from a `classes` Firestore collection so admin can edit syllabus per class */}
+                  Algebra, Geometry, Trigonometry, Statistics and more — with regular tests and doubt-clearing sessions.
+                </p>
+                <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: "10px 14px", fontSize: 12, color: "#1e40af" }}>
+                  📅 Next live class link will appear here once admin schedules it.
+                </div>
+              </Card>
+            </div>
+          )}
 
-      {/* ─── FOOTER ─── */}
-      <footer
-        style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          padding: "2.5rem",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "1rem",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <img
-            src="/Logo.png"
-            alt="Yarwng Mathematics Logo"
-            style={{
-              width: "28px",
-              height: "28px",
-              objectFit: "contain",
-              borderRadius: "4px",
-              opacity: 0.85,
-            }}
-          />
-          <span
-            style={{
-              fontFamily: "'Georgia', serif",
-              fontStyle: "italic",
-              color: "#e8c97a",
-              fontSize: "1rem",
-            }}
-          >
-            Yarwng Mathematics
-          </span>
-        </div>
-        <span style={{ fontSize: "0.75rem", color: "#3a3630" }}>
-          Conceptual clarity for Class 10, 11 &amp; 12
-        </span>
-      </footer>
+          {tab === "profile" && (
+            <Card title="My Profile">
+              {!editing ? (
+                <>
+                  <ProfileRow label="Name" value={profile?.name} />
+                  <ProfileRow label="Email" value={profile?.email} />
+                  <ProfileRow label="WhatsApp" value={profile?.whatsapp} />
+                  <ProfileRow label="Class" value={profile?.studentClass} />
+                  <ProfileRow label="Board" value={profile?.board} />
+                  <ProfileRow label="Medium" value={profile?.medium} />
+                  <ProfileRow label="School" value={profile?.schoolName} />
+                  <ProfileRow label="Address" value={profile?.address} />
+                  <button onClick={() => setEditing(true)} style={payBtn("#2563eb")}>Edit Profile</button>
+                </>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 380 }}>
+                  <SelectField label="Class" value={form.studentClass} onChange={(v) => setForm({ ...form, studentClass: v })} options={["Class 10", "Class 11", "Class 12"]} />
+                  <SelectField label="Board" value={form.board} onChange={(v) => setForm({ ...form, board: v })} options={["CBSE", "TBSE", "ICSE"]} />
+                  <SelectField label="Medium" value={form.medium} onChange={(v) => setForm({ ...form, medium: v })} options={["English", "Bengali", "Kokborok"]} />
+                  <TextField label="School" value={form.schoolName} onChange={(v) => setForm({ ...form, schoolName: v })} />
+                  <TextField label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
+                  <TextField label="WhatsApp" value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: v })} />
+                  <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                    <button onClick={saveProfile} style={payBtn("#2563eb")}>Save Changes</button>
+                    <button onClick={() => setEditing(false)} style={payBtn("#6b7280")}>Cancel</button>
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
 
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
-      `}</style>
-    </main>
+          {tab === "doubts" && (
+            <Card title="Ask a Doubt">
+              <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 14 }}>
+                Upload a photo of the question you're stuck on. Faculty will reply here once answered.
+                {/* TODO: form → uploads image to Firebase Storage under doubts/{uid}/{timestamp}.jpg,
+                    creates a doc in `doubts` collection { uid, studentName, imageUrl, status: "pending", createdAt } */}
+              </p>
+              <input type="file" accept="image/*" style={{ marginBottom: 12 }} />
+              <br />
+              <button style={payBtn("#2563eb")}>Submit Doubt</button>
+              <div style={{ marginTop: 20, borderTop: "1px solid #e5e7eb", paddingTop: 16 }}>
+                <p style={{ fontSize: 12, color: "#9ca3af" }}>Your submitted doubts will appear here with faculty replies.</p>
+              </div>
+            </Card>
+          )}
+
+          {tab === "notes" && (
+            <Card title="Class Notes">
+              {status === "active" ? (
+                <p style={{ fontSize: 13, color: "#6b7280" }}>
+                  {/* TODO: list files from `notes` collection filtered by studentClass, with download links from Firebase Storage */}
+                  Notes uploaded by your faculty for {profile?.studentClass} will appear here.
+                </p>
+              ) : (
+                <div style={{ background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 11, padding: "14px 16px", color: "#dc2626", fontSize: 13 }}>
+                  🔒 Notes are locked. Clear your pending payment to unlock access.
+                </div>
+              )}
+            </Card>
+          )}
+        </div>
+      </main>
+    </>
   );
 }
 
-function AnnouncementCard({
-  tag,
-  desc,
-  cta,
-  accent,
-}: {
-  tag: string;
-  desc: string;
-  cta: string;
-  accent: string;
-}) {
-  const [hov, setHov] = useState(false);
+function Card({ title, children, full }: { title: string; children: React.ReactNode; full?: boolean }) {
   return (
-    <div
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        background: hov ? "rgba(255,255,255,0.035)" : "#0d0f14",
-        padding: "2.5rem 2rem",
-        cursor: "default",
-        transition: "background 0.25s",
-      }}
-    >
-      <p
-        style={{
-          fontSize: "0.7rem",
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: accent,
-          marginBottom: "1rem",
-          fontFamily: "'Georgia', serif",
-        }}
-      >
-        {tag}
-      </p>
-      <p
-        style={{
-          fontSize: "0.95rem",
-          color: "#7a7568",
-          lineHeight: 1.65,
-          marginBottom: "2rem",
-          fontFamily: "'Georgia', serif",
-        }}
-      >
-        {desc}
-      </p>
-      <button
-        style={{
-          background: "transparent",
-          border: `1px solid ${accent}55`,
-          color: accent,
-          borderRadius: "4px",
-          padding: "0.55rem 1.4rem",
-          fontSize: "0.8rem",
-          letterSpacing: "0.08em",
-          cursor: "pointer",
-          fontFamily: "'Georgia', serif",
-          transition: "background 0.2s, border-color 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          (e.target as HTMLButtonElement).style.background = accent + "18";
-          (e.target as HTMLButtonElement).style.borderColor = accent;
-        }}
-        onMouseLeave={(e) => {
-          (e.target as HTMLButtonElement).style.background = "transparent";
-          (e.target as HTMLButtonElement).style.borderColor = accent + "55";
-        }}
-      >
-        {cta}
-      </button>
+    <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, padding: 22, gridColumn: full ? "1 / -1" : undefined }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 14 }}>{title}</p>
+      {children}
     </div>
   );
 }
-
-function LearningCard({
-  icon,
-  title,
-  desc,
-  cta,
-  accent,
-  index,
-}: {
-  icon: string;
-  title: string;
-  desc: string;
-  cta: string;
-  accent: string;
-  index: string;
-}) {
-  const [hov, setHov] = useState(false);
+function ProfileRow({ label, value }: { label: string; value?: string }) {
   return (
-    <div
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        position: "relative",
-        background: hov ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.015)",
-        border: `1px solid ${hov ? accent + "40" : "rgba(255,255,255,0.06)"}`,
-        borderRadius: "8px",
-        padding: "2.5rem 2rem",
-        transition: "all 0.3s ease",
-        cursor: "default",
-        overflow: "hidden",
-      }}
-    >
-      {/* index watermark */}
-      <span
-        aria-hidden
-        style={{
-          position: "absolute",
-          top: "1.2rem",
-          right: "1.5rem",
-          fontSize: "0.65rem",
-          letterSpacing: "0.12em",
-          color: "rgba(255,255,255,0.08)",
-          fontFamily: "'Georgia', serif",
-        }}
-      >
-        {index}
-      </span>
-
-      {/* icon */}
-      <div
-        style={{
-          fontSize: "1.6rem",
-          color: accent,
-          marginBottom: "1.5rem",
-          lineHeight: 1,
-        }}
-      >
-        {icon}
-      </div>
-
-      <h3
-        style={{
-          fontSize: "1.3rem",
-          fontWeight: 400,
-          fontFamily: "'Georgia', serif",
-          color: "#e8e4d9",
-          margin: "0 0 0.75rem",
-        }}
-      >
-        {title}
-      </h3>
-
-      <p
-        style={{
-          fontSize: "0.9rem",
-          color: "#5c564e",
-          lineHeight: 1.65,
-          marginBottom: "2.2rem",
-          fontFamily: "'Georgia', serif",
-        }}
-      >
-        {desc}
-      </p>
-
-      <button
-        style={{
-          background: accent,
-          color: "#0a0c10",
-          border: "none",
-          borderRadius: "4px",
-          padding: "0.6rem 1.5rem",
-          fontSize: "0.8rem",
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          cursor: "pointer",
-          fontFamily: "'Georgia', serif",
-          transition: "opacity 0.2s",
-        }}
-        onMouseEnter={(e) =>
-          ((e.target as HTMLButtonElement).style.opacity = "0.8")
-        }
-        onMouseLeave={(e) =>
-          ((e.target as HTMLButtonElement).style.opacity = "1")
-        }
-      >
-        {cta}
-      </button>
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "9px 0", borderBottom: "1px solid #f3f4f6", fontSize: 13 }}>
+      <span style={{ color: "#9ca3af" }}>{label}</span>
+      <span style={{ color: "#111827", fontWeight: 600 }}>{value || "—"}</span>
     </div>
   );
+}
+function TextField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label style={{ fontSize: 12, color: "#6b7280" }}>
+      {label}
+      <input value={value} onChange={(e) => onChange(e.target.value)} style={{ width: "100%", border: "1.5px solid #e5e7eb", padding: "9px 12px", borderRadius: 9, marginTop: 4, fontSize: 13 }} />
+    </label>
+  );
+}
+function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+  return (
+    <label style={{ fontSize: 12, color: "#6b7280" }}>
+      {label}
+      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ width: "100%", border: "1.5px solid #e5e7eb", padding: "9px 12px", borderRadius: 9, marginTop: 4, fontSize: 13 }}>
+        <option value="">Select</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </label>
+  );
+}
+function payBtn(bg: string): React.CSSProperties {
+  return { background: bg, color: "#fff", padding: "10px 18px", borderRadius: 9, fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer" };
 }

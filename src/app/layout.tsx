@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/authContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -70,17 +71,17 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
-    // ── 1. WebSite — tells Google the preferred site name shown in search
+   
     {
       "@type": "WebSite",
       "@id": "https://yarwngmathematics.com/#website",
       "url": "https://yarwngmathematics.com",
-      "name": "Yarwng Mathematics",          // ← this becomes the bold name in SERP
+      "name": "Yarwng Mathematics",          
       "description": "Mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
       "publisher": { "@id": "https://yarwngmathematics.com/#organization" },
       "inLanguage": "en-IN",
     },
-    // ── 2. Organization — logo must use ImageObject for Google to show it
+  
     {
       "@type": "EducationalOrganization",
       "@id": "https://yarwngmathematics.com/#organization",
@@ -89,8 +90,8 @@ const jsonLd = {
       "logo": {
         "@type": "ImageObject",
         "@id": "https://yarwngmathematics.com/#logo",
-        "url": "https://yarwngmathematics.com/Logo.png",  // must be publicly accessible
-        "width": 512,    // set to actual pixel dimensions of Logo.png
+        "url": "https://yarwngmathematics.com/Logo.png",
+        "width": 512, 
         "height": 512,
         "caption": "Yarwng Mathematics",
       },
@@ -156,7 +157,9 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

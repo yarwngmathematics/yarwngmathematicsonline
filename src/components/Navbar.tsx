@@ -156,6 +156,13 @@ export default function Navbar({ onEnroll, enrollHref = "/#enroll" }: NavbarProp
                 {l.label}
               </Link>
             ))}
+            <Link
+              href="/login"
+              className={`ym-nav-link${pathname === "/login" ? " active" : ""}`}
+              aria-current={pathname === "/login" ? "page" : undefined}
+            >
+              Login
+            </Link>
           </div>
 
           {/* Enroll + Hamburger */}
@@ -190,6 +197,12 @@ export default function Navbar({ onEnroll, enrollHref = "/#enroll" }: NavbarProp
             {l.label}
           </Link>
         ))}
+        <Link
+          href="/login"
+          className={`ym-mobile-link${pathname === "/login" ? " active" : ""}`}
+        >
+          Login
+        </Link>
         <div className="ym-mobile-divider" />
         {onEnroll ? (
           <button onClick={handleEnroll} className="ym-nav-enroll" style={{ borderRadius: "11px", padding: "14px", width: "100%", justifyContent: "center" }}>
