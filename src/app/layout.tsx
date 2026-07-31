@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Rakesh Debbarma" }],
   creator: "Rakesh Debbarma",
   robots: "index, follow",
-  metadataBase: new URL("https://yarwngmathematics.com"),
+  metadataBase: new URL("https://www.yarwngmathematics.com"),
   alternates: {
     canonical: "/",
   },
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    url: "https://yarwngmathematics.com",
+    url: "https://www.yarwngmathematics.com",
     title: "Yarwng Mathematics – IIT Delhi Math Coaching | Class 10, 11, 12",
     description:
       "Expert mathematics coaching by an IIT Delhi M.Sc graduate. Online via Google Meet. Classes 10–12. Starting 15rd June 2026.",
@@ -81,28 +81,28 @@ const jsonLd = {
    
     {
       "@type": "WebSite",
-      "@id": "https://yarwngmathematics.com/#website",
-      "url": "https://yarwngmathematics.com",
+      "@id": "https://www.yarwngmathematics.com/#website",
+      "url": "https://www.yarwngmathematics.com",
       "name": "Yarwng Mathematics",          
       "description": "Mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
-      "publisher": { "@id": "https://yarwngmathematics.com/#organization" },
+      "publisher": { "@id": "https://www.yarwngmathematics.com/#organization" },
       "inLanguage": "en-IN",
     },
   
     {
       "@type": "EducationalOrganization",
-      "@id": "https://yarwngmathematics.com/#organization",
+      "@id": "https://www.yarwngmathematics.com/#organization",
       "name": "Yarwng Mathematics",
-      "url": "https://yarwngmathematics.com",
+      "url": "https://www.yarwngmathematics.com",
       "logo": {
         "@type": "ImageObject",
-        "@id": "https://yarwngmathematics.com/#logo",
-        "url": "https://yarwngmathematics.com/Logo.png",
+        "@id": "https://www.yarwngmathematics.com/#logo",
+        "url": "https://www.yarwngmathematics.com/Logo.png",
         "width": 512, 
         "height": 512,
         "caption": "Yarwng Mathematics",
       },
-      "image": { "@id": "https://yarwngmathematics.com/#logo" },
+      "image": { "@id": "https://www.yarwngmathematics.com/#logo" },
       "description": "Mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
       "founder": {
         "@type": "Person",
