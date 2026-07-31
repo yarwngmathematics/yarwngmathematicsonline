@@ -13,6 +13,9 @@ export interface UserProfile {
   name: string;
   email: string;
   whatsapp?: string;
+  phoneNumber?: string;
+  parentName?: string;
+  parentOccupation?: string;
   studentClass?: "Class 10" | "Class 11" | "Class 12";
   board?: string;
   medium?: string;
