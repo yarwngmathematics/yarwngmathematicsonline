@@ -7,7 +7,7 @@ import { auth, db } from "@/lib/firebase";
 import RequireAuth from "@/components/RequireAuth";
 import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
-import { UserProfile } from "@/lib/authContext";
+import { UserProfile, useAuth } from "@/lib/authContext";
 
 interface Faculty {
   id: string;
@@ -52,6 +52,7 @@ export default function AdminPortal() {
 
 function AdminDashboard() {
   const router = useRouter();
+  const { profile } = useAuth();
   const [tab, setTab] = useState<"students" | "doubts" | "classroom" | "notes" | "owner">("students");
   const [students, setStudents] = useState<UserProfile[]>([]);
   const [expandedUid, setExpandedUid] = useState<string | null>(null);
@@ -97,25 +98,64 @@ function AdminDashboard() {
     try {
       const { jsPDF } = await import("jspdf");
       const autoTable = (await import("jspdf-autotable")).default;
-      const pdf = new jsPDF();
-      pdf.setFontSize(16);
-      pdf.text("Yarwng Mathematics — Student List", 14, 18);
+      const pdf = new jsPDF({ orientation: "landscape" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+
+      // Letterhead
+      pdf.setFontSize(17);
+      pdf.setTextColor(6, 15, 46);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Yarwng Mathematics", 14, 16);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(100);
+      pdf.text("Student Directory", 14, 22);
+      pdf.setFontSize(8.5);
+      pdf.text(`Khumulwng, Tripura  ·  9366030347  ·  yarwngmathematics@gmail.com`, 14, 27);
+
+      pdf.setDrawColor(229, 231, 235);
+      pdf.line(14, 30, pageWidth - 14, 30);
+
       pdf.setFontSize(9);
       pdf.setTextColor(120);
-      pdf.text(`Generated: ${new Date().toLocaleString("en-IN")} · Total: ${students.length}`, 14, 24);
-      autoTable(pdf, {
-        startY: 30,
-        head: [["Name", "Class", "Board", "Medium", "Mode", "Payment", "Plan", "Due Date", "WhatsApp", "Email", "School", "Address"]],
-        body: students.map((s) => [
-          s.name || "", s.studentClass || "", s.board || "", s.medium || "", s.mode || "",
-          s.paymentStatus || "due", s.paymentPlan || "", s.paymentDueDate || "",
-          s.whatsapp || "", s.email || "", s.schoolName || "", s.address || "",
-        ]),
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [37, 99, 235], fontSize: 7.5 },
-        alternateRowStyles: { fillColor: [249, 250, 251] },
+      const generatedLine = `Generated: ${new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}   ·   Total students: ${students.length}   ·   By: ${profile?.name || "Owner"}`;
+      pdf.text(generatedLine, 14, 36);
+
+      const sorted = [...students].sort((a, b) => {
+        const classOrder = (c?: string) => (c === "Class 10" ? 0 : c === "Class 11" ? 1 : c === "Class 12" ? 2 : 3);
+        const diff = classOrder(a.studentClass) - classOrder(b.studentClass);
+        return diff !== 0 ? diff : (a.name || "").localeCompare(b.name || "");
       });
-      pdf.save(`yarwng-students-${new Date().toISOString().slice(0, 10)}.pdf`);
+
+      autoTable(pdf, {
+        startY: 41,
+        head: [["#", "Name", "Class", "Board", "Medium", "Mode", "WhatsApp / Phone", "Email", "Payment", "Plan", "Due Date", "School", "Address"]],
+        body: sorted.map((s, i) => [
+          String(i + 1), s.name || "", s.studentClass || "", s.board || "", s.medium || "", s.mode || "",
+          s.whatsapp || "", s.email || "", s.paymentStatus || "due", s.paymentPlan || "", s.paymentDueDate || "",
+          s.schoolName || "", s.address || "",
+        ]),
+        styles: { fontSize: 7.5, cellPadding: 2.5, textColor: [31, 41, 55] },
+        headStyles: { fillColor: [6, 15, 46], textColor: 255, fontSize: 7.5, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [249, 250, 251] },
+        columnStyles: { 0: { cellWidth: 8 } },
+        didParseCell: (data: any) => {
+          if (data.section === "body" && data.column.index === 8) {
+            const val = String(data.cell.raw).toLowerCase();
+            data.cell.styles.textColor = val === "active" ? [22, 163, 74] : [220, 38, 38];
+            data.cell.styles.fontStyle = "bold";
+          }
+        },
+        didDrawPage: (data: any) => {
+          const pageCount = pdf.getNumberOfPages();
+          pdf.setFontSize(8);
+          pdf.setTextColor(150);
+          pdf.text(`Page ${data.pageNumber} of ${pageCount}`, pageWidth - 28, pdf.internal.pageSize.getHeight() - 8);
+          pdf.text("Yarwng Mathematics — Confidential student record", 14, pdf.internal.pageSize.getHeight() - 8);
+        },
+      });
+
+      pdf.save(`yarwng-student-directory-${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (err) {
       setActionError("Could not generate PDF. Make sure jspdf and jspdf-autotable are installed.");
     } finally {
@@ -130,8 +170,11 @@ function AdminDashboard() {
         <div style={{ background: "linear-gradient(135deg,#060f2e 0%,#0d1b4b 60%,#0f2d6b 100%)", padding: "36px 20px" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
             <div>
-              <p style={{ color: "#fcd34d", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Owner Portal</p>
-              <h1 style={{ fontFamily: "'Cormorant Garamond', serif", color: "#fff", fontSize: 28, fontWeight: 700, marginTop: 4 }}>Yarwng Mathematics — Control Panel</h1>
+              <p style={{ color: "#fcd34d", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{profile?.position || "Owner"} Portal</p>
+              <h1 style={{ fontFamily: "'Cormorant Garamond', serif", color: "#fff", fontSize: 28, fontWeight: 700, marginTop: 4 }}>
+                {profile?.name || "Yarwng Mathematics"}
+              </h1>
+              <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, marginTop: 2 }}>{profile?.position || "Owner"} · Yarwng Mathematics</p>
             </div>
             <button onClick={() => signOut(auth).then(() => router.push("/"))} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "9px 18px", borderRadius: 10, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
               Log Out

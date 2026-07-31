@@ -22,9 +22,10 @@ export interface UserProfile {
   paymentPlan?: "monthly" | "annual";
   paymentStatus?: "active" | "due" | "expired";
   paymentDueDate?: string;
-  phoneNumber?: string;
-  parentName?: string;
-  parentOccupation?: string;
+  // Only relevant when role === "admin" — distinguishes the account owner
+  // from any faculty members added later. Defaults to "Owner" in the UI
+  // when this field isn't set (e.g. your original account).
+  position?: "Owner" | "Faculty";
 }
 
 interface AuthContextValue {
@@ -51,6 +52,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const snap = await getDoc(doc(db, "users", firebaseUser.uid));
           setProfile(snap.exists() ? (snap.data() as UserProfile) : null);
         } catch (err: any) {
+          // Without this catch, a Firestore error (e.g. security rules not
+          // published yet) would leave `loading` stuck true forever, which
+          // shows as an infinite "Loading…" screen with no visible error.
           console.error("[Auth] Failed to load profile:", err?.message ?? err);
           setProfile(null);
           setProfileError(err?.message ?? "Failed to load your profile.");
