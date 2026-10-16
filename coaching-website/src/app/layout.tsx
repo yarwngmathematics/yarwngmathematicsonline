@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/authContext";
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     url: "https://www.yarwngmathematics.com",
     title: "Yarwng Mathematics – IIT Delhi Math Coaching | Class 10, 11, 12",
     description:
-      "Expert mathematics coaching by an IIT Delhi M.Sc graduate. Online via Google Meet. Classes 10–12. Starting 15rd June 2026.",
+      "Expert mathematics coaching by an IIT Delhi M.Sc graduate. Online via Google Meet. Classes 10–12. Starting 15th June 2026.",
     siteName: "Yarwng Mathematics",
     locale: "en_IN",
     images: [
@@ -75,20 +75,26 @@ export const metadata: Metadata = {
   },
 };
 
+// Forces phones to render the desktop layout (1240px wide) scaled down to fit.
+export const viewport: Viewport = {
+  width: 1240,
+  minimumScale: 0.1,
+  maximumScale: 5,
+  userScalable: true,
+};
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
-   
     {
       "@type": "WebSite",
       "@id": "https://www.yarwngmathematics.com/#website",
       "url": "https://www.yarwngmathematics.com",
-      "name": "Yarwng Mathematics",          
+      "name": "Yarwng Mathematics",
       "description": "Mathematics coaching for Class 10, 11 & 12 by Rakesh Debbarma, M.Sc IIT Delhi.",
       "publisher": { "@id": "https://www.yarwngmathematics.com/#organization" },
       "inLanguage": "en-IN",
     },
-  
     {
       "@type": "EducationalOrganization",
       "@id": "https://www.yarwngmathematics.com/#organization",
@@ -98,7 +104,7 @@ const jsonLd = {
         "@type": "ImageObject",
         "@id": "https://www.yarwngmathematics.com/#logo",
         "url": "https://www.yarwngmathematics.com/Logo.png",
-        "width": 512, 
+        "width": 512,
         "height": 512,
         "caption": "Yarwng Mathematics",
       },
