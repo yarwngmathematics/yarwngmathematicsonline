@@ -342,18 +342,18 @@ export default function Home() {
         .yw-hero-meta { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 10px 28px; font-size: 14px; color: var(--muted); font-weight: 500; }
         .yw-hero-meta span::before { content: '✓'; color: var(--teal); font-weight: 800; margin-right: 8px; }
 
-        .yw-portrait { position: relative; max-width: 380px; margin: 0 auto; }
-        .yw-portrait::before { content: ''; position: absolute; inset: -18px -18px 18px 18px; border-radius: 28px; background: linear-gradient(160deg, var(--gold-soft), #dbe6f7); z-index: 0; }
-        .yw-portrait-card { position: relative; z-index: 1; border-radius: 24px; overflow: hidden; background: #fff; box-shadow: var(--shadow-lg); }
-        .yw-portrait-img { aspect-ratio: 4 / 4.6; background: linear-gradient(180deg, #eaf1fb, #fff); }
-        .yw-portrait-img img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
-        .yw-portrait-cap { padding: 18px 22px 20px; border-top: 1px solid var(--line); }
+        .yw-portrait { position: relative; max-width: 340px; margin: 0 auto; text-align: center; }
+        .yw-circle { position: relative; width: 250px; height: 250px; margin: 0 auto; }
+        .yw-ring { position: absolute; inset: -16px; border-radius: 50%; background: repeating-conic-gradient(var(--navy) 0deg 2.5deg, transparent 2.5deg 6deg); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px)); opacity: 0.45; }
+        .yw-circle-img { position: relative; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 5px solid #fff; background: linear-gradient(180deg, #eaf1fb, #fff); box-shadow: 0 10px 30px rgba(15,31,61,0.16); }
+        .yw-circle-img img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+        .yw-portrait-cap { margin-top: 30px; }
         .yw-portrait-cap b { display: block; font-size: 18px; color: var(--ink); letter-spacing: -0.01em; }
         .yw-portrait-cap span { display: block; margin-top: 3px; font-size: 14px; color: var(--muted); }
         .yw-float { position: absolute; z-index: 2; background: #fff; border-radius: 14px; padding: 12px 16px; box-shadow: var(--shadow-lg); font-size: 13px; color: var(--muted); line-height: 1.35; }
         .yw-float b { display: block; font-size: 15px; color: var(--ink); }
-        .yw-float.a { left: -34px; top: 56px; }
-        .yw-float.b { right: -26px; bottom: 120px; }
+        .yw-float.a { left: -6px; top: 14px; }
+        .yw-float.b { right: -6px; top: 160px; }
 
         /* ═════════ STATS ═════════ */
         .yw-stats { background: var(--ink); color: #fff; padding: 40px 24px; }
@@ -441,7 +441,6 @@ export default function Home() {
 
         /* ═════════ MENTOR ═════════ */
         .yw-mentor { display: grid; grid-template-columns: 0.75fr 1.25fr; gap: 72px; align-items: center; }
-        .yw-mentor .yw-portrait::before { inset: -18px 18px 18px -18px; }
         .yw-mentor-text p { color: var(--text); font-size: 17px; line-height: 1.8; margin-top: 18px; max-width: 600px; }
         .yw-quote { margin-top: 28px; padding: 6px 0 6px 22px; border-left: 3px solid var(--gold); font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; line-height: 1.5; color: var(--navy); font-weight: 500; }
         .yw-creds { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px; }
@@ -506,7 +505,7 @@ export default function Home() {
         /* ═════════ RESPONSIVE ═════════ */
         @media (max-width: 1000px) {
           .yw-hero-grid, .yw-mentor, .yw-contact-grid, .yw-off-grid { grid-template-columns: 1fr; gap: 48px; }
-          .yw-portrait { max-width: 320px; }
+          .yw-circle { width: 220px; height: 220px; }
           .yw-float.a { left: -8px; } .yw-float.b { right: -8px; }
           .yw-stats-row { grid-template-columns: 1fr 1fr; row-gap: 28px; }
           .yw-stat:nth-child(3) { border-left: none; padding-left: 0; }
@@ -651,12 +650,13 @@ export default function Home() {
           <div className="yw-portrait">
             <div className="yw-float a"><b>Live on Google Meet</b>Interactive, not recorded</div>
             <div className="yw-float b"><b>2 hours</b>per class, twice a week</div>
-            <div className="yw-portrait-card">
-              <div className="yw-portrait-img"><img src="/profile.jpg" alt="Rakesh Debbarma" /></div>
-              <div className="yw-portrait-cap">
-                <b>Rakesh Debbarma</b>
-                <span>M.Sc Mathematics, IIT Delhi</span>
-              </div>
+            <div className="yw-circle">
+              <span className="yw-ring" aria-hidden="true" />
+              <div className="yw-circle-img"><img src="/profile.jpg" alt="Rakesh Debbarma" /></div>
+            </div>
+            <div className="yw-portrait-cap">
+              <b>Rakesh Debbarma</b>
+              <span>M.Sc Mathematics, IIT Delhi</span>
             </div>
           </div>
         </div>
@@ -816,8 +816,9 @@ export default function Home() {
       <section id="about" className="yw-sec alt">
         <div className="yw-wrap yw-mentor">
           <div className="yw-portrait">
-            <div className="yw-portrait-card">
-              <div className="yw-portrait-img"><img src="/profile.jpg" alt="Rakesh Debbarma, M.Sc Mathematics, IIT Delhi" /></div>
+            <div className="yw-circle">
+              <span className="yw-ring" aria-hidden="true" />
+              <div className="yw-circle-img"><img src="/profile.jpg" alt="Rakesh Debbarma, M.Sc Mathematics, IIT Delhi" /></div>
             </div>
           </div>
           <div className="yw-mentor-text">
