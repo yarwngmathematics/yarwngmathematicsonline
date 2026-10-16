@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { useState, useEffect, useRef } from "react";
 
@@ -40,13 +39,21 @@ const SLOTS = {
   },
 };
 
+const WEEK = [
+  { d: "Mon", c: "Class 10" },
+  { d: "Tue", c: "Class 11" },
+  { d: "Wed", c: "Class 10" },
+  { d: "Thu", c: "Class 12" },
+  { d: "Fri", c: "Class 11" },
+  { d: "Sat", c: "Class 12" },
+  { d: "Sun", c: "" },
+];
+
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState("form"); // "form" | "payment"
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [slotsOpen, setSlotsOpen] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [payError, setPayError] = useState("");
 
   const [name, setName] = useState("");
@@ -95,8 +102,8 @@ export default function Home() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("enroll") === "1") {
-      const mode = params.get("mode") ?? "";
-      openModal(mode);
+      const m = params.get("mode") ?? "";
+      openModal(m);
     }
   }, []);
 
@@ -107,6 +114,11 @@ export default function Home() {
     setPayError("");
     setSubmitting(false);
     setShowModal(true);
+  };
+
+  const openForClass = (cls: string) => {
+    openModal();
+    setStudentClass(cls);
   };
 
   const closeModal = () => setShowModal(false);
@@ -159,7 +171,7 @@ export default function Home() {
 
   const displayCount = (count: number | null) => { if (count === null) return "—"; return count.toLocaleString("en-IN"); };
 
-  /* ───────── TOP BANNER CAROUSEL (5 slides, PW-style) ───────── */
+  /* ───────── TOP BANNER CAROUSEL (unchanged except logo) ───────── */
   const banners = [
     {
       bg: "linear-gradient(110deg, #fff7e6 0%, #ffe8b8 100%)",
@@ -232,26 +244,33 @@ export default function Home() {
   const prevSlide = () => setSlide((v) => (v - 1 + banners.length) % banners.length);
   const nextSlide = () => setSlide((v) => (v + 1) % banners.length);
 
+  const reasons = [
+    { t: "Why before how", d: "Each chapter starts with the idea behind the formula, so students can rebuild a method even when they forget it." },
+    { t: "Taught by an IITian", d: "Rakesh sir studied M.Sc Mathematics at IIT Delhi and brings that depth to school-level maths." },
+    { t: "One slot, every week", d: "Your batch meets on the same days at the same time. No reshuffling, no missed announcements." },
+    { t: "Doubts get answered", d: "Every batch has its own WhatsApp group. Send a photo of the sum you are stuck on, get a worked reply." },
+    { t: "Live, not recorded", d: "Classes run live on Google Meet, so students can interrupt, ask, and be asked right back." },
+    { t: "Tests with feedback", d: "Regular tests are marked and discussed, so every student knows exactly which topic needs work." },
+  ];
+
+  const steps = [
+    { t: "Fill the form", d: "Student name, class, board and school. It takes about a minute." },
+    { t: "Pay the monthly fee", d: "Pay securely through PhonePe. UPI, cards and netbanking all work." },
+    { t: "Join your batch", d: "You are added to the batch WhatsApp group and get the class link before the first session." },
+  ];
+
   return (
     <main id="home" className="ym-page">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=DM+Serif+Display&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-          --navy: #060f2e; --navy-mid: #0d1b4b; --blue-bright: #1d4ed8; --blue-light: #3b82f6;
-          --gold: #f59e0b; --gold-light: #fcd34d; --gold-pale: #fef3c7; --white: #ffffff;
-          --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-400: #9ca3af;
-          --gray-500: #6b7280; --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937;
-          --gray-900: #111827; --green: #16a34a; --green-light: #dcfce7; --red: #dc2626;
-          --red-light: #fee2e2; --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px;
-          --radius-xl: 28px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-          --shadow-md: 0 4px 16px rgba(0,0,0,0.1); --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
-          --purple: #5b21b6; --brand: #5b4bdb; --brand-dark: #4a3cc4; --ink: #14122b;
+          --navy: #0b3a7a; --navy-deep: #08254f; --navy-ink: #061a38; --gold: #d9a93a; --gold-soft: #f4e3b3;
+          --paper: #f5f8fd; --line: #d6e0ef; --teal: #0f766e; --text: #1b2a44; --muted: #5a6b86;
         }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Outfit', sans-serif; color: var(--gray-900); background: #fff; }
+        body { font-family: 'Outfit', sans-serif; color: var(--text); background: #fff; }
         .ym-page { font-family: 'Outfit', sans-serif; }
-        .ym-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
         .ym-nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
         .ym-nav-link.active { color: #fff; background: rgba(59,130,246,0.2); }
         .ym-nav-link.active-dot { position: relative; }
@@ -262,18 +281,18 @@ export default function Home() {
         .ym-mobile-link:hover, .ym-mobile-link.active { background: rgba(59,130,246,0.15); color: #fff; }
         @media (max-width: 900px) { .ym-nav-links { display: none; } .ym-hamburger { display: flex; } }
         @media (max-width: 500px) { .ym-nav-enroll { font-size: 11px; padding: 7px 12px; } .ym-nav-name { font-size: 13px; } .ym-nav-sub { display: none; } }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes floaty { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        @keyframes ringSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+        @keyframes skeletonShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes visitorPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+        a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
         /* ═════════ TOP BANNER CAROUSEL ═════════ */
         .bn-wrap { position: relative; width: 100%; overflow: hidden; background: #fff; }
         .bn-track { display: flex; transition: transform 0.6s cubic-bezier(.65,.05,.36,1); will-change: transform; }
         .bn-slide { flex: 0 0 100%; min-width: 0; }
         .bn-inner { max-width: 1240px; margin: 0 auto; min-height: 250px; padding: 22px 64px; display: grid; grid-template-columns: 1.05fr 1.6fr 0.75fr; align-items: center; gap: 28px; }
-        .bn-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .bn-logo { width: 38px; height: 38px; border-radius: 50%; background: #14122b; color: #fcd34d; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 17px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .bn-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .bn-logo { width: 58px; height: 58px; border-radius: 14px; background: #fff; padding: 3px; object-fit: contain; display: block; box-shadow: 0 3px 12px rgba(6,26,56,0.22); }
         .bn-brand-name { font-weight: 800; font-size: 15px; line-height: 1.05; color: #14122b; letter-spacing: 0.01em; }
         .bn-title { font-weight: 900; font-size: clamp(2rem, 3.8vw, 3.2rem); line-height: 0.98; color: #14122b; letter-spacing: -0.02em; }
         .bn-sub { margin-top: 10px; font-weight: 700; font-size: clamp(0.95rem, 1.5vw, 1.3rem); color: #1d4ed8; }
@@ -302,10 +321,7 @@ export default function Home() {
         .bn-dots { display: flex; justify-content: center; gap: 9px; padding: 14px 0 6px; background: #faf8ff; }
         .bn-dot { width: 9px; height: 9px; border-radius: 50%; border: none; background: #d1d5db; cursor: pointer; padding: 0; transition: all 0.25s; }
         .bn-dot.on { background: #14122b; width: 26px; border-radius: 6px; }
-        @media (max-width: 980px) {
-          .bn-inner { grid-template-columns: 1fr 1.5fr; padding: 22px 56px; }
-          .bn-photo { display: none; }
-        }
+        @media (max-width: 980px) { .bn-inner { grid-template-columns: 1fr 1.5fr; padding: 22px 56px; } .bn-photo { display: none; } }
         @media (max-width: 700px) {
           .bn-inner { grid-template-columns: 1fr; gap: 14px; padding: 20px 20px 24px; min-height: 0; }
           .bn-points { grid-template-columns: 1fr; gap: 7px; }
@@ -313,196 +329,170 @@ export default function Home() {
           .bn-pill { padding: 8px 20px 8px 14px; }
           .bn-cta { padding: 12px 28px; font-size: 15px; }
         }
+        @media (prefers-reduced-motion: reduce) { .bn-track { transition: none; } html { scroll-behavior: auto; } }
 
-        /* ═════════ SIMPLE HERO (PW-style) ═════════ */
-        .hv { background: linear-gradient(120deg, #f4f2ff 0%, #faf3ff 50%, #fff1f6 100%); padding: 56px 20px 72px; overflow: hidden; }
-        .hv-inner { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; }
-        .hv-title { font-weight: 800; font-size: clamp(2.1rem, 4.6vw, 3.6rem); line-height: 1.12; color: var(--ink); letter-spacing: -0.02em; }
-        .hv-title em { font-style: normal; color: var(--brand); }
-        .hv-desc { margin-top: 18px; font-size: 17px; line-height: 1.6; color: #1f1d33; max-width: 520px; }
-        .hv-btns { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 14px; }
-        .hv-btn { background: var(--brand); color: #fff; border: none; border-radius: 10px; padding: 17px 52px; font-size: 18px; font-weight: 700; font-family: inherit; cursor: pointer; transition: background 0.2s, transform 0.2s; }
-        .hv-btn:hover { background: var(--brand-dark); transform: translateY(-1px); }
-        .hv-btn-line { background: #fff; color: var(--brand); border: 2px solid var(--brand); border-radius: 10px; padding: 15px 32px; font-size: 16px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; transition: background 0.2s; }
-        .hv-btn-line:hover { background: #f0edff; }
-        .hv-trust { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px 26px; }
-        .hv-trust span { font-size: 14px; font-weight: 600; color: #3b3957; display: flex; align-items: center; gap: 7px; }
-        .hv-trust span::before { content: '✓'; width: 18px; height: 18px; border-radius: 50%; background: #16a34a; color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+        /* ═════════ NEW DESIGN: graph-paper + navy & gold ═════════ */
+        .yw-wrap { max-width: 1120px; margin: 0 auto; }
+        .yw-h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 700; font-size: clamp(1.7rem, 3.4vw, 2.5rem); line-height: 1.15; color: var(--navy-ink); letter-spacing: -0.01em; }
+        .yw-lead { color: var(--muted); font-size: 16px; line-height: 1.7; max-width: 560px; margin-top: 10px; }
+        .yw-btn { display: inline-flex; align-items: center; justify-content: center; font-family: inherit; font-weight: 700; font-size: 16px; border-radius: 6px; padding: 14px 28px; cursor: pointer; text-decoration: none; transition: transform 0.15s, background 0.2s; border: 2px solid transparent; }
+        .yw-btn:hover { transform: translateY(-1px); }
+        .yw-btn-gold { background: var(--gold); color: var(--navy-ink); }
+        .yw-btn-gold:hover { background: #e6b94c; }
+        .yw-btn-navy { background: var(--navy); color: #fff; }
+        .yw-btn-navy:hover { background: var(--navy-deep); }
+        .yw-btn-ghost { background: transparent; color: var(--navy); border-color: var(--navy); }
+        .yw-btn-ghost:hover { background: rgba(11,58,122,0.06); }
 
-        .hv-art { position: relative; height: 430px; max-width: 520px; width: 100%; margin: 0 auto; }
-        .hv-ring { position: absolute; border: 2px dashed #9b8cf0; border-radius: 50%; }
-        .hv-ring.r1 { width: 400px; height: 400px; top: 14px; left: 56px; animation: ringSpin 60s linear infinite; }
-        .hv-ring.r2 { width: 250px; height: 250px; bottom: 6px; left: 0; border-color: #c4b8fb; animation: ringSpin 45s linear infinite reverse; }
-        .hv-orb { position: absolute; width: 14px; height: 14px; border-radius: 50%; }
-        .hv-orb.o1 { background: #60a5fa; top: 30px; left: 232px; }
-        .hv-orb.o2 { background: #fb7185; top: 210px; right: 12px; }
-        .hv-orb.o3 { background: #fb923c; bottom: 20px; right: 120px; }
-        .hv-orb.o4 { background: #60a5fa; bottom: 140px; left: 6px; }
-        .hv-photo { position: absolute; width: 230px; height: 230px; border-radius: 50%; overflow: hidden; bottom: 36px; left: 44px; background: #e9e5ff; border: 6px solid #fff; box-shadow: 0 14px 36px rgba(91,75,219,0.25); }
-        .hv-photo img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
-        .hv-q { position: absolute; top: 112px; right: 6px; background: #fff; color: var(--ink); padding: 11px 18px; border-radius: 12px; font-size: 15px; font-weight: 500; box-shadow: 0 6px 20px rgba(0,0,0,0.1); animation: floaty 5s ease-in-out infinite; }
-        .hv-a { position: absolute; top: 205px; left: 196px; width: 270px; background: #1e1b5e; color: #fff; padding: 14px 18px; border-radius: 12px; font-size: 15px; line-height: 1.45; box-shadow: 0 10px 26px rgba(30,27,94,0.35); }
-        .hv-a::before { content: ''; position: absolute; left: -9px; top: 22px; border: 9px solid transparent; border-right-color: #1e1b5e; border-left: 0; }
-        .hv-chip { position: absolute; background: #fff; border-radius: 12px; padding: 8px 14px; font-size: 13px; font-weight: 700; color: var(--ink); box-shadow: 0 6px 18px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 6px; }
-        .hv-chip.c1 { top: 36px; right: 40px; }
-        .hv-chip.c2 { bottom: 66px; right: 10px; }
-        @media (max-width: 900px) {
-          .hv { padding: 40px 18px 56px; }
-          .hv-inner { grid-template-columns: 1fr; gap: 28px; }
-          .hv-art { height: 400px; }
-        }
-        @media (max-width: 520px) {
-          .hv-btn { width: 100%; padding: 16px; }
-          .hv-btn-line { width: 100%; justify-content: center; }
-          .hv-art { transform: scale(0.82); transform-origin: top center; height: 340px; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .bn-track { transition: none; }
-          .hv-ring, .hv-q { animation: none; }
-        }
+        /* intro on graph paper */
+        .yw-intro { padding: 76px 20px 70px; background-color: var(--paper); background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 32px 32px; background-position: -1px -1px; border-bottom: 4px solid var(--navy); }
+        .yw-intro-grid { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 56px; align-items: center; }
+        .yw-intro h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 800; font-size: clamp(2.1rem, 4.4vw, 3.5rem); line-height: 1.08; color: var(--navy-ink); letter-spacing: -0.02em; }
+        .yw-intro p { margin-top: 20px; font-size: 18px; line-height: 1.65; max-width: 540px; color: var(--text); background: rgba(245,248,253,0.85); }
+        .yw-intro-btns { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px; }
+        .yw-arch { position: relative; width: 100%; max-width: 330px; margin: 0 auto; }
+        .yw-arch-frame { border-radius: 999px 999px 18px 18px; overflow: hidden; border: 5px solid var(--navy); background: var(--gold-soft); aspect-ratio: 4 / 5; box-shadow: 12px 12px 0 var(--gold); }
+        .yw-arch-frame img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+        .yw-arch-tag { position: absolute; left: -18px; bottom: 26px; background: var(--navy-ink); color: #fff; padding: 12px 16px; border-radius: 8px; font-size: 13px; line-height: 1.45; max-width: 220px; }
+        .yw-arch-tag strong { display: block; font-size: 15px; color: var(--gold); }
 
-        /* ═════════ REST OF PAGE ═════════ */
-        .ym-section { padding: 80px 20px; }
-        .ym-section-inner { max-width: 1100px; margin: 0 auto; }
-        .ym-section-tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; margin-bottom: 14px; }
-        .ym-section-tag.green { background: #dcfce7; color: #15803d; }
-        .ym-section-tag.blue { background: #dbeafe; color: #1d4ed8; }
-        .ym-section-tag.orange { background: #ffedd5; color: #c2410c; }
-        .ym-section-tag.gold { background: #fef3c7; color: #92400e; }
-        .ym-section-h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3.6vw, 2.7rem); font-weight: 700; color: var(--gray-900); margin-bottom: 10px; }
-        .ym-section-line { width: 48px; height: 3px; border-radius: 2px; margin: 0 auto 14px; position: relative; }
-        .ym-section-line::after { content: ''; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; border-radius: 50%; background: inherit; transform: translate(14px,-50%); }
-        .ym-section-desc { color: var(--gray-500); font-size: 15px; max-width: 500px; margin: 0 auto; line-height: 1.7; }
-        .ym-section-head { text-align: center; margin-bottom: 48px; }
+        .yw-facts { background: var(--navy); color: #fff; padding: 26px 20px; }
+        .yw-facts-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .yw-fact { border-left: 3px solid var(--gold); padding-left: 14px; }
+        .yw-fact b { display: block; font-family: 'Fraunces', serif; font-size: 26px; font-weight: 700; line-height: 1.1; }
+        .yw-fact span { font-size: 13px; color: #b9cbe8; }
 
-        .ym-btn-gold { background: var(--gold); color: #1a0a00; padding: 14px 28px; border-radius: 12px; font-weight: 800; font-size: 15px; border: none; cursor: pointer; transition: all 0.2s; }
-        .ym-btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+        /* batches */
+        .yw-sec { padding: 84px 20px; }
+        .yw-batch-list { margin-top: 36px; border-top: 2px solid var(--navy-ink); }
+        .yw-batch { display: grid; grid-template-columns: 150px 1.4fr 1.5fr auto; gap: 26px; align-items: center; padding: 26px 6px; border-bottom: 1px solid var(--line); }
+        .yw-batch-name { font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; color: var(--navy-ink); }
+        .yw-batch-when b { display: block; font-size: 16px; color: var(--text); }
+        .yw-batch-when span { font-size: 14px; color: var(--muted); }
+        .yw-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .yw-chip { background: var(--paper); border: 1px solid var(--line); color: var(--navy); font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 4px; }
+        .yw-batch-note { font-size: 13px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+        .yw-batch-buy { text-align: right; }
+        .yw-price { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 26px; color: var(--navy); line-height: 1; }
+        .yw-price small { font-size: 13px; font-weight: 500; color: var(--muted); }
+        .yw-price-was { display: block; font-size: 13px; color: var(--muted); text-decoration: line-through; margin-bottom: 4px; }
+        .yw-batch-buy .yw-btn { margin-top: 10px; padding: 10px 20px; font-size: 14px; }
 
-        .ym-classes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
-        .ym-class-card { background: #fff; border: 1.5px solid var(--gray-200); border-radius: 18px; padding: 24px 20px; text-align: center; transition: all 0.25s; box-shadow: var(--shadow-sm); }
-        .ym-class-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
-        .ym-class-card.featured { box-shadow: 0 0 0 3px rgba(255,255,255,0.35), var(--shadow-lg); }
-        .ym-class-icon { width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 14px; background: rgba(255,255,255,0.22); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
-        .ym-classes-grid .ym-class-card:nth-child(1) { background: linear-gradient(150deg, #3163dd 0%, #1e40af 100%); border-color: transparent; }
-        .ym-classes-grid .ym-class-card:nth-child(2) { background: linear-gradient(150deg, #ea9a3d 0%, #c2740b 100%); border-color: transparent; }
-        .ym-classes-grid .ym-class-card:nth-child(3) { background: linear-gradient(150deg, #17a97a 0%, #0d7a56 100%); border-color: transparent; }
-        .ym-classes-grid .ym-class-name { color: #fff; }
-        .ym-classes-grid .ym-class-days { color: rgba(255,255,255,0.88); }
-        .ym-classes-grid .ym-class-time { color: rgba(255,255,255,0.65); }
-        .ym-classes-grid .ym-class-price { color: #fff; }
-        .ym-classes-grid .ym-class-price-unit { color: rgba(255,255,255,0.7); }
-        .ym-classes-grid .ym-class-price-original { color: rgba(255,255,255,0.55); }
-        .ym-classes-grid .ym-class-price-save { background: rgba(255,255,255,0.25); color: #fff; }
-        .ym-classes-grid .ym-class-badge { background: rgba(255,255,255,0.25); color: #fff; }
-        .ym-classes-grid .ym-class-btn-primary { background: #fff; color: #1d4ed8; }
-        .ym-classes-grid .ym-class-btn-primary:hover { background: #f3f4f6; }
-        .ym-class-name { font-size: 20px; font-weight: 800; color: var(--gray-900); margin-bottom: 3px; }
-        .ym-class-days { color: var(--gray-500); font-size: 13px; margin-bottom: 2px; }
-        .ym-class-time { color: var(--gray-400); font-size: 12px; margin-bottom: 18px; }
-        .ym-class-price-row { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-        .ym-class-price { font-size: 28px; font-weight: 800; color: #2563eb; font-family: 'Space Grotesk', 'Outfit', sans-serif; }
-        .ym-class-price-unit { font-size: 13px; color: var(--gray-400); }
-        .ym-class-price-original { font-size: 16px; font-weight: 600; color: var(--gray-400); text-decoration: line-through; font-family: 'Space Grotesk', 'Outfit', sans-serif; }
-        .ym-class-price-save { display: inline-block; background: #dcfce7; color: #15803d; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; margin-left: 2px; vertical-align: middle; }
-        .ym-class-btn { width: 100%; padding: 11px; border-radius: 11px; font-weight: 700; font-size: 13px; border: none; cursor: pointer; transition: all 0.2s; }
-        .ym-class-btn-primary { background: #2563eb; color: #fff; }
-        .ym-class-btn-primary:hover { background: #1d4ed8; }
-        .ym-class-badge { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; margin-bottom: 10px; }
-        @media (max-width: 760px) { .ym-classes-grid { grid-template-columns: 1fr; max-width: 380px; margin-left: auto; margin-right: auto; } }
-        @media (min-width: 560px) and (max-width: 760px) { .ym-classes-grid { grid-template-columns: repeat(2, 1fr); max-width: 100%; } }
+        /* week strip */
+        .yw-week-sec { background: var(--paper); padding: 70px 20px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+        .yw-week { margin-top: 30px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+        .yw-day { background: #fff; border: 1px solid var(--line); border-top: 5px solid var(--line); border-radius: 6px; padding: 14px 10px 16px; text-align: center; }
+        .yw-day b { display: block; font-size: 15px; color: var(--navy-ink); }
+        .yw-day span { display: block; margin-top: 8px; font-size: 13px; font-weight: 700; }
+        .yw-day small { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
+        .yw-day.c10 { border-top-color: var(--navy); } .yw-day.c10 span { color: var(--navy); }
+        .yw-day.c11 { border-top-color: var(--gold); } .yw-day.c11 span { color: #9a7413; }
+        .yw-day.c12 { border-top-color: var(--teal); } .yw-day.c12 span { color: var(--teal); }
+        .yw-day.off span { color: #94a3b8; font-weight: 500; }
 
-        .ym-slots-wrap { max-width: 640px; margin: 0 auto; }
-        .ym-slots-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; background: #2563eb; color: #fff; padding: 14px 22px; border-radius: 14px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; transition: background 0.2s; margin-bottom: 10px; }
-        .ym-slots-toggle:hover { background: #1d4ed8; }
-        .ym-slots-body { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 7px; }
-        .ym-slot-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 11px; border: 1px solid var(--gray-200); background: #fff; font-weight: 600; font-size: 14px; color: var(--gray-800); cursor: pointer; transition: all 0.2s; }
-        .ym-slot-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
-        .ym-slot-btn:hover:not(.active) { border-color: #93c5fd; }
-        .ym-slot-detail { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 11px; padding: 14px 18px; margin-top: 5px; display: flex; flex-direction: column; gap: 10px; }
-        .ym-slot-row { display: flex; align-items: flex-start; gap: 10px; }
-        .ym-slot-row-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
-        .ym-slot-row-label { font-weight: 600; color: #1e40af; font-size: 13px; }
-        .ym-slot-row-sub { color: #3b82f6; font-size: 11px; margin-top: 2px; }
-        .ym-offline-section { background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%); border-top: 1px solid #fed7aa; border-bottom: 1px solid #fed7aa; }
-        .ym-offline-card { background: linear-gradient(150deg, #ea9a3d 0%, #c2740b 100%); border: none; border-radius: 24px; padding: 48px 40px; text-align: center; box-shadow: var(--shadow-md); max-width: 580px; margin: 0 auto; }
-        .ym-offline-loc { display: inline-flex; align-items: center; gap: 6px; color: #fff; font-weight: 700; font-size: 16px; margin-bottom: 10px; }
-        .ym-btn-orange { background: #fff; color: #c2410c; padding: 13px 28px; border-radius: 12px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; transition: all 0.2s; }
-        .ym-btn-orange:hover { background: #fff7ed; }
-        .ym-why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .ym-why-card { border-radius: 18px; padding: 24px; transition: all 0.25s; border: none; }
-        .ym-why-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
-        .ym-why-icon { width: 54px; height: 54px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 14px; background: rgba(255,255,255,0.22); box-shadow: none; }
-        .ym-why-grid .ym-why-card:nth-child(1) { background: linear-gradient(150deg, #3163dd 0%, #1e40af 100%); box-shadow: var(--shadow-md); }
-        .ym-why-grid .ym-why-card:nth-child(2) { background: linear-gradient(150deg, #ea9a3d 0%, #c2740b 100%); box-shadow: var(--shadow-md); }
-        .ym-why-grid .ym-why-card:nth-child(3) { background: linear-gradient(150deg, #17a97a 0%, #0d7a56 100%); box-shadow: var(--shadow-md); }
-        .ym-why-grid .ym-why-card:nth-child(4) { background: linear-gradient(150deg, #7c5cdb 0%, #5b21b6 100%); box-shadow: var(--shadow-md); }
-        .ym-why-grid .ym-why-card:nth-child(5) { background: linear-gradient(150deg, #0ea5b7 0%, #0a7285 100%); box-shadow: var(--shadow-md); }
-        .ym-why-grid .ym-why-card:nth-child(6) { background: linear-gradient(150deg, #e2574c 0%, #b91c1c 100%); box-shadow: var(--shadow-md); }
-        .ym-why-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 7px; }
-        .ym-why-desc { color: rgba(255,255,255,0.88); font-size: 13px; line-height: 1.65; }
-        @media (max-width: 760px) { .ym-why-grid { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 480px) { .ym-why-grid { grid-template-columns: 1fr; } }
-        .ym-about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
-        .ym-about-text p { color: var(--gray-600); font-size: 16px; line-height: 1.8; margin-bottom: 18px; }
-        .ym-about-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        .ym-about-card { border-radius: 14px; padding: 18px; text-align: center; border: none; box-shadow: var(--shadow-sm); }
-        .ym-about-cards .ym-about-card:nth-child(1) { background: linear-gradient(150deg, #3163dd 0%, #1e40af 100%); }
-        .ym-about-cards .ym-about-card:nth-child(2) { background: linear-gradient(150deg, #ea9a3d 0%, #c2740b 100%); }
-        .ym-about-cards .ym-about-card:nth-child(3) { background: linear-gradient(150deg, #17a97a 0%, #0d7a56 100%); }
-        .ym-about-cards .ym-about-card:nth-child(4) { background: linear-gradient(150deg, #7c5cdb 0%, #5b21b6 100%); }
-        .ym-about-card-icon { font-size: 26px; margin-bottom: 7px; }
-        .ym-about-card-label { font-weight: 700; color: #fff; font-size: 13px; }
-        .ym-about-card-sub { color: rgba(255,255,255,0.82); font-size: 11px; margin-top: 3px; }
-        @media (max-width: 760px) { .ym-about-grid { grid-template-columns: 1fr; gap: 36px; } }
-        .ym-contact-section { background: var(--navy); }
-        .ym-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
-        .ym-contact-info h3 { font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 26px; font-weight: 700; margin-bottom: 7px; }
-        .ym-contact-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-        .ym-contact-icon { width: 40px; height: 40px; border-radius: 11px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-        .ym-contact-val { color: #fff; font-size: 14px; font-weight: 500; }
-        .ym-contact-val a { color: #93c5fd; text-decoration: none; }
-        .ym-contact-val a:hover { color: #fff; }
-        .ym-contact-sub { color: rgba(255,255,255,0.4); font-size: 11px; }
-        .ym-contact-cta { background: linear-gradient(150deg, #7c5cdb 0%, #5b21b6 100%); border: none; border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-lg); }
-        .ym-contact-cta-title { color: #fff; font-size: 18px; font-weight: 700; margin-bottom: 3px; }
-        .ym-contact-cta-sub { color: rgba(255,255,255,0.85); font-size: 13px; margin-bottom: 6px; }
-        .ym-contact-enroll-btn { width: 100%; background: var(--gold); color: #1a0a00; padding: 15px; border-radius: 13px; font-weight: 800; font-size: 15px; border: none; cursor: pointer; transition: all 0.2s; }
-        .ym-contact-enroll-btn:hover { background: var(--gold-light); }
-        @media (max-width: 760px) { .ym-contact-grid { grid-template-columns: 1fr; gap: 32px; } }
-        .ym-footer { background: #030a1f; color: rgba(255,255,255,0.5); padding: 44px 20px 22px; border-top: 3px solid #f59e0b; }
-        .ym-footer-inner { max-width: 1100px; margin: 0 auto; }
-        .ym-footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 36px; margin-bottom: 36px; }
-        .ym-footer-brand-name { color: #fff; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 22px; margin-bottom: 5px; }
-        .ym-footer-brand-tagline { color: #fcd34d; font-style: italic; font-size: 12px; margin-bottom: 10px; }
-        .ym-footer-brand-desc { font-size: 12px; line-height: 1.7; }
+        /* offline */
+        .yw-off { background: var(--navy-ink); color: #fff; padding: 70px 20px; position: relative; overflow: hidden; }
+        .yw-off::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 32px 32px; }
+        .yw-off-grid { position: relative; display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
+        .yw-off h2 { font-family: 'Fraunces', serif; font-weight: 700; font-size: clamp(1.7rem, 3.4vw, 2.5rem); line-height: 1.15; }
+        .yw-off p { margin-top: 12px; color: #b9cbe8; line-height: 1.7; max-width: 520px; }
+        .yw-off-box { border: 2px solid var(--gold); border-radius: 10px; padding: 26px; background: rgba(8,37,79,0.7); }
+        .yw-off-box b { display: block; font-family: 'Fraunces', serif; font-size: 22px; color: var(--gold); }
+        .yw-off-box span { display: block; margin: 6px 0 18px; font-size: 14px; color: #d5e1f5; }
+
+        /* steps */
+        .yw-steps { margin-top: 36px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; counter-reset: s; position: relative; }
+        .yw-step { position: relative; padding: 0 28px 0 0; }
+        .yw-step::before { counter-increment: s; content: counter(s); display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--navy); color: #fff; font-family: 'Fraunces', serif; font-weight: 700; font-size: 20px; position: relative; z-index: 1; }
+        .yw-step::after { content: ''; position: absolute; top: 21px; left: 44px; right: 0; height: 2px; background: repeating-linear-gradient(90deg, var(--navy) 0 8px, transparent 8px 14px); }
+        .yw-step:last-child::after { display: none; }
+        .yw-step h3 { margin-top: 16px; font-size: 18px; color: var(--navy-ink); }
+        .yw-step p { margin-top: 6px; color: var(--muted); font-size: 14.5px; line-height: 1.65; }
+
+        /* reasons */
+        .yw-why { background: var(--paper); border-top: 1px solid var(--line); }
+        .yw-why-grid { margin-top: 36px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 56px; }
+        .yw-why-item { padding: 22px 0 22px 22px; border-bottom: 1px solid var(--line); border-left: 4px solid var(--gold); margin-bottom: 0; }
+        .yw-why-item h3 { font-family: 'Fraunces', serif; font-size: 19px; color: var(--navy-ink); }
+        .yw-why-item p { margin-top: 6px; color: var(--muted); font-size: 15px; line-height: 1.65; }
+
+        /* mentor */
+        .yw-mentor { display: grid; grid-template-columns: 0.7fr 1.3fr; gap: 56px; align-items: center; }
+        .yw-mentor .yw-arch-frame { box-shadow: -12px 12px 0 var(--navy); border-color: var(--gold); }
+        .yw-mentor p { color: var(--text); font-size: 16.5px; line-height: 1.8; margin-top: 16px; max-width: 600px; }
+        .yw-quote { margin-top: 22px; padding: 14px 18px; border-left: 4px solid var(--gold); background: var(--paper); font-family: 'Fraunces', serif; font-size: 18px; color: var(--navy); }
+
+        /* contact */
+        .yw-contact { background: var(--navy); color: #fff; padding: 76px 20px; }
+        .yw-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+        .yw-contact h2 { font-family: 'Fraunces', serif; font-size: clamp(1.7rem, 3.2vw, 2.4rem); line-height: 1.15; }
+        .yw-crow { display: flex; gap: 14px; align-items: flex-start; margin-top: 22px; }
+        .yw-crow i { font-style: normal; width: 42px; height: 42px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; }
+        .yw-crow p { font-size: 15px; font-weight: 500; }
+        .yw-crow small { display: block; color: #b9cbe8; font-size: 12.5px; margin-top: 2px; }
+        .yw-crow a { color: var(--gold-soft); text-decoration: none; }
+        .yw-crow a:hover { text-decoration: underline; }
+        .yw-cta { background: #fff; color: var(--text); border-radius: 12px; padding: 32px; border-top: 6px solid var(--gold); }
+        .yw-cta h3 { font-family: 'Fraunces', serif; font-size: 24px; color: var(--navy-ink); }
+        .yw-cta p { margin-top: 8px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+        .yw-cta ul { list-style: none; margin: 18px 0 22px; }
+        .yw-cta li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 15px; }
+        .yw-cta li b { color: var(--navy); font-family: 'Space Grotesk', sans-serif; }
+        .yw-cta .yw-btn { width: 100%; }
+
+        /* footer */
+        .ym-footer { background: var(--navy-ink); color: rgba(255,255,255,0.6); padding: 48px 20px 22px; border-top: 4px solid var(--gold); }
+        .ym-footer-inner { max-width: 1120px; margin: 0 auto; }
+        .ym-footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 36px; margin-bottom: 32px; }
+        .ym-footer-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .ym-footer-logo img { width: 52px; height: 52px; border-radius: 10px; background: #fff; padding: 3px; object-fit: contain; }
+        .ym-footer-brand-name { color: #fff; font-family: 'Fraunces', serif; font-weight: 700; font-size: 21px; }
+        .ym-footer-brand-tagline { color: var(--gold); font-style: italic; font-size: 13px; margin-bottom: 10px; }
+        .ym-footer-brand-desc { font-size: 13px; line-height: 1.7; }
         .ym-footer-badges { display: flex; gap: 7px; margin-top: 14px; flex-wrap: wrap; }
-        .ym-footer-badge { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); border-radius: 7px; padding: 5px 10px; font-size: 11px; }
-        .ym-footer-h4 { color: #fff; font-weight: 700; font-size: 13px; margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
-        .ym-footer-h4::before { content: ''; display: inline-block; width: 20px; height: 3px; background: #f59e0b; border-radius: 2px; }
-        .ym-footer-h4::after { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #f59e0b; margin-left: -3px; }
-        .ym-footer-item { font-size: 12px; margin-bottom: 7px; line-height: 1.5; }
-        .ym-footer-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin-bottom: 18px; }
-        .ym-footer-visitor-bar { display: flex; align-items: center; justify-content: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 24px; margin-bottom: 24px; flex-wrap: wrap; }
+        .ym-footer-badge { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px 10px; font-size: 11px; }
+        .ym-footer-h4 { color: #fff; font-weight: 700; font-size: 14px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--gold); display: inline-block; }
+        .ym-footer-item { font-size: 13px; margin-bottom: 8px; line-height: 1.5; }
+        .ym-footer-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin-bottom: 18px; }
+        .ym-footer-visitor-bar { display: flex; align-items: center; justify-content: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px 24px; margin-bottom: 24px; flex-wrap: wrap; }
         .ym-footer-visitor-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: visitorPulse 2s ease infinite; flex-shrink: 0; }
         .ym-footer-visitor-dot.error { background: #f59e0b; animation: none; }
-        .ym-footer-visitor-count { color: #fff; font-weight: 700; font-size: 18px; font-family: 'DM Serif Display', 'Cormorant Garamond', serif; }
-        .ym-footer-visitor-label { color: rgba(255,255,255,0.35); font-size: 12px; }
-        .ym-footer-visitor-sep { color: rgba(255,255,255,0.13); font-size: 16px; }
+        .ym-footer-visitor-count { color: #fff; font-weight: 700; font-size: 18px; font-family: 'Fraunces', serif; }
+        .ym-footer-visitor-label { color: rgba(255,255,255,0.4); font-size: 12px; }
+        .ym-footer-visitor-sep { color: rgba(255,255,255,0.15); font-size: 16px; }
         .ym-skeleton { display: inline-block; background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% auto; animation: skeletonShimmer 1.5s linear infinite; border-radius: 4px; height: 1em; width: 40px; vertical-align: middle; }
-        @keyframes skeletonShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
-        @keyframes visitorPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
         .ym-footer-policy-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 0; margin-bottom: 14px; }
-        .ym-footer-policy-link { font-size: 11px; color: rgba(255,255,255,0.35); text-decoration: none; transition: color 0.2s; padding: 4px 12px; border-right: 1px solid rgba(255,255,255,0.1); }
+        .ym-footer-policy-link { font-size: 12px; color: rgba(255,255,255,0.45); text-decoration: none; transition: color 0.2s; padding: 4px 12px; border-right: 1px solid rgba(255,255,255,0.12); }
         .ym-footer-policy-link:last-child { border-right: none; }
-        .ym-footer-policy-link:hover { color: #93c5fd; }
-        .ym-footer-copy { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11px; text-align: center; }
-        @media (max-width: 760px) { .ym-footer-grid { grid-template-columns: 1fr; gap: 28px; } }
-        .ym-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 14px; backdrop-filter: blur(4px); }
-        .ym-modal { background: #fff; border-radius: 24px; width: 100%; max-width: 460px; box-shadow: 0 24px 80px rgba(0,0,0,0.3); overflow: hidden; max-height: 94vh; overflow-y: auto; position: relative; }
-        .ym-modal-head { background: linear-gradient(135deg, #5b4bdb 0%, #3b2fa0 100%); padding: 24px 28px 20px; color: #fff; position: sticky; top: 0; z-index: 10; }
+        .ym-footer-policy-link:hover { color: var(--gold); }
+        .ym-footer-copy { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 12px; text-align: center; }
+
+        @media (max-width: 900px) {
+          .yw-intro-grid, .yw-mentor, .yw-contact-grid, .yw-off-grid { grid-template-columns: 1fr; gap: 36px; }
+          .yw-arch { max-width: 280px; }
+          .yw-arch-tag { left: 0; }
+          .yw-facts-row { grid-template-columns: 1fr 1fr; }
+          .yw-batch { grid-template-columns: 1fr; gap: 12px; }
+          .yw-batch-buy { text-align: left; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+          .yw-batch-buy .yw-btn { margin-top: 0; }
+          .yw-price-was { display: inline; margin-right: 8px; }
+          .yw-week { grid-template-columns: repeat(4, 1fr); }
+          .yw-steps { grid-template-columns: 1fr; gap: 28px; }
+          .yw-step::after { display: none; }
+          .yw-why-grid { grid-template-columns: 1fr; }
+          .ym-footer-grid { grid-template-columns: 1fr; gap: 28px; }
+          .yw-sec { padding: 60px 18px; }
+          .yw-intro { padding: 48px 18px; }
+        }
+        @media (max-width: 520px) { .yw-intro-btns .yw-btn { width: 100%; } .yw-week { grid-template-columns: repeat(3, 1fr); } }
+
+        /* modal */
+        .ym-overlay { position: fixed; inset: 0; background: rgba(6,26,56,0.7); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 14px; backdrop-filter: blur(4px); }
+        .ym-modal { background: #fff; border-radius: 16px; width: 100%; max-width: 460px; box-shadow: 0 24px 80px rgba(0,0,0,0.35); overflow: hidden; max-height: 94vh; overflow-y: auto; position: relative; }
+        .ym-modal-head { background: linear-gradient(135deg, #0b3a7a 0%, #061a38 100%); padding: 24px 28px 20px; color: #fff; position: sticky; top: 0; z-index: 10; border-bottom: 4px solid var(--gold); }
         .ym-modal-close { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.15); border: none; color: #fff; width: 30px; height: 30px; border-radius: 7px; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .ym-modal-close:hover { background: rgba(255,255,255,0.25); }
-        .ym-modal-steps { display: flex; align-items: center; gap: 7px; margin-bottom: 16px; }
+        .ym-modal-steps { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
         .ym-modal-step { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; transition: all 0.3s; }
         .ym-modal-step.current { background: var(--gold); color: #1a0a00; }
         .ym-modal-step.done { background: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
@@ -510,41 +500,39 @@ export default function Home() {
         .ym-modal-step-line { flex: 1; height: 2px; border-radius: 1px; max-width: 36px; }
         .ym-modal-step-line.done { background: rgba(255,255,255,0.3); }
         .ym-modal-step-line.future { background: rgba(255,255,255,0.1); }
-        .ym-modal-emoji { font-size: 28px; margin-bottom: 7px; }
-        .ym-modal-title { font-size: 20px; font-weight: 800; }
-        .ym-modal-sub { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 3px; }
+        .ym-modal-logo { width: 44px; height: 44px; border-radius: 10px; background: #fff; padding: 2px; object-fit: contain; margin-bottom: 8px; display: block; }
+        .ym-modal-title { font-family: 'Fraunces', serif; font-size: 21px; font-weight: 700; }
+        .ym-modal-sub { color: rgba(255,255,255,0.65); font-size: 13px; margin-top: 3px; }
         .ym-modal-body { padding: 24px 28px 28px; }
-        .ym-form-info { background: #f1efff; border: 1px solid #d8d2ff; border-radius: 11px; padding: 10px 14px; display: flex; gap: 7px; font-size: 12px; color: #3b2fa0; margin-bottom: 18px; }
-        .ym-form-label { font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; display: block; }
+        .ym-form-info { background: #eef4fc; border: 1px solid #cfdcf0; border-radius: 8px; padding: 10px 14px; display: flex; gap: 7px; font-size: 12px; color: var(--navy); margin-bottom: 18px; }
+        .ym-form-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; display: block; }
         .ym-form-group { display: flex; flex-direction: column; }
-        .ym-input { width: 100%; border: 1.5px solid var(--gray-200); padding: 11px 14px; border-radius: 11px; font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--gray-900); outline: none; transition: border-color 0.2s; background: #fff; }
-        .ym-input:focus { border-color: #5b4bdb; box-shadow: 0 0 0 3px rgba(91,75,219,0.12); }
-        .ym-input::placeholder { color: var(--gray-400); }
+        .ym-input { width: 100%; border: 1.5px solid #d3dbe8; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--text); outline: none; transition: border-color 0.2s; background: #fff; }
+        .ym-input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(11,58,122,0.14); }
+        .ym-input::placeholder { color: #9aa7bb; }
         .ym-form-stack { display: flex; flex-direction: column; gap: 12px; }
         .ym-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .ym-policy-text { font-size: 11px; color: var(--gray-400); text-align: center; line-height: 1.6; }
-        .ym-policy-text a { color: #5b4bdb; text-decoration: none; }
-        .ym-submit-btn { width: 100%; background: #5b4bdb; color: #fff; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; margin-top: 3px; }
-        .ym-submit-btn:hover { background: #4a3cc4; }
-        .ym-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .ym-pay-summary { background: #f1efff; border: 1.5px solid #d8d2ff; border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-        .ym-pay-class { font-size: 11px; color: #5b4bdb; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
-        .ym-pay-amount { font-size: 26px; font-weight: 800; color: #3b2fa0; }
-        .ym-pay-unit { font-size: 12px; color: var(--gray-400); }
-        .ym-pay-discount { background: #dcfce7; color: #15803d; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 10px; text-align: center; }
-        .ym-confirm-btn { width: 100%; background: #5b21b6; color: #fff; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .ym-confirm-btn:hover:not(:disabled) { background: #4c1d95; }
-        .ym-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .ym-pay-err { background: #fee2e2; border: 1px solid #fecaca; border-radius: 11px; padding: 11px 14px; color: #dc2626; font-size: 13px; text-align: center; margin-top: 10px; }
-        .ym-pay-secure { text-align: center; margin-top: 12px; font-size: 11px; color: var(--gray-400); }
+        .ym-policy-text { font-size: 11px; color: #8795ab; text-align: center; line-height: 1.6; }
+        .ym-policy-text a { color: var(--navy); text-decoration: none; }
+        .ym-submit-btn { width: 100%; background: var(--navy); color: #fff; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; margin-top: 3px; font-family: inherit; }
+        .ym-submit-btn:hover { background: var(--navy-deep); }
+        .ym-pay-summary { background: #eef4fc; border: 1.5px solid #cfdcf0; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; text-align: left; }
+        .ym-pay-class { font-size: 12px; color: var(--navy); font-weight: 600; margin-bottom: 3px; }
+        .ym-pay-amount { font-size: 26px; font-weight: 800; color: var(--navy-ink); }
+        .ym-pay-unit { font-size: 12px; color: var(--muted); }
+        .ym-pay-discount { background: var(--gold-soft); color: #7a5a0c; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; text-align: center; }
+        .ym-confirm-btn { width: 100%; background: var(--gold); color: var(--navy-ink); padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 800; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; }
+        .ym-confirm-btn:hover:not(:disabled) { background: #e6b94c; }
+        .ym-confirm-btn:disabled, .ym-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .ym-pay-err { background: #fee2e2; border: 1px solid #fecaca; border-radius: 8px; padding: 11px 14px; color: #dc2626; font-size: 13px; text-align: center; margin-top: 10px; }
+        .ym-pay-secure { text-align: center; margin-top: 12px; font-size: 11px; color: #8795ab; }
         .ym-spin { animation: spin 0.8s linear infinite; }
-        @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
       `}</style>
 
       {/* NAVBAR */}
       <Navbar onEnroll={() => openModal()} />
 
-      {/* ───── TOP BANNER CAROUSEL (5 slides) ───── */}
+      {/* ───── TOP BANNER CAROUSEL (live part — only the logo changed) ───── */}
       <section
         className="bn-wrap"
         aria-roledescription="carousel"
@@ -556,17 +544,15 @@ export default function Home() {
           {banners.map((b, i) => (
             <div key={i} className={`bn-slide${b.dark ? " bn-dark" : ""}`} style={{ background: b.bg }} aria-hidden={slide !== i}>
               <div className="bn-inner">
-                {/* left: brand + big title */}
                 <div>
                   <div className="bn-brand">
-                    <div className="bn-logo">YM</div>
+                    <img className="bn-logo" src="/logo.png" alt="Yarwng Mathematics logo" />
                     <p className="bn-brand-name">YARWNG<br />MATHEMATICS</p>
                   </div>
                   <h2 className="bn-title">{b.title[0]}<br />{b.title[1]}</h2>
                   <p className="bn-sub">{b.sub}</p>
                 </div>
 
-                {/* middle: pill, points, price + CTA */}
                 <div>
                   <span className="bn-pill">{b.pill}</span>
                   <div className="bn-points">
@@ -581,7 +567,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* right: teacher photo */}
                 <div className="bn-photo">
                   <div className="bn-photo-circle">
                     <img src="/profile.jpg" alt="Rakesh Debbarma, M.Sc Mathematics, IIT Delhi" />
@@ -602,199 +587,160 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───── SIMPLE HERO ───── */}
-      <section className="hv" aria-label="Yarwng Mathematics">
-        <div className="hv-inner">
+      {/* ───── INTRO (graph-paper) ───── */}
+      <section className="yw-intro" aria-label="Introduction">
+        <div className="yw-wrap yw-intro-grid">
           <div>
-            <h1 className="hv-title">
-              Tripura&apos;s <em>Trusted &amp; Affordable</em> Mathematics Coaching
-            </h1>
-            <p className="hv-desc">
-              Learn Class 10, 11 &amp; 12 Maths from an IIT Delhi graduate. Live online classes on Google Meet, offline classes at Khumulwng soon — starting at just ₹600 a month.
+            <h1>Maths that makes sense, from someone who studied it at IIT Delhi</h1>
+            <p>
+              Small, steady, live classes for Class 10, 11 and 12. We work through the reasoning behind every
+              chapter, then practise until it sticks. Fees start at ₹600 a month.
             </p>
-            <div className="hv-btns">
-              <button onClick={() => openModal()} className="hv-btn">Get Started</button>
-              <Link href="/classes" className="hv-btn-line">View Schedule</Link>
-            </div>
-            <div className="hv-trust">
-              <span>IIT Delhi M.Sc faculty</span>
-              <span>Live on Google Meet</span>
-              <span>WhatsApp doubt support</span>
+            <div className="yw-intro-btns">
+              <button onClick={() => openModal()} className="yw-btn yw-btn-gold">Reserve a seat</button>
+              <a href="#classes" className="yw-btn yw-btn-ghost">See the batches</a>
             </div>
           </div>
-
-          <div className="hv-art" aria-hidden="true">
-            <div className="hv-ring r1" />
-            <div className="hv-ring r2" />
-            <span className="hv-orb o1" /><span className="hv-orb o2" /><span className="hv-orb o3" /><span className="hv-orb o4" />
-            <div className="hv-chip c1">🎓 IIT Delhi</div>
-            <div className="hv-chip c2">📘 Class 10 · 11 · 12</div>
-            <div className="hv-q">Sir, what is Yarwng Mathematics?</div>
-            <div className="hv-photo"><img src="/profile.jpg" alt="" /></div>
-            <div className="hv-a">Yarwng Mathematics is where students learn with concepts and grow with guidance.</div>
+          <div className="yw-arch">
+            <div className="yw-arch-frame"><img src="/profile.jpg" alt="Rakesh Debbarma" /></div>
+            <div className="yw-arch-tag"><strong>Rakesh Debbarma</strong>M.Sc Mathematics, IIT Delhi</div>
           </div>
         </div>
       </section>
 
-      {/* CLASSES */}
-      <section id="classes" className="ym-section" style={{ background: "#fff" }}>
-        <div className="ym-section-inner">
-          <div className="ym-section-head">
-            <div className="ym-section-tag green">🟢 Currently via Google Meet</div>
-            <h2 className="ym-section-h2">Online Classes</h2>
-            <div className="ym-section-line" style={{ background: "#22c55e" }} />
-            <p className="ym-section-desc">Live interactive sessions via Google Meet. Join from anywhere across India.</p>
-          </div>
-          <div className="ym-classes-grid">
-            {Object.entries(PAYMENT.classes).map(([cls], idx) => {
-              const p = PAYMENT.classes[cls as keyof typeof PAYMENT.classes];
+      <section className="yw-facts" aria-label="Quick facts">
+        <div className="yw-wrap yw-facts-row">
+          <div className="yw-fact"><b>3 batches</b><span>Class 10, 11 and 12</span></div>
+          <div className="yw-fact"><b>2 hours</b><span>per class, twice a week</span></div>
+          <div className="yw-fact"><b>5 to 7 PM</b><span>every batch, every week</span></div>
+          <div className="yw-fact"><b>₹600</b><span>a month, to begin with</span></div>
+        </div>
+      </section>
+
+      {/* BATCHES */}
+      <section id="classes" className="yw-sec">
+        <div className="yw-wrap">
+          <h2 className="yw-h2">Choose your batch</h2>
+          <p className="yw-lead">Live on Google Meet from anywhere in India. Pick the class you are in and the fee is monthly.</p>
+          <div className="yw-batch-list">
+            {(Object.keys(PAYMENT.classes) as Array<keyof typeof PAYMENT.classes>).map((cls) => {
+              const p = PAYMENT.classes[cls];
               const offerPrice = p.offer === 1 ? p.original : p.offer;
-              const savePct = Math.round(((p.original - offerPrice) / p.original) * 100);
+              const s = SLOTS[cls];
               return (
-                <div key={cls} className={`ym-class-card${idx === 1 ? " featured" : ""}`}>
-                  {idx === 1 && <div className="ym-class-badge">Most Popular</div>}
-                  <div className="ym-class-icon">{cls === "Class 10" ? "📘" : cls === "Class 11" ? "📙" : "📗"}</div>
-                  <h3 className="ym-class-name">{cls}</h3>
-                  <p className="ym-class-days">{SLOTS[cls as keyof typeof SLOTS].days}</p>
-                  <p className="ym-class-time">{SLOTS[cls as keyof typeof SLOTS].time}</p>
-                  <div className="ym-class-price-row">
-                    <span className="ym-class-price">₹{offerPrice}</span>
-                    <span className="ym-class-price-original">₹{p.original}</span>
-                    <span className="ym-class-price-unit">/mo</span>
-                    <span className="ym-class-price-save">{savePct}% off</span>
+                <div key={cls} className="yw-batch">
+                  <h3 className="yw-batch-name">{cls}</h3>
+                  <div className="yw-batch-when">
+                    <b>{s.days}</b>
+                    <span>{s.time}</span>
                   </div>
-                  <button onClick={() => openModal()} className="ym-class-btn ym-class-btn-primary">Join {cls}</button>
+                  <div>
+                    <div className="yw-chips">{s.desc.slice(0, 4).map((t) => (<span key={t} className="yw-chip">{t}</span>))}</div>
+                    <p className="yw-batch-note">{s.desc[4]}</p>
+                  </div>
+                  <div className="yw-batch-buy">
+                    <div>
+                      <span className="yw-price-was">₹{p.original}</span>
+                      <span className="yw-price">₹{offerPrice}<small> / month</small></span>
+                    </div>
+                    <button onClick={() => openForClass(cls)} className="yw-btn yw-btn-navy">Join {cls}</button>
+                  </div>
                 </div>
               );
             })}
           </div>
-          <div className="ym-slots-wrap">
-            <button onClick={() => { setSlotsOpen(!slotsOpen); setSelectedSlot(null); }} className="ym-slots-toggle">
-              <span>📅 View Detailed Class Slots</span><span style={{ fontSize: "20px" }}>{slotsOpen ? "−" : "+"}</span>
-            </button>
-            {slotsOpen && (
-              <div className="ym-slots-body">
-                {(["Class 10", "Class 11", "Class 12"] as const).map((cls) => {
-                  const p = PAYMENT.classes[cls];
-                  const offerPrice = p.offer === 1 ? p.original : p.offer;
-                  return (
-                    <div key={cls}>
-                      <button onClick={() => setSelectedSlot(selectedSlot === cls ? null : cls)} className={`ym-slot-btn${selectedSlot === cls ? " active" : ""}`}>
-                        <span>{cls}</span><span>{selectedSlot === cls ? "▲" : "▼"}</span>
-                      </button>
-                      {selectedSlot === cls && (
-                        <div className="ym-slot-detail">
-                          <div className="ym-slot-row"><span className="ym-slot-row-icon">📋</span><div style={{ flex: 1 }}><p className="ym-slot-row-label">What you&apos;ll learn</p><div style={{ display: "flex", flexDirection: "column", gap: "5px", marginTop: "5px" }}>{(SLOTS[cls].desc as string[]).map((item, i) => (<div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "7px" }}><span style={{ color: "#2563eb", fontSize: "15px", lineHeight: "1.4", flexShrink: 0 }}>›</span><span style={{ color: "#1e40af", fontSize: "12px", lineHeight: "1.65" }}>{item}</span></div>))}</div></div></div>
-                          <div className="ym-slot-row"><span className="ym-slot-row-icon">📆</span><div><p className="ym-slot-row-label">{SLOTS[cls].days}</p><p className="ym-slot-row-sub">Every week</p></div></div>
-                          <div className="ym-slot-row"><span className="ym-slot-row-icon">🕐</span><div><p className="ym-slot-row-label">{SLOTS[cls].time}</p><p className="ym-slot-row-sub">Evening · 2 hours</p></div></div>
-                          <div className="ym-slot-row"><span className="ym-slot-row-icon">💰</span><div><p className="ym-slot-row-label">₹{offerPrice}/month</p><p className="ym-slot-row-sub">Regular: ₹{p.original}/month</p></div></div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+        </div>
+      </section>
+
+      {/* WEEK */}
+      <section className="yw-week-sec" aria-label="Weekly timetable">
+        <div className="yw-wrap">
+          <h2 className="yw-h2">Your week at a glance</h2>
+          <p className="yw-lead">Each batch meets twice a week, 5 to 7 in the evening. Sunday is free for revision.</p>
+          <div className="yw-week">
+            {WEEK.map((w) => (
+              <div key={w.d} className={`yw-day ${w.c ? "c" + w.c.split(" ")[1] : "off"}`}>
+                <b>{w.d}</b>
+                <span>{w.c || "No class"}</span>
+                {w.c && <small>5 to 7 PM</small>}
               </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* OFFLINE */}
-      <section className="ym-section ym-offline-section">
-        <div className="ym-section-inner">
-          <div className="ym-section-head">
-            <div className="ym-section-tag orange">🔔 Starting Soon</div>
-            <h2 className="ym-section-h2">Offline Session</h2>
-            <div className="ym-section-line" style={{ background: "#f97316" }} />
-          </div>
-          <div className="ym-offline-card">
-            <div style={{ fontSize: "44px", marginBottom: "14px" }}>🏫</div>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "24px", fontWeight: 700, color: "#fff", marginBottom: "7px" }}>Physical Classroom</h3>
-            <div className="ym-offline-loc">📍 Khumulwng, Tripura</div>
-            <p style={{ color: "rgba(255,255,255,0.9)", marginBottom: "20px", maxWidth: "400px", margin: "0 auto 20px", lineHeight: 1.7, fontSize: "14px" }}>Face-to-face classes in a structured environment. Personalised attention. Details will be announced soon.</p>
-            <div style={{ display: "inline-block", background: "rgba(255,255,255,0.22)", color: "#fff", padding: "7px 18px", borderRadius: "10px", fontWeight: 700, fontSize: "13px", marginBottom: "20px" }}>⏳ Launching Soon — Limited Seats</div>
-            <br />
-            <button onClick={() => openModal("Offline")} className="ym-btn-orange">Register Interest</button>
-          </div>
-        </div>
-      </section>
-
-      {/* WHY US */}
-      <section id="why-us" className="ym-section" style={{ background: "linear-gradient(180deg, #f9fafb 0%, #fff 100%)" }}>
-        <div className="ym-section-inner">
-          <div className="ym-section-head">
-            <div className="ym-section-tag gold">⭐ Our Edge</div>
-            <h2 className="ym-section-h2">What Makes Us Different</h2>
-            <div className="ym-section-line" style={{ background: "#f59e0b" }} />
-          </div>
-          <div className="ym-why-grid">
-            {[
-              { icon: "🧠", title: "Conceptual Depth", desc: "We don't just teach formulas — we build intuition and deep understanding that lasts beyond exams." },
-              { icon: "👨‍🏫", title: "IIT-Level Expertise", desc: "Faculty trained at one of India's premier institutes brings top-tier rigour to every class." },
-              { icon: "🗓️", title: "Structured Timetable", desc: "Fixed weekly slots per class ensure consistency, discipline, and steady progress." },
-              { icon: "💬", title: "WhatsApp Support", desc: "Doubt-clearing continues beyond class hours via dedicated WhatsApp groups for every batch." },
-              { icon: "🖥️", title: "Google Meet Sessions", desc: "High-quality online classes via Google Meet — join from anywhere with a good connection." },
-              { icon: "📝", title: "Regular Assessments", desc: "Frequent tests and detailed feedback help track progress and identify areas needing improvement." },
-            ].map((item) => (
-              <div key={item.title} className="ym-why-card"><div className="ym-why-icon">{item.icon}</div><h3 className="ym-why-title">{item.title}</h3><p className="ym-why-desc">{item.desc}</p></div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ABOUT */}
-      <section id="about" className="ym-section" style={{ background: "#fff" }}>
-        <div className="ym-section-inner">
-          <div className="ym-section-head">
-            <div className="ym-section-tag blue">🎓 Our Story</div>
-            <h2 className="ym-section-h2">Know About Yarwng Mathematics</h2>
-            <div className="ym-section-line" style={{ background: "#2563eb" }} />
+      {/* OFFLINE */}
+      <section className="yw-off">
+        <div className="yw-wrap yw-off-grid">
+          <div>
+            <h2>A real classroom is coming to Khumulwng</h2>
+            <p>Prefer a blackboard and a teacher in the room? Offline batches are being planned with small groups so every student gets personal attention. Tell us you are interested and we will contact you first.</p>
           </div>
-          <div className="ym-about-grid">
-            <div className="ym-about-text">
-              <p><strong style={{ color: "#5b4bdb" }}>Yarwng Mathematics</strong> was founded to make advanced mathematics accessible and enjoyable for every student in Tripura and beyond.</p>
-              <p>Led by <strong>Rakesh Debbarma</strong>, an M.Sc graduate from <strong>IIT Delhi</strong>, we bring world-class mathematical thinking to your doorstep.</p>
-              <p>Our approach combines rigorous conceptual teaching, regular problem-solving, and personalised attention so every student grows confidently.</p>
-              <button onClick={() => openModal()} className="ym-btn-gold" style={{ marginTop: "6px" }}>Start Learning Today →</button>
-            </div>
-            <div className="ym-about-cards">
-              {[{ icon: "🎓", label: "IIT Delhi Alumni", sub: "M.Sc Mathematics" }, { icon: "📚", label: "Classes 10–12", sub: "Full syllabus coverage" }, { icon: "🌐", label: "Online & Offline", sub: "Flexible modes" }, { icon: "📈", label: "Proven Results", sub: "High scoring students" }].map((card) => (
-                <div key={card.label} className="ym-about-card"><div className="ym-about-card-icon">{card.icon}</div><p className="ym-about-card-label">{card.label}</p><p className="ym-about-card-sub">{card.sub}</p></div>
-              ))}
-            </div>
+          <div className="yw-off-box">
+            <b>Offline batch, Khumulwng</b>
+            <span>Seats are limited. Registering interest is free.</span>
+            <button onClick={() => openModal("Offline")} className="yw-btn yw-btn-gold" style={{ width: "100%" }}>Register interest</button>
+          </div>
+        </div>
+      </section>
+
+      {/* HOW TO JOIN */}
+      <section className="yw-sec">
+        <div className="yw-wrap">
+          <h2 className="yw-h2">Joining takes three steps</h2>
+          <div className="yw-steps">
+            {steps.map((s) => (
+              <div key={s.t} className="yw-step"><h3>{s.t}</h3><p>{s.d}</p></div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* WHY */}
+      <section id="why-us" className="yw-sec yw-why">
+        <div className="yw-wrap">
+          <h2 className="yw-h2">What students get in every class</h2>
+          <div className="yw-why-grid">
+            {reasons.map((r) => (
+              <div key={r.t} className="yw-why-item"><h3>{r.t}</h3><p>{r.d}</p></div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* MENTOR */}
+      <section id="about" className="yw-sec">
+        <div className="yw-wrap yw-mentor">
+          <div className="yw-arch"><div className="yw-arch-frame"><img src="/profile.jpg" alt="Rakesh Debbarma, M.Sc Mathematics, IIT Delhi" /></div></div>
+          <div>
+            <h2 className="yw-h2">Meet your teacher, Rakesh Debbarma</h2>
+            <p>Yarwng Mathematics began with a simple idea: students in Tripura should not have to leave home to learn maths from someone trained at a top institute.</p>
+            <p>Rakesh sir holds an M.Sc in Mathematics from IIT Delhi. He teaches by asking students to explain their steps, fixing the misunderstanding underneath, and giving plenty of problems to practise on.</p>
+            <div className="yw-quote">Learn the concept first. The marks follow.</div>
+            <div style={{ marginTop: 26 }}><button onClick={() => openModal()} className="yw-btn yw-btn-navy">Start learning</button></div>
           </div>
         </div>
       </section>
 
       {/* CONTACT */}
-      <section id="contact" className="ym-section ym-contact-section">
-        <div className="ym-section-inner">
-          <div className="ym-section-head">
-            <div className="ym-section-tag" style={{ background: "rgba(255,255,255,0.1)", color: "#93c5fd" }}>📬 Get In Touch</div>
-            <h2 className="ym-section-h2" style={{ color: "#fff" }}>Contact Us</h2>
-            <div className="ym-section-line" style={{ background: "#f59e0b" }} />
+      <section id="contact" className="yw-contact">
+        <div className="yw-wrap yw-contact-grid">
+          <div>
+            <h2>Questions before you join? Talk to us.</h2>
+            <div className="yw-crow"><i>👨‍🏫</i><div><p>Rakesh Debbarma</p><small>M.Sc Mathematics, IIT Delhi</small></div></div>
+            <div className="yw-crow"><i>📱</i><div><p><a href="tel:9366030347">9366030347</a></p><small>Call or message on WhatsApp</small></div></div>
+            <div className="yw-crow"><i>✉️</i><div><p><a href="mailto:yarwngmathematics@gmail.com">yarwngmathematics@gmail.com</a></p></div></div>
+            <div className="yw-crow"><i>📍</i><div><p>Khumulwng, Tripura</p><small>Offline classes launching soon</small></div></div>
           </div>
-          <div className="ym-contact-grid">
-            <div className="ym-contact-info">
-              <h3>Yarwng Mathematics</h3>
-              {[
-                { icon: "👨‍🏫", val: "Rakesh Debbarma", sub: "M.Sc Mathematics, IIT Delhi" },
-                { icon: "📱", val: <a href="tel:9366030347">9366030347</a>, sub: "WhatsApp available" },
-                { icon: "✉️", val: <a href="mailto:yarwngmathematics@gmail.com">yarwngmathematics@gmail.com</a>, sub: "" },
-                { icon: "📍", val: "Khumulwng, Tripura", sub: "Offline classes launching soon" },
-              ].map((r, i) => (
-                <div key={i} className="ym-contact-row"><div className="ym-contact-icon">{r.icon}</div><div><p className="ym-contact-val">{r.val}</p>{r.sub && <p className="ym-contact-sub">{r.sub}</p>}</div></div>
-              ))}
-            </div>
-            <div className="ym-contact-cta">
-              <div><p className="ym-contact-cta-title">Ready to Excel in Mathematics?</p><p className="ym-contact-cta-sub">Admissions are open. Limited seats per batch — enroll now to secure your spot.</p></div>
-              <button onClick={() => openModal()} className="ym-contact-enroll-btn">🚀 Enroll Now →</button>
-              <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
-                {["Class 10 · ₹600/mo", "Class 11 · ₹800/mo", "Class 12 · ₹900/mo"].map((t) => (
-                  <span key={t} style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "7px", padding: "5px 10px", fontSize: "11px", color: "rgba(255,255,255,0.9)" }}>{t}</span>
-                ))}
-              </div>
-            </div>
+          <div className="yw-cta">
+            <h3>Admissions are open</h3>
+            <p>Each batch has limited seats. Register now to hold yours.</p>
+            <ul>
+              <li><span>Class 10</span><b>₹600 / month</b></li>
+              <li><span>Class 11</span><b>₹800 / month</b></li>
+              <li><span>Class 12</span><b>₹900 / month</b></li>
+            </ul>
+            <button onClick={() => openModal()} className="yw-btn yw-btn-gold">Enroll now</button>
           </div>
         </div>
       </section>
@@ -804,9 +750,12 @@ export default function Home() {
         <div className="ym-footer-inner">
           <div className="ym-footer-grid">
             <div>
-              <p className="ym-footer-brand-name">Yarwng Mathematics</p>
+              <div className="ym-footer-logo">
+                <img src="/logo.png" alt="Yarwng Mathematics logo" />
+                <p className="ym-footer-brand-name">Yarwng Mathematics</p>
+              </div>
               <p className="ym-footer-brand-tagline">&quot;Amani Kok Kokborok bai Swrwngwi Mannai&quot;</p>
-              <p className="ym-footer-brand-desc">Professional Mathematics Coaching for Classes 10, 11 &amp; 12. Conceptual clarity. Proven results. By Rakesh Debbarma, M.Sc IIT Delhi.</p>
+              <p className="ym-footer-brand-desc">Mathematics coaching for Classes 10, 11 &amp; 12 by Rakesh Debbarma, M.Sc IIT Delhi.</p>
               <div className="ym-footer-badges">
                 <span className="ym-footer-badge"><span style={{ color: "#a78bfa", fontWeight: 700 }}>PhonePe</span><span>UPI</span></span>
                 <span className="ym-footer-badge"><span style={{ color: "#34d399" }}>🔒 SSL</span><span>Secure</span></span>
@@ -814,18 +763,18 @@ export default function Home() {
             </div>
             <div>
               <p className="ym-footer-h4">Contact</p>
-              <p className="ym-footer-item">👨‍🏫 <strong style={{ color: "rgba(255,255,255,0.75)" }}>Rakesh Debbarma</strong></p>
+              <p className="ym-footer-item">👨‍🏫 <strong style={{ color: "rgba(255,255,255,0.8)" }}>Rakesh Debbarma</strong></p>
               <p className="ym-footer-item">🎓 M.Sc Mathematics, IIT Delhi</p>
-              <p className="ym-footer-item">📱 <a href="tel:9366030347" style={{ color: "#93c5fd", textDecoration: "none" }}>9366030347</a></p>
-              <p className="ym-footer-item">✉️ <a href="mailto:yarwngmathematics@gmail.com" style={{ color: "#93c5fd", textDecoration: "none" }}>yarwngmathematics@gmail.com</a></p>
+              <p className="ym-footer-item">📱 <a href="tel:9366030347" style={{ color: "#f4e3b3", textDecoration: "none" }}>9366030347</a></p>
+              <p className="ym-footer-item">✉️ <a href="mailto:yarwngmathematics@gmail.com" style={{ color: "#f4e3b3", textDecoration: "none" }}>yarwngmathematics@gmail.com</a></p>
               <p className="ym-footer-item">📍 Khumulwng, Tripura</p>
             </div>
             <div>
-              <p className="ym-footer-h4">Classes Offered</p>
-              <p className="ym-footer-item">📘 Class 10 · Mon &amp; Wed · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹600</span> <span style={{ textDecoration: "line-through", color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>₹700</span></p>
-              <p className="ym-footer-item">📙 Class 11 · Tue &amp; Fri · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹800</span> <span style={{ textDecoration: "line-through", color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>₹900</span></p>
-              <p className="ym-footer-item">📗 Class 12 · Thu &amp; Sat · 5–7 PM · <span style={{ color: "#93c5fd" }}>₹900</span> <span style={{ textDecoration: "line-through", color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>₹1000</span></p>
-              <p className="ym-footer-item" style={{ color: "#fb923c", marginTop: "10px" }}>🏫 Offline: Khumulwng (Launching Soon)</p>
+              <p className="ym-footer-h4">Batches</p>
+              <p className="ym-footer-item">Class 10: Mon &amp; Wed, 5 to 7 PM, <span style={{ color: "#f4e3b3" }}>₹600</span> <span style={{ textDecoration: "line-through", color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>₹700</span></p>
+              <p className="ym-footer-item">Class 11: Tue &amp; Fri, 5 to 7 PM, <span style={{ color: "#f4e3b3" }}>₹800</span> <span style={{ textDecoration: "line-through", color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>₹900</span></p>
+              <p className="ym-footer-item">Class 12: Thu &amp; Sat, 5 to 7 PM, <span style={{ color: "#f4e3b3" }}>₹900</span> <span style={{ textDecoration: "line-through", color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>₹1000</span></p>
+              <p className="ym-footer-item" style={{ color: "#d9a93a", marginTop: "10px" }}>Offline in Khumulwng: launching soon</p>
             </div>
           </div>
           <div className="ym-footer-visitor-bar">
@@ -866,7 +815,7 @@ export default function Home() {
                   );
                 })}
               </div>
-              <div className="ym-modal-emoji">{step === "form" ? "📝" : "💜"}</div>
+              <img className="ym-modal-logo" src="/logo.png" alt="" />
               <div className="ym-modal-title">{step === "form" ? "Join Yarwng Mathematics" : "Pay via PhonePe"}</div>
               <div className="ym-modal-sub">{step === "form" ? "Fill your details to proceed" : `${studentClass} · ₹${pay?.offer}/month`}</div>
             </div>
@@ -888,18 +837,17 @@ export default function Home() {
                     </div>
                     <div className="ym-form-group"><label className="ym-form-label">School Name *</label><input type="text" placeholder="Name of the school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} required className="ym-input" /></div>
                     <div className="ym-form-group"><label className="ym-form-label">Address *</label><input type="text" placeholder="Village / Town / Area" value={address} onChange={(e) => setAddress(e.target.value)} required className="ym-input" /></div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "7px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "9px", padding: "9px 12px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ fontSize: "12px", color: "#15803d", fontWeight: 500 }}>Classes are taught in <strong>English Medium</strong>.</span></div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "7px", background: "#fdf6e3", border: "1px solid #f0dca6", borderRadius: "8px", padding: "9px 12px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ fontSize: "12px", color: "#7a5a0c", fontWeight: 500 }}>Classes are taught in <strong>English Medium</strong>.</span></div>
                     <p className="ym-policy-text">By registering you agree to our <a href={POLICY.terms} target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</a>, <a href={POLICY.privacy} target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href={POLICY.refund} target="_blank" rel="noopener noreferrer">Refund Policy</a>.</p>
-                    <button type="submit" className="ym-submit-btn">Next: Pay &amp; Join →</button>
+                    <button type="submit" className="ym-submit-btn">Continue to payment</button>
                   </div>
                 </form>
               )}
 
               {step === "payment" && pay && (
-                <div style={{ textAlign: "center", padding: "20px 0" }}>
-                  <div style={{ fontSize: 52, marginBottom: 16 }}>💜</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Complete Your Payment</h3>
-                  <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>You&apos;ll be securely redirected to PhonePe to complete the payment.</p>
+                <div style={{ textAlign: "center", padding: "10px 0" }}>
+                  <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, marginBottom: 8, color: "#061a38" }}>Complete your payment</h3>
+                  <p style={{ color: "#5a6b86", fontSize: 14, marginBottom: 20 }}>You&apos;ll be securely redirected to PhonePe to pay.</p>
                   <div className="ym-pay-summary">
                     <div>
                       <p className="ym-pay-class">{studentClass} · {board} · {mode}</p>
@@ -908,11 +856,11 @@ export default function Home() {
                     <div className="ym-pay-discount">{discount}% OFF<br /><span style={{ textDecoration: "line-through", color: "#9ca3af", fontSize: "11px" }}>₹{pay.original}</span></div>
                   </div>
                   <button onClick={handleSubmit as any} disabled={submitting} className="ym-confirm-btn">
-                    {submitting ? (<><svg className="ym-spin" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" /><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" /></svg>Redirecting to PhonePe…</>) : (<>💜 Pay ₹{pay.offer} via PhonePe</>)}
+                    {submitting ? (<><svg className="ym-spin" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" /><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" /></svg>Redirecting to PhonePe…</>) : (<>Pay ₹{pay.offer} with PhonePe</>)}
                   </button>
                   {payError && <div className="ym-pay-err">⚠️ {payError}</div>}
                   <p className="ym-pay-secure">🔒 Powered by PhonePe Payment Gateway · SSL Secured</p>
-                  <button onClick={() => { setStep("form"); setPayError(""); setSubmitting(false); }} style={{ marginTop: 14, background: "none", border: "none", color: "#6b7280", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>← Edit details</button>
+                  <button onClick={() => { setStep("form"); setPayError(""); setSubmitting(false); }} style={{ marginTop: 14, background: "none", border: "none", color: "#5a6b86", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>← Edit details</button>
                 </div>
               )}
             </div>
