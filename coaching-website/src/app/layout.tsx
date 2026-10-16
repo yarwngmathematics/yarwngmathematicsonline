@@ -75,13 +75,34 @@ export const metadata: Metadata = {
   },
 };
 
-// Forces phones to render the desktop layout (1240px wide) scaled down to fit.
+// Base viewport (the script below overrides it on phones so the desktop layout fits the screen).
 export const viewport: Viewport = {
   width: 1240,
+  initialScale: 0.3,
   minimumScale: 0.1,
   maximumScale: 5,
   userScalable: true,
 };
+
+// Runs on the phone: renders the 1240px desktop layout scaled to fit the screen width exactly.
+const fitScript = `
+(function () {
+  var DESKTOP_WIDTH = 1240;
+  function apply() {
+    var meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) { meta = document.createElement('meta'); meta.name = 'viewport'; document.head.appendChild(meta); }
+    var w = Math.min(screen.width, window.innerWidth || screen.width);
+    if (w < DESKTOP_WIDTH) {
+      var s = (w / DESKTOP_WIDTH).toFixed(4);
+      meta.setAttribute('content', 'width=' + DESKTOP_WIDTH + ', initial-scale=' + s + ', minimum-scale=' + s + ', maximum-scale=5, user-scalable=yes');
+    } else {
+      meta.setAttribute('content', 'width=device-width, initial-scale=1');
+    }
+  }
+  apply();
+  window.addEventListener('orientationchange', function () { setTimeout(apply, 300); });
+})();
+`;
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -165,6 +186,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <script dangerouslySetInnerHTML={{ __html: fitScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
