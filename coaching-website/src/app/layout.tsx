@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/authContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Bold geometric sans used for all headings (matches the "Exam Categories" style)
+const nunito = Nunito_Sans({
+  variable: "--font-nunito",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -55,7 +58,7 @@ export const metadata: Metadata = {
     url: "https://www.yarwngmathematics.com",
     title: "Yarwng Mathematics – IIT Delhi Math Coaching | Class 10, 11, 12",
     description:
-      "Expert mathematics coaching by an IIT Delhi M.Sc graduate. Online via Google Meet. Classes 10–12. Starting 15th June 2026.",
+      "Expert mathematics coaching by an IIT Delhi M.Sc graduate. Live online classes on Google Meet for Classes 10–12. Admissions open.",
     siteName: "Yarwng Mathematics",
     locale: "en_IN",
     images: [
@@ -75,34 +78,13 @@ export const metadata: Metadata = {
   },
 };
 
-// Base viewport (the script below overrides it on phones so the desktop layout fits the screen).
+// Standard responsive viewport: phones get the mobile layout, not a shrunk desktop page.
 export const viewport: Viewport = {
-  width: 1240,
-  initialScale: 0.3,
-  minimumScale: 0.1,
+  width: "device-width",
+  initialScale: 1,
   maximumScale: 5,
-  userScalable: true,
+  themeColor: "#0b3a7a",
 };
-
-// Runs on the phone: renders the 1240px desktop layout scaled to fit the screen width exactly.
-const fitScript = `
-(function () {
-  var DESKTOP_WIDTH = 1240;
-  function apply() {
-    var meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) { meta = document.createElement('meta'); meta.name = 'viewport'; document.head.appendChild(meta); }
-    var w = Math.min(screen.width, window.innerWidth || screen.width);
-    if (w < DESKTOP_WIDTH) {
-      var s = (w / DESKTOP_WIDTH).toFixed(4);
-      meta.setAttribute('content', 'width=' + DESKTOP_WIDTH + ', initial-scale=' + s + ', minimum-scale=' + s + ', maximum-scale=5, user-scalable=yes');
-    } else {
-      meta.setAttribute('content', 'width=device-width, initial-scale=1');
-    }
-  }
-  apply();
-  window.addEventListener('orientationchange', function () { setTimeout(apply, 300); });
-})();
-`;
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -152,24 +134,9 @@ const jsonLd = {
       "telephone": "+919366030347",
       "email": "yarwngmathematics@gmail.com",
       "offers": [
-        {
-          "@type": "Offer",
-          "name": "Class 10 Mathematics",
-          "price": "600",
-          "priceCurrency": "INR",
-        },
-        {
-          "@type": "Offer",
-          "name": "Class 11 Mathematics",
-          "price": "800",
-          "priceCurrency": "INR",
-        },
-        {
-          "@type": "Offer",
-          "name": "Class 12 Mathematics",
-          "price": "900",
-          "priceCurrency": "INR",
-        },
+        { "@type": "Offer", "name": "Class 10 Mathematics", "price": "600", "priceCurrency": "INR" },
+        { "@type": "Offer", "name": "Class 11 Mathematics", "price": "800", "priceCurrency": "INR" },
+        { "@type": "Offer", "name": "Class 12 Mathematics", "price": "900", "priceCurrency": "INR" },
       ],
     },
   ],
@@ -183,16 +150,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${nunito.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: fitScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body
+        className="min-h-full flex flex-col"
+        style={{ fontFamily: "var(--font-nunito), 'Nunito Sans', system-ui, sans-serif", overflowX: "hidden" }}
+      >
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
